@@ -1,0 +1,45 @@
+# ── Secretos ────────────────────────────────────────────────────────────
+# El repositorio es público. Nada de credenciales versionadas.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# ── Python ──────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# ── Django ──────────────────────────────────────────────────────────────
+*.sqlite3
+/backend/staticfiles/
+/backend/media/
+
+# ── Node / Next.js ──────────────────────────────────────────────────────
+node_modules/
+.next/
+out/
+.turbo/
+next-env.d.ts
+npm-debug.log*
+
+# ── Analítica ───────────────────────────────────────────────────────────
+# Los datos del cliente y los modelos entrenados no van al repositorio.
+/data/
+*.pkl
+*.joblib
+.ipynb_checkpoints/
+
+# ── Editores y sistema operativo ────────────────────────────────────────
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini

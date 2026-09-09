@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: dealcommerce_test
+          POSTGRES_USER: dealcommerce
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready --health-interval 5s
+          --health-timeout 5s --health-retries 10
+        ports: ["5432:5432"]
+
+    env:
+      DJANGO_SECRET_KEY: clave-solo-para-ci-no-es-un-secreto
+      DJANGO_DEBUG: "False"
+      DATABASE_URL: postgres://dealcommerce:postgres@localhost:5432/dealcommerce_test
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+          cache: pip
+      - run: pip install -r requirements/dev.txt
+      - name: Lint (PEP 8)
+        run: ruff check .
+      - name: Migraciones sin pendientes
+        run: python manage.py makemigrations --check --dry-run
+      - name: Pruebas
+        run: pytest --cov
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build

@@ -1,0 +1,10 @@
+# Entorno de desarrollo y pruebas.
+
+-r analitica.txt
+
+pytest~=8.4.0
+pytest-django~=4.11.0
+pytest-cov~=6.2.0
+factory-boy~=3.3.0                # datos de prueba por tienda
+ruff~=0.14.0                      # lint y formato PEP 8
+django-extensions~=4.1

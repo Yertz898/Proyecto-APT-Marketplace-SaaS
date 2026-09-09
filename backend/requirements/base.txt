@@ -1,0 +1,20 @@
+# Núcleo del backend. Versiones fijadas por rango menor para que
+# `pip install -r` sea reproducible durante las 18 semanas del proyecto.
+
+Django~=5.2.17                    # LTS, soporte hasta abril 2028
+djangorestframework~=3.16.0
+djangorestframework-simplejwt~=5.5.0   # autenticación por JWT
+django-cors-headers~=4.9.0
+django-environ~=0.12.0            # lee configuración desde variables de entorno
+django-filter~=25.1
+
+# Base de datos
+psycopg[binary]~=3.2.0            # driver PostgreSQL
+
+# Archivos en Cloudflare R2 (API compatible con S3)
+django-storages~=1.14.6
+boto3~=1.40.0
+Pillow~=11.3.0
+
+# Servidor de aplicación
+gunicorn~=23.0.0
