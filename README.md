@@ -17,6 +17,7 @@ de los contenedores.)
 git clone <url-del-repositorio>
 cd dealcommerce
 cp .env.example .env      # completar los valores; .env nunca se versiona
+                          # para desarrollo local: DJANGO_DEBUG=True en tu .env
 docker compose up -d
 ```
 

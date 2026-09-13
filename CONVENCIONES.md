@@ -20,7 +20,10 @@ Reglas concretas:
 - El filtro por tienda se aplica en una capa común (manager o mixin), no repetido a mano
   en cada vista, para que no se olvide en la siguiente.
 - Toda funcionalidad nueva que lea datos de tienda lleva su prueba de aislamiento:
-  autenticarse como tienda A e intentar leer datos de la tienda B debe fallar.
+  autenticarse como tienda A e intentar leer datos de la tienda B debe responder
+  `404`, nunca `403` (ver [Pruebas](#pruebas)).
+- La tienda de cada petición sale del JWT, nunca del cuerpo ni de la URL (ver
+  [Decisiones técnicas cerradas](#decisiones-técnicas-cerradas)).
 
 ## Stack
 
@@ -46,6 +49,67 @@ no por preferencia.
   se cobra. El pago se coordina fuera de la plataforma.
 - **Cliente comprador** — se le calculan variables de recencia, frecuencia y monto (RFM)
   para el modelo de segmentación.
+
+## Decisiones técnicas cerradas
+
+Estas son decisiones ya tomadas. No proponer alternativas ni cambiarlas sin que se pida.
+
+**Moneda y números** — Pesos chilenos, enteros, sin decimales. Guardar como `Integer`, nunca
+`Float`. El redondeo de un precio escalonado es hacia arriba al peso. Los precios se guardan
+y se muestran **con IVA incluido**.
+
+**Zona horaria y locale** — `America/Santiago`. `USE_TZ = True`, guardar en UTC, mostrar en
+hora local. Formato de fecha `dd-mm-aaaa`. Toda la interfaz en español de Chile.
+
+**Cómo se resuelve la tienda en cada petición** — Por el usuario autenticado, leído del JWT,
+no por subdominio ni por un parámetro de la URL. Un `tienda_id` que venga en el cuerpo o en
+la query string **no se confía nunca**: se ignora y se usa el del token. Para el catálogo
+público de una tienda, la tienda va en la ruta (`/t/<slug>/...`) y solo expone datos publicados.
+
+**Roles** — Cuatro, y no más:
+- `admin_plataforma` — nosotros. Ve todas las tiendas. No se crea desde la interfaz.
+- `dueno_tienda` — el vendedor suscrito. Ve y administra solo su tienda.
+- `vendedor` — empleado del dueño. Igual que el dueño pero sin acceso a facturación
+  ni a la gestión de usuarios.
+- `comprador` — cliente final o mayorista. No pertenece a ninguna tienda.
+
+**Precio mayorista** — Un comprador ve los tramos mayoristas solo si el dueño de la tienda lo
+marcó como mayorista aprobado. Un comprador no aprobado ve únicamente el precio de detalle.
+Esto es una regla de autorización, no un detalle de interfaz: se aplica en el backend al
+calcular el precio, no ocultando el tramo en el frontend.
+
+**Tramos de precio** — Definidos por cantidad mínima, sin solaparse. Se aplica el tramo de
+mayor cantidad mínima que la cantidad pedida alcance. Si no alcanza ninguno, precio de
+detalle. Validar al guardar que los tramos de una lista no se solapen.
+
+**Estados del pedido** — `borrador → confirmado → preparacion → entregado`, más `anulado`
+alcanzable desde cualquiera menos `entregado`. Las transiciones válidas se definen en un solo
+lugar del modelo; una transición no permitida es un error de validación, no un `assert`.
+
+**Stock** — Se descuenta al pasar a `confirmado`, no al agregar al carrito. El descuento va
+dentro de una transacción con bloqueo de la fila de la variante
+(`select_for_update`), porque dos compradores pueden confirmar la última unidad a la vez.
+Anular un pedido devuelve el stock.
+
+**Imágenes de producto** — En Cloudflare R2. Son públicas: se sirven por URL directa, sin
+firmar. La base guarda solo la clave del objeto, nunca la URL completa. Validar tipo y tamaño
+al subir. El nombre del archivo lo genera el sistema, nunca se usa el que envía el usuario.
+
+## Ingesta de planillas
+
+Es el módulo que más va a fallar, porque el archivo lo hace una persona a mano.
+
+- Nunca confiar en el orden de las columnas: mapear por nombre de encabezado, normalizado
+  (minúsculas, sin acentos, sin espacios sobrantes).
+- Una fila inválida **no aborta la carga**. Se acumulan los errores por número de fila y se
+  devuelve un resumen: cuántas filas se cargaron, cuántas se rechazaron y por qué.
+- La carga es idempotente: subir dos veces la misma planilla no duplica las ventas. La clave
+  natural es (tienda, documento de venta, línea).
+- Guardar cada carga con su archivo original, fecha y usuario, para poder auditar de dónde
+  salieron los datos que alimentan los modelos.
+- No hay historial real suficiente para entrenar. Se trabaja con datos sintéticos generados
+  por nosotros, y **todo gráfico o métrica producido con ellos se rotula como tal** en la
+  interfaz. Nunca mostrar un número sintético como si fuera del cliente.
 
 ## Los dos modelos y sus métricas
 
@@ -77,6 +141,15 @@ conversacional del vendedor.
 - Búsqueda visual de productos por imagen.
 - Ejecución automática de campañas o envío de correos sin aprobación humana.
 
+## Lo que no está decidido
+
+Si el trabajo depende de uno de estos puntos, **preguntar antes de implementar**:
+
+- Qué proveedor de modelo de lenguaje usa el asistente conversacional, y con qué presupuesto.
+- Si el asistente responde solo sobre datos de la tienda o también sobre el catálogo público.
+- Cómo se cobra la suscripción del vendedor, si es que se modela en esta fase.
+- Quién es Product Owner y quién Scrum Master en el equipo.
+
 ## Seguridad
 
 **El repositorio es público.** Nada de credenciales en el código, en ningún momento.
@@ -88,6 +161,25 @@ conversacional del vendedor.
   autenticado, y la entrada se valida.
 - Autorización por rol en cada endpoint, no solo en la interfaz. Ocultar un botón en el
   frontend no protege nada.
+
+## Errores y respuestas de la API
+
+- Formato único de error: `{"error": {"codigo": "...", "mensaje": "...", "detalles": {...}}}`.
+  El mensaje es para mostrar al usuario, en español. El código es para el frontend.
+- Un error nunca filtra detalles internos: sin rutas de archivos, sin consultas SQL, sin
+  trazas. `DEBUG = False` es el valor por defecto y solo se activa localmente.
+- Listados paginados siempre, con un tope máximo de página. Un endpoint sin límite es un
+  problema de rendimiento y de denegación de servicio.
+
+## Pruebas
+
+- Las fixtures base crean **siempre dos tiendas con datos**. Una prueba que corre con una sola
+  tienda no puede detectar una fuga de aislamiento, que es el error más grave del sistema.
+- Cada endpoint que lee datos de tienda lleva una prueba que se autentica como tienda A y
+  espera `404` al pedir un recurso de la tienda B. **`404`, no `403`**: un `403` confirma que
+  el recurso existe.
+- El motor de precios escalonados se prueba en los bordes: cantidad justo bajo el tramo, justo
+  en el tramo, y sobre el último tramo.
 
 ## Convenciones
 

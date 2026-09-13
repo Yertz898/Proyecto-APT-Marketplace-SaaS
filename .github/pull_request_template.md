@@ -18,7 +18,8 @@
 
 - [ ] Este PR **no** lee datos de tienda, o
 - [ ] Todo queryset nuevo filtra por la tienda del usuario autenticado **desde la capa común**, y
-- [ ] Incluye su prueba de aislamiento (tienda A no puede leer datos de tienda B)
+- [ ] Incluye su prueba de aislamiento: autenticado como tienda A, pedir un recurso de
+      la tienda B responde **`404`, no `403`** (un 403 confirma que el recurso existe)
 
 ## Seguridad
 
