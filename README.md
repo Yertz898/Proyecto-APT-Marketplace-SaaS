@@ -29,9 +29,15 @@ Servicios:
 | `api` | http://localhost:8000 | Backend Django REST Framework |
 | `db`  | localhost:5432 | PostgreSQL 17 |
 
-Primer arranque, una vez que los contenedores estén arriba:
+> **No ejecutar `migrate` todavía.** Primero hay que definir el modelo `Usuario` en
+> `apps/usuarios` y activar `AUTH_USER_MODEL` en `config/settings.py`. Si se migra antes,
+> Django crea las tablas con su usuario por defecto y cambiarlo después obliga a borrar la
+> base de datos.
+
+Una vez definido `Usuario`, el primer arranque es:
 
 ```bash
+docker compose exec api python manage.py makemigrations
 docker compose exec api python manage.py migrate
 docker compose exec api python manage.py createsuperuser
 ```
