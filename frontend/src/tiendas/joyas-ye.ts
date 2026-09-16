@@ -34,32 +34,22 @@ export const joyasYe: ContenidoTienda = {
   },
 
   portada: {
-    antetitulo: "Joyería artesanal · Santiago",
     titulo: "Piezas que se heredan, no que se reemplazan",
-    descripcion:
-      "Plata 925 y baños de oro de 18k, hechos a mano en talleres chilenos. Vendemos al detalle y también por volumen a tiendas y revendedoras.",
-    garantias: ["Envíos a todo Chile", "Cambios en 30 días", "Pago coordinado por WhatsApp"],
+    garantias: ["Envíos a todo Chile"],
     movil: {
-      antetitulo: "Joyería artesanal",
       titulo: "Piezas que se heredan",
-      descripcion: "Plata 925 y baño de oro 18k, hechos a mano en Chile.",
     },
   },
 
   llamadoMayorista: {
     titulo: "¿Compras para tu tienda?",
-    descripcion:
-      "Desde 6 unidades por modelo accedes a precios mayoristas. Requiere cuenta aprobada por Joyas Ye.",
     boton: "Solicitar cuenta mayorista",
     movil: {
-      descripcion: "Desde 6 unidades accedes a precio mayorista con cuenta aprobada.",
       boton: "Solicitar cuenta",
     },
   },
 
   pie: {
-    descripcion:
-      "Joyería artesanal en plata 925 y baños de oro. Hecho en Chile, enviado a todo el país.",
     columnas: [
       {
         titulo: "Comprar",
@@ -76,12 +66,10 @@ export const joyasYe: ContenidoTienda = {
     ],
     escribenos: {
       titulo: "Escríbenos",
-      texto: "Coordinamos pedidos y pagos directo por WhatsApp.",
       boton: "Escríbenos por WhatsApp",
     },
     derechos: "© 2026 Joyas Ye. Todos los derechos reservados.",
     movil: {
-      descripcion: "Joyería artesanal en plata 925 y baños de oro. Envíos a todo Chile.",
       columnas: [
         { titulo: "Comprar", enlaces: ["Anillos", "Collares", "Aros", "Pulseras"] },
         { titulo: "Ayuda", enlaces: ["Envíos", "Cambios", "Contacto", "Nosotros"] },

@@ -24,11 +24,9 @@ export function Portada({ tienda }: { tienda: ContenidoTienda }) {
           </div>
 
           <div className="relative max-w-[600px]">
-            <p className="text-[11px] font-semibold tracking-[.18em] text-lila uppercase">{portada.antetitulo}</p>
-            <h1 className="mt-[18px] font-serif text-[62px] leading-[1.04] font-medium text-pretty text-texto">
+            <h1 className="font-serif text-[62px] leading-[1.04] font-medium text-pretty text-texto">
               {portada.titulo}
             </h1>
-            <p className="mt-5 max-w-[470px] text-base leading-[1.65] text-texto-suave">{portada.descripcion}</p>
 
             <div className="mt-[34px] flex gap-3.5">
               <Link
@@ -60,11 +58,9 @@ export function Portada({ tienda }: { tienda: ContenidoTienda }) {
       </section>
 
       <section className="bg-[radial-gradient(90%_100%_at_80%_0%,rgba(124,58,237,.34)_0%,rgba(11,10,15,0)_62%),linear-gradient(180deg,#100E18,#0B0A0F)] px-5 pt-[34px] pb-9 lg:hidden">
-        <p className="text-[10px] font-semibold tracking-[.18em] text-lila uppercase">{portada.movil.antetitulo}</p>
-        <h1 className="mt-3 font-serif text-[38px] leading-[1.08] font-medium text-pretty text-texto">
+        <h1 className="font-serif text-[38px] leading-[1.08] font-medium text-pretty text-texto">
           {portada.movil.titulo}
         </h1>
-        <p className="mt-3 text-sm leading-[1.6] text-texto-suave">{portada.movil.descripcion}</p>
 
         <Link
           href={catalogo}

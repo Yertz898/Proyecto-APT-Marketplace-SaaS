@@ -36,36 +36,27 @@ export type ContenidoTienda = {
     placeholder: string;
   };
   portada: {
-    antetitulo: string;
     titulo: string;
-    descripcion: string;
     garantias: string[];
     movil: {
-      antetitulo: string;
       titulo: string;
-      descripcion: string;
     };
   };
   llamadoMayorista: {
     titulo: string;
-    descripcion: string;
     boton: string;
     movil: {
-      descripcion: string;
       boton: string;
     };
   };
   pie: {
-    descripcion: string;
     columnas: ColumnaPie[];
     escribenos: {
       titulo: string;
-      texto: string;
       boton: string;
     };
     derechos: string;
     movil: {
-      descripcion: string;
       columnas: ColumnaPie[];
       derechos: string;
     };

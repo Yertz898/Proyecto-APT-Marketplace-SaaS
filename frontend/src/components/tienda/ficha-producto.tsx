@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 
 import { useCarrito } from "./carrito";
 import { EnlaceExterno } from "./enlace-externo";
-import { IconoInfo, IconoWhatsapp } from "./iconos";
+import { IconoWhatsapp } from "./iconos";
 
 /*
  * Ficha de producto (mockup 1C).
@@ -92,28 +92,16 @@ export function FichaProducto({ producto, enlaceWhatsapp }: Props) {
         {variante && <p className="mt-2.5 text-[13px] text-texto-suave">SKU {variante.sku}</p>}
 
         {tramo && (
-          <>
-            <p className="mt-[26px] flex items-baseline gap-3">
-              <span className="font-serif text-[44px] font-semibold text-oro">
-                {formatearPesos(tramo.precioUnitario)}
-              </span>
-              <span className="text-[13px] text-texto-suave">por unidad · IVA incluido</span>
-            </p>
-            <p className="mt-2 text-[13px] text-lila">
-              {indiceTramo === 0
-                ? hayMayorista
-                  ? `Precio al detalle · desde ${tramos[1].cantidadMinima} unidades baja el valor`
-                  : "Precio al detalle"
-                : `Tramo mayorista aplicado (${rangoDeTramo(tramos, indiceTramo).replace(" unidades", "")})`}
-            </p>
-          </>
+          <p className="mt-[26px] flex items-baseline gap-3">
+            <span className="font-serif text-[44px] font-semibold text-oro">
+              {formatearPesos(tramo.precioUnitario)}
+            </span>
+            <span className="text-[13px] text-texto-suave">por unidad · IVA incluido</span>
+          </p>
         )}
 
         <div className="mt-8 border-t border-texto/8 pt-[26px]">
-          <div className="flex items-baseline justify-between gap-4">
-            <span className="text-[13px] font-semibold text-texto">Material</span>
-            <span className="text-xs text-texto-suave">El stock depende de la combinación</span>
-          </div>
+          <div className="text-[13px] font-semibold text-texto">Material</div>
           <div className="mt-3.5 flex flex-wrap gap-2.5">
             {producto.materiales.map((opcion) => (
               <button
@@ -147,15 +135,6 @@ export function FichaProducto({ producto, enlaceWhatsapp }: Props) {
             })}
           </div>
 
-          <p className="mt-3.5 flex items-center gap-[9px] text-xs text-texto-suave">
-            <span
-              aria-hidden="true"
-              className={cn("size-[7px] rounded-full", conStock ? "bg-violeta" : "bg-texto-suave")}
-            />
-            {conStock
-              ? `En stock · ${material} talla ${talla}`
-              : `Sin stock en ${material} talla ${talla} · elige otra combinación`}
-          </p>
         </div>
 
         <div className="mt-7 border-t border-texto/8 pt-[26px]">
@@ -212,9 +191,6 @@ export function FichaProducto({ producto, enlaceWhatsapp }: Props) {
               Consultar por WhatsApp
             </EnlaceExterno>
 
-            <p className="text-center text-xs text-texto-suave">
-              El pago se coordina por WhatsApp al confirmar el pedido.
-            </p>
           </div>
         </div>
       </div>
@@ -315,15 +291,6 @@ function TablaTramos({ tramos, activo }: { tramos: TramoPrecio[]; activo: number
         );
       })}
 
-      {tramos.length > 1 && (
-        <div className="flex items-start gap-2.5 border-t border-oro/22 bg-oro/7 px-[18px] py-[13px]">
-          <IconoInfo className="mt-px flex-none" />
-          <span className="text-xs leading-[1.55] text-texto-suave">
-            Los tramos de {tramos[1].cantidadMinima} unidades o más requieren cuenta mayorista aprobada. Puedes pedir la
-            aprobación en un paso al confirmar.
-          </span>
-        </div>
-      )}
     </div>
   );
 }

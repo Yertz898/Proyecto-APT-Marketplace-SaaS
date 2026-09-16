@@ -19,7 +19,6 @@ export function Pie({ tienda }: { tienda: ContenidoTienda }) {
         <div className="mx-auto grid max-w-[1280px] grid-cols-[1.4fr_.8fr_.8fr_.8fr_1.2fr] gap-10 px-6 pt-[58px] pb-[30px]">
           <div>
             <Marca tienda={tienda} lugar="pie" />
-            <p className="mt-3.5 max-w-[250px] text-[13px] leading-[1.6] text-texto-suave">{pie.descripcion}</p>
             <Redes redes={redes} tamano={22} className="mt-[18px]" />
           </div>
 
@@ -29,8 +28,7 @@ export function Pie({ tienda }: { tienda: ContenidoTienda }) {
 
           <div>
             <TituloColumna>{pie.escribenos.titulo}</TituloColumna>
-            <p className="mt-3.5 text-[13px] leading-[1.6] text-texto-suave">{pie.escribenos.texto}</p>
-            <BotonWhatsapp enlace={redes.whatsapp} className="mt-4 h-[46px] px-5 text-[13px]">
+            <BotonWhatsapp enlace={redes.whatsapp} className="mt-3.5 h-[46px] px-5 text-[13px]">
               {pie.escribenos.boton}
             </BotonWhatsapp>
           </div>
@@ -44,7 +42,6 @@ export function Pie({ tienda }: { tienda: ContenidoTienda }) {
 
       <div className="px-5 pt-[30px] pb-[26px] lg:hidden">
         <Marca tienda={tienda} lugar="pie-movil" />
-        <p className="mt-2.5 text-[13px] leading-[1.6] text-texto-suave">{pie.movil.descripcion}</p>
         <BotonWhatsapp enlace={redes.whatsapp} className="mt-[18px] h-12 w-full justify-center text-sm">
           {pie.escribenos.boton}
         </BotonWhatsapp>

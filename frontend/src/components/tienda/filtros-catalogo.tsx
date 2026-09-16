@@ -100,7 +100,7 @@ function PanelFiltros({
   onCambio: (seleccion: Seleccion) => void;
   sinTitulo?: boolean;
 }) {
-  const { precioMinimo, precioMaximo, cantidadMinimaMayorista } = filtros;
+  const { precioMinimo, precioMaximo } = filtros;
   const hayRango = precioMinimo !== null && precioMaximo !== null;
   const precio = seleccion.precio ?? (hayRango ? [precioMinimo, precioMaximo] : [0, 100]);
 
@@ -208,17 +208,8 @@ function PanelFiltros({
           checked={seleccion.soloMayorista}
           onCheckedChange={(marcado) => onCambio({ ...seleccion, soloMayorista: marcado })}
         />
-        <span>
-          <span className="block text-[13px] text-texto">Solo con precio mayorista</span>
-          {cantidadMinimaMayorista !== null && (
-            <span className="mt-0.5 block text-[11px] text-texto-suave">Desde {cantidadMinimaMayorista} unidades</span>
-          )}
-        </span>
+        <span className="text-[13px] text-texto">Solo con precio mayorista</span>
       </label>
-
-      <p className="mt-[22px] rounded-xl border border-oro/28 bg-oro/8 p-3.5 text-xs leading-[1.55] text-texto-suave">
-        Los tramos mayoristas se muestran con tu cuenta aprobada.
-      </p>
     </>
   );
 }

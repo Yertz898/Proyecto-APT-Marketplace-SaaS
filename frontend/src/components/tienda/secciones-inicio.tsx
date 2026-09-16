@@ -39,10 +39,7 @@ export function CategoriasDestacadas({
               className="flex h-[170px] flex-col justify-between rounded-2xl border border-lila/12 p-5 transition-colors hover:border-lila/45"
             >
               <IconoCategoria slug={categoria.slug} tamano={40} grosor={1.4} />
-              <div>
-                <div className="font-serif text-[23px] text-texto">{categoria.nombre}</div>
-                <div className="mt-0.5 text-xs text-texto-suave">{categoria.cantidadProductos} modelos</div>
-              </div>
+              <div className="font-serif text-[23px] text-texto">{categoria.nombre}</div>
             </Link>
           ))}
         </div>
@@ -78,7 +75,6 @@ export function MasPedidos({
     <section className="mx-auto w-full max-w-[1440px] px-5 pt-[26px] lg:px-20 lg:pt-[62px] lg:pb-[76px]">
       <div className="flex items-baseline justify-between">
         <h2 className="font-serif text-2xl text-texto lg:text-[32px] lg:font-medium">Lo más pedido</h2>
-        <span className="hidden text-xs text-texto-suave lg:inline">Pasa el mouse sobre una pieza</span>
         <Link href={`/t/${slugTienda}/catalogo`} className="text-xs text-lila lg:hidden">
           Ver todo
         </Link>
@@ -101,10 +97,7 @@ export function LlamadoMayorista({ tienda }: { tienda: ContenidoTienda }) {
     <>
       <section className="mx-auto hidden w-full max-w-[1440px] px-20 pb-[76px] lg:block">
         <div className="flex items-center gap-10 rounded-[18px] border border-violeta/35 bg-[linear-gradient(100deg,rgba(124,58,237,.20)_0%,rgba(11,10,15,.2)_70%)] px-12 py-10">
-          <div className="flex-1">
-            <h2 className="font-serif text-[30px] font-normal text-texto">{llamado.titulo}</h2>
-            <p className="mt-2 max-w-[560px] text-sm text-texto-suave">{llamado.descripcion}</p>
-          </div>
+          <h2 className="flex-1 font-serif text-[30px] font-normal text-texto">{llamado.titulo}</h2>
           <button
             type="button"
             aria-disabled="true"
@@ -119,7 +112,6 @@ export function LlamadoMayorista({ tienda }: { tienda: ContenidoTienda }) {
       <section className="px-5 pt-7 pb-[30px] lg:hidden">
         <div className="rounded-2xl border border-violeta/35 bg-[linear-gradient(140deg,rgba(124,58,237,.22),rgba(11,10,15,.2))] p-[22px]">
           <h2 className="font-serif text-[22px] font-normal text-texto">{llamado.titulo}</h2>
-          <p className="mt-1.5 text-[13px] leading-[1.55] text-texto-suave">{llamado.movil.descripcion}</p>
           <button
             type="button"
             aria-disabled="true"

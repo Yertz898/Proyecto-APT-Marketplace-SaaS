@@ -43,9 +43,6 @@ export default async function PaginaCatalogo({ params, searchParams }: PageProps
         <div className="mt-3 flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 className="font-serif text-[38px] font-medium text-texto lg:text-[44px]">Catálogo completo</h1>
-            <p className="mt-1.5 text-[13px] text-texto-suave">
-              {catalogo.total} piezas · {catalogo.totalConMayorista} con precio mayorista activo
-            </p>
           </div>
 
           <div className="flex items-center gap-3">
