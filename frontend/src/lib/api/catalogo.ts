@@ -1,59 +1,62 @@
-import type {
-  Categoria,
-  PaginaCatalogo,
-  ProductoDetalle,
-  ProductoResumen,
-} from "@/lib/tipos";
+import type { CotizacionGranel, LineaGranel, Lote, PaginaDeLotes } from "@/lib/tipos";
 
 /*
- * Acceso a los datos del catálogo público.
+ * Catálogo público de una tienda: lotes y líneas de granel.
  *
- * Todavía no existe la API, así que estas funciones devuelven vacío: las
- * pantallas se construyen contra la forma final de los datos y, al conectar el
- * backend, solo cambia el cuerpo de cada función.
+ * El backend todavía no existe. Los listados devuelven vacío y las fichas null,
+ * para que las pantallas se construyan contra la forma final de los datos.
  *
- * Al implementarlas (CONVENCIONES.md):
- * - La tienda va en la ruta (/t/<slug>/...) y la API solo expone datos publicados.
- * - Los tramos mayoristas los filtra el backend según el comprador autenticado.
- * - Los listados vienen paginados, con tope de página.
+ * Endpoints a implementar:
+ *   GET  /t/{slug}/lotes?pagina=
+ *   GET  /t/{slug}/lotes/{codigo}
+ *   GET  /t/{slug}/granel
+ *   GET  /t/{slug}/granel/{codigo}
+ *   POST /t/{slug}/granel/{codigo}/cotizar
+ *
+ * Recordatorios al implementarlos (CONVENCIONES.md y prompt de actualización):
+ * - Solo se exponen datos publicados de esa tienda.
+ * - El precio del granel lo calcula el backend, incluido el aviso de
+ *   conveniencia y el rechazo por bajo el mínimo.
+ * - Las URLs de las fotos vienen de Cloudflare R2; hay que declarar ese dominio
+ *   en images.remotePatterns de next.config.ts antes de que lleguen imágenes.
  */
 
-export async function obtenerCategorias(slugTienda: string): Promise<Categoria[]> {
-  void slugTienda;
-  return [];
+export class ApiPendiente extends Error {
+  constructor(endpoint: string) {
+    super(`Esta función todavía no está conectada: falta implementar ${endpoint} en el backend.`);
+    this.name = "ApiPendiente";
+  }
 }
 
-export async function obtenerMasPedidos(slugTienda: string): Promise<ProductoResumen[]> {
-  void slugTienda;
-  return [];
+export async function obtenerLotes(slug: string, pagina: number): Promise<PaginaDeLotes> {
+  void slug;
+  return { lotes: [], paginaActual: pagina, totalPaginas: 0 };
 }
 
-export async function obtenerCatalogo(
-  slugTienda: string,
-  pagina: number,
-): Promise<PaginaCatalogo> {
-  void slugTienda;
-  return {
-    productos: [],
-    total: 0,
-    totalConMayorista: 0,
-    paginaActual: pagina,
-    totalPaginas: 0,
-    filtros: {
-      categorias: [],
-      materiales: [],
-      precioMinimo: null,
-      precioMaximo: null,
-      cantidadMinimaMayorista: null,
-    },
-  };
-}
-
-export async function obtenerProducto(
-  slugTienda: string,
-  slugProducto: string,
-): Promise<ProductoDetalle | null> {
-  void slugTienda;
-  void slugProducto;
+export async function obtenerLote(slug: string, codigo: string): Promise<Lote | null> {
+  void slug;
+  void codigo;
   return null;
+}
+
+export async function obtenerLineasGranel(slug: string): Promise<LineaGranel[]> {
+  void slug;
+  return [];
+}
+
+export async function obtenerLineaGranel(slug: string, codigo: string): Promise<LineaGranel | null> {
+  void slug;
+  void codigo;
+  return null;
+}
+
+/** El precio lo calcula el backend; el navegador solo muestra lo que devuelve. */
+export async function cotizarGranel(
+  slug: string,
+  codigo: string,
+  gramos: number,
+): Promise<CotizacionGranel> {
+  void slug;
+  void gramos;
+  throw new ApiPendiente(`POST /t/{slug}/granel/${codigo}/cotizar`);
 }

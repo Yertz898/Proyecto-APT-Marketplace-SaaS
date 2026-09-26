@@ -25,3 +25,12 @@ export function formatearFecha(iso: string): string {
   }
   return fechaChilena.format(fecha).replaceAll("/", "-");
 }
+
+const gramosChilenos = new Intl.NumberFormat("es-CL", {
+  maximumFractionDigits: 2,
+});
+
+/** 166.5 → "166,5 g" (gramos con coma decimal). */
+export function formatearGramos(gramos: number): string {
+  return `${gramosChilenos.format(gramos)} g`;
+}

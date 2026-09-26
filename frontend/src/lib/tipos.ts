@@ -1,147 +1,144 @@
 /**
- * Tipos de datos de la tienda pública.
+ * Tipos de la tienda pública.
  *
- * Reflejan lo que muestra el mockup y el modelo de dominio del CONVENCIONES.md. Cuando
- * exista la API se ajustan al contrato real de los endpoints; hasta entonces son
- * la referencia de qué necesita recibir cada pantalla.
+ * Todo lo que distingue a una tienda de otra son datos que entrega el backend:
+ * su identidad, sus categorías, sus lotes y sus líneas de granel. Nada de eso se
+ * escribe en el frontend. Si mañana entra una segunda tienda con otras
+ * categorías y otras líneas, este archivo no cambia.
  */
 
-/** Pesos chilenos, enteros y con IVA incluido (CONVENCIONES.md > Moneda y números). */
+/** Pesos chilenos enteros, sin decimales. Los precios se manejan NETOS. */
 export type Pesos = number;
-
-// ── Contenido de la tienda ──────────────────────────────────────────────────
-
-export type Logo = {
-  src: string;
-  ancho: number;
-  alto: number;
-  /** true si la imagen ya contiene el nombre escrito de la tienda. */
-  incluyeNombre: boolean;
-};
-
-export type ColumnaPie = {
-  titulo: string;
-  enlaces: string[];
-};
-
-export type ContenidoTienda = {
-  slug: string;
-  nombre: string;
-  logo: Logo | null;
-  redes: {
-    whatsapp: string | null;
-    instagram: string | null;
-  };
-  buscador: {
-    placeholder: string;
-  };
-  portada: {
-    titulo: string;
-    garantias: string[];
-    movil: {
-      titulo: string;
-    };
-  };
-  llamadoMayorista: {
-    titulo: string;
-    boton: string;
-    movil: {
-      boton: string;
-    };
-  };
-  pie: {
-    columnas: ColumnaPie[];
-    escribenos: {
-      titulo: string;
-      boton: string;
-    };
-    derechos: string;
-    movil: {
-      columnas: ColumnaPie[];
-      derechos: string;
-    };
-  };
-};
-
-// ── Catálogo ────────────────────────────────────────────────────────────────
 
 export type Imagen = {
   url: string;
   alt: string;
 };
 
-export type Categoria = {
+// ── Identidad de la tienda ──────────────────────────────────────────────────
+
+/**
+ * Colores de la tienda, en hexadecimal.
+ *
+ * Se aplican como variables CSS y se validan antes de usarse. Nunca se renderiza
+ * HTML ni CSS escrito por el vendedor: todas las tiendas comparten origen, y un
+ * script inyectado en una leería la sesión de los compradores de otra.
+ */
+export type ColoresTienda = {
+  primario: string;
+  primarioHover: string;
+  acento: string;
+  destacado: string;
+};
+
+export type IdentidadTienda = {
   slug: string;
   nombre: string;
-  cantidadProductos: number;
+  logo: Imagen | null;
+  banner: Imagen | null;
+  colores: ColoresTienda | null;
+  redes: {
+    whatsapp: string | null;
+    instagram: string | null;
+  };
 };
 
-export type ProductoResumen = {
-  slug: string;
+// ── Productos ───────────────────────────────────────────────────────────────
+
+/**
+ * Tipos de producto de la plataforma.
+ *
+ * Los componentes discriminan por este campo. Sumar un tercer tipo (una tienda
+ * que venda piezas sueltas, por ejemplo) debe ser agregar un caso, no reescribir.
+ */
+export type TipoProducto = "lote" | "granel";
+
+export type PiezasPorCategoria = {
+  categoria: string;
+  cantidad: number;
+};
+
+/** UNICO no se repite; MULTIPLE se repite y lleva la cuenta de lo que queda. */
+export type Cupos = { tipo: "UNICO" } | { tipo: "MULTIPLE"; restantes: number };
+
+/**
+ * Lote: unidad de venta cerrada.
+ *
+ * Es una composición (cuántas piezas de cada categoría), no una lista de piezas
+ * concretas: los modelos varían según disponibilidad. Se compra entero, sin
+ * seleccionar nada.
+ *
+ * El backend entrega neto, IVA y total ya calculados: el navegador no hace
+ * aritmética de dinero.
+ */
+export type Lote = {
+  tipo: "lote";
+  codigo: string;
   nombre: string;
-  /** Línea bajo el nombre en la tarjeta, p. ej. "Plata 925 · 4 tallas". */
-  resumen: string;
-  precioDetalle: Pesos;
-  /** Cantidad desde la que aplica el primer tramo mayorista; null si no tiene. */
-  cantidadMinimaMayorista: number | null;
-  imagen: Imagen | null;
+  material: string;
+  piezasTotales: number;
+  composicion: PiezasPorCategoria[];
+  precioNeto: Pesos;
+  iva: Pesos;
+  precioTotal: Pesos;
+  cupos: Cupos;
+  agotado: boolean;
+  /** Null mientras el dueño no haya subido la foto: no se dibuja nada en su lugar. */
+  foto: Imagen | null;
 };
 
-export type FiltrosCatalogo = {
-  categorias: Categoria[];
-  materiales: string[];
-  precioMinimo: Pesos | null;
-  precioMaximo: Pesos | null;
-  cantidadMinimaMayorista: number | null;
+export type UnidadUmbral = "pesos" | "gramos";
+
+/**
+ * Tramo de una línea de granel.
+ *
+ * El umbral puede venir en pesos o en gramos, y `unidadUmbral` dice cuál es. Se
+ * muestran tal como los definió la tienda, sin convertir entre unidades.
+ */
+export type TramoGranel = {
+  umbral: number;
+  unidadUmbral: UnidadUmbral;
+  precioGramoNeto: Pesos;
 };
 
-export type PaginaCatalogo = {
-  productos: ProductoResumen[];
-  total: number;
-  totalConMayorista: number;
+/** Granel: venta por gramo, organizada en líneas con sus tramos. */
+export type LineaGranel = {
+  tipo: "granel";
+  codigo: string;
+  nombre: string;
+  material: string;
+  categorias: string[];
+  tramos: TramoGranel[];
+  /** Mínimo de compra, redactado por el backend. Null si la línea no tiene. */
+  minimo: string | null;
+};
+
+export type ItemCatalogo = Lote | LineaGranel;
+
+/**
+ * Cotización de una compra por gramos.
+ *
+ * La calcula siempre el backend. El frontend puede resaltar el tramo para
+ * orientar, pero el total que se cobra no se calcula en el navegador.
+ */
+export type CotizacionGranel = {
+  gramos: number;
+  precioGramoNeto: Pesos;
+  neto: Pesos;
+  iva: Pesos;
+  total: Pesos;
+  /** Índice del tramo aplicado dentro de `LineaGranel.tramos`; null si no aplica ninguno. */
+  tramoAplicado: number | null;
+  /** Aviso de conveniencia cuando comprar más cuesta menos. Lo decide el backend. */
+  aviso: string | null;
+  /** Motivo por el que no se puede comprar (bajo el mínimo). Si viene, no se agrega al carrito. */
+  rechazo: string | null;
+};
+
+// ── Listados ────────────────────────────────────────────────────────────────
+
+export type PaginaDeLotes = {
+  lotes: Lote[];
   paginaActual: number;
   totalPaginas: number;
-  filtros: FiltrosCatalogo;
-};
-
-// ── Ficha de producto ───────────────────────────────────────────────────────
-
-export type TramoPrecio = {
-  /** El tramo aplica desde esta cantidad (CONVENCIONES.md > Tramos de precio). */
-  cantidadMinima: number;
-  precioUnitario: Pesos;
-  /** Texto de la etiqueta, p. ej. "Detalle", "Mayorista", "Mayorista +". */
-  etiqueta: string;
-};
-
-/** El stock vive en la variante, no en el producto. */
-export type Variante = {
-  sku: string;
-  material: string;
-  talla: string;
-  stock: number;
-};
-
-export type Caracteristica = {
-  nombre: string;
-  valor: string;
-};
-
-export type ProductoDetalle = {
-  slug: string;
-  nombre: string;
-  categoria: Pick<Categoria, "slug" | "nombre">;
-  coleccion: string | null;
-  descripcion: string;
-  caracteristicas: Caracteristica[];
-  imagenes: Imagen[];
-  materiales: string[];
-  tallas: string[];
-  variantes: Variante[];
-  /**
-   * Tramos que el comprador actual puede ver. Qué tramos se incluyen lo decide
-   * el backend según la aprobación mayorista: es una regla de autorización, el
-   * frontend no oculta nada por su cuenta.
-   */
-  tramos: TramoPrecio[];
 };

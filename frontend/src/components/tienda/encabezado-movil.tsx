@@ -4,24 +4,24 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import type { Categoria, ContenidoTienda } from "@/lib/tipos";
-import { cn } from "@/lib/utils";
+import type { IdentidadTienda } from "@/lib/tipos";
 
 import { ContadorCarrito } from "./carrito";
 import { IconoLupa } from "./iconos";
 import { Marca } from "./marca";
 import { clasesPanelLateral } from "./panel-lateral";
 
-type Props = {
-  tienda: ContenidoTienda;
-  categorias: Categoria[];
-};
+type Seccion = { href: string; etiqueta: string; activa: boolean };
 
-/** Encabezado móvil con su panel lateral de menú (mockup 1D). */
-export function EncabezadoMovil({ tienda, categorias }: Props) {
+/** Encabezado móvil con su panel lateral de menú. */
+export function EncabezadoMovil({
+  tienda,
+  secciones,
+}: {
+  tienda: IdentidadTienda;
+  secciones: Seccion[];
+}) {
   const [abierto, setAbierto] = useState(false);
-  const base = `/t/${tienda.slug}`;
-  const cerrar = () => setAbierto(false);
 
   return (
     <header className="border-b border-lila/14 bg-tinta/80 px-[18px] py-3.5 backdrop-blur-[16px] lg:hidden">
@@ -63,35 +63,16 @@ export function EncabezadoMovil({ tienda, categorias }: Props) {
             </div>
 
             <nav aria-label="Principal" className="mt-[26px] flex flex-col">
-              <Link href={base} onClick={cerrar} className="border-b border-texto/8 py-3.5 text-[15px] text-texto">
-                Inicio
-              </Link>
-              <Link
-                href={`${base}/catalogo`}
-                onClick={cerrar}
-                className="flex justify-between border-b border-texto/8 pt-3.5 pb-2.5 text-[15px] text-lila"
-              >
-                Productos <span aria-hidden="true">−</span>
-              </Link>
-              {categorias.map((categoria, indice) => (
+              {secciones.map((seccion) => (
                 <Link
-                  key={categoria.slug}
-                  href={`${base}/catalogo?categoria=${categoria.slug}`}
-                  onClick={cerrar}
-                  className={cn(
-                    "py-3 pl-3.5 text-sm text-texto-suave",
-                    indice === categorias.length - 1 && "border-b border-texto/8",
-                  )}
+                  key={seccion.href}
+                  href={seccion.href}
+                  onClick={() => setAbierto(false)}
+                  className="border-b border-texto/8 py-3.5 text-[15px] text-texto"
                 >
-                  {categoria.nombre}
+                  {seccion.etiqueta}
                 </Link>
               ))}
-              <span data-pendiente="envios" aria-disabled="true" className="border-b border-texto/8 py-3.5 text-[15px] text-texto">
-                Envíos
-              </span>
-              <span data-pendiente="ayuda" aria-disabled="true" className="border-b border-texto/8 py-3.5 text-[15px] text-texto">
-                Ayuda
-              </span>
             </nav>
 
             <button

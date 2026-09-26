@@ -1,12 +1,16 @@
-import type { ContenidoTienda } from "@/lib/tipos";
-import { contenidoLocalDeTienda } from "@/tiendas";
+import type { IdentidadTienda } from "@/lib/tipos";
 
-/**
- * Contenido de una tienda pública por su slug.
+/*
+ * Identidad de la tienda pública.
  *
- * Todavía no hay API: lee el contenido provisorio de src/tiendas/. Al conectar
- * el backend solo cambia el cuerpo de esta función.
+ * La tienda es datos, no código: nombre, logo, banner, colores y redes vienen
+ * del backend según el slug de la URL. Mientras no exista la API no hay tienda
+ * que mostrar, y las páginas responden 404.
+ *
+ * Endpoint a implementar:
+ *   GET /t/{slug}/tienda
  */
-export async function obtenerTienda(slug: string): Promise<ContenidoTienda | null> {
-  return contenidoLocalDeTienda(slug);
+export async function obtenerIdentidadTienda(slug: string): Promise<IdentidadTienda | null> {
+  void slug;
+  return null;
 }
