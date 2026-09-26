@@ -16,7 +16,7 @@ import { InsigniaCupos } from "./cupos";
  * que los modelos varían va visible y no en letra chica.
  */
 export function FichaLote({ lote }: { lote: Lote }) {
-  const { agregar } = useCarrito();
+  const { agregarLote } = useCarrito();
 
   return (
     <div className="mx-auto grid max-w-[1280px] items-start gap-10 px-5 pt-[26px] pb-[70px] lg:grid-cols-[minmax(0,1fr)_460px] lg:px-6">
@@ -77,7 +77,7 @@ export function FichaLote({ lote }: { lote: Lote }) {
         ) : (
           <button
             type="button"
-            onClick={() => agregar(1)}
+            onClick={() => agregarLote(lote.codigo)}
             className="mt-6 h-[54px] w-full cursor-pointer rounded-full bg-violeta text-[15px] font-semibold text-white transition-colors hover:bg-violeta-hover"
           >
             Agregar al carrito

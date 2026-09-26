@@ -17,7 +17,7 @@ import { TablaDeTramos } from "./tabla-tramos";
  * no alcanzar el mínimo. El navegador no hace aritmética de dinero.
  */
 export function CompraGranel({ slugTienda, linea }: { slugTienda: string; linea: LineaGranel }) {
-  const { agregar } = useCarrito();
+  const { agregarGranel } = useCarrito();
   const [gramos, setGramos] = useState("");
   const [cotizacion, setCotizacion] = useState<CotizacionGranel | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -108,7 +108,7 @@ export function CompraGranel({ slugTienda, linea }: { slugTienda: string; linea:
       <button
         type="button"
         disabled={!puedeAgregar}
-        onClick={() => cotizacion && agregar(1)}
+        onClick={() => cotizacion && agregarGranel(linea.codigo, cotizacion.gramos)}
         className="h-[54px] cursor-pointer rounded-full bg-violeta text-[15px] font-semibold text-white transition-colors hover:bg-violeta-hover disabled:cursor-not-allowed disabled:opacity-50"
       >
         Agregar al carrito

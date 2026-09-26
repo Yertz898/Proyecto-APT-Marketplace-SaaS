@@ -142,3 +142,45 @@ export type PaginaDeLotes = {
   paginaActual: number;
   totalPaginas: number;
 };
+
+// ── Carrito y pedido ────────────────────────────────────────────────────────
+
+/**
+ * Lo que el comprador eligió: solo referencias y cantidades.
+ *
+ * Ningún precio se guarda acá. Los tramos de lotes dependen de cuántos lotes
+ * lleva el pedido completo, así que cotizar es siempre trabajo del backend.
+ */
+export type LineaCarrito =
+  | { tipo: "lote"; codigo: string; cantidad: number }
+  | { tipo: "granel"; codigo: string; gramos: number };
+
+export type LineaCotizada = {
+  linea: LineaCarrito;
+  nombre: string;
+  /** Cantidad con su unidad, ya redactada por el backend: "3 lotes", "166,5 g". */
+  detalle: string;
+  neto: Pesos;
+  iva: Pesos;
+  total: Pesos;
+  /** Motivo por el que esta línea no se puede comprar (cupo agotado, bajo el mínimo). */
+  rechazo: string | null;
+};
+
+export type CarritoCotizado = {
+  lineas: LineaCotizada[];
+  neto: Pesos;
+  iva: Pesos;
+  total: Pesos;
+  /** Cuánto falta para el siguiente tramo por cantidad de lotes. Lo redacta el backend. */
+  avisoTramo: string | null;
+  /** Si viene, el pedido no se puede confirmar todavía. */
+  rechazo: string | null;
+};
+
+export type PedidoConfirmado = {
+  numero: string;
+  mensaje: string;
+  /** Enlace para coordinar el pago; el checkout es simulado. */
+  enlaceWhatsapp: string | null;
+};

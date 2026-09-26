@@ -29,7 +29,7 @@ export default async function LayoutTienda({ children, params }: LayoutProps<"/t
   }
 
   return (
-    <ProveedorCarrito>
+    <ProveedorCarrito slugTienda={slug}>
       <div style={variablesDeIdentidad(tienda.colores)} className="flex min-h-full flex-1 flex-col">
         <Encabezado tienda={tienda} />
         {children}
