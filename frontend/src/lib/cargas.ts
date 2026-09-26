@@ -35,9 +35,9 @@ export const TIPOS_DE_CARGA = {
   fotos: {
     titulo: "Fotos de productos",
     descripcion:
-      "Un .zip con las imágenes. Se emparejan con los lotes por el nombre de archivo de la columna foto.",
+      "Un .zip o .rar con las imágenes. Se emparejan con los lotes por el nombre de archivo de la columna foto.",
     columnas: [],
-    extensiones: [".zip"],
+    extensiones: [".zip", ".rar"],
   },
 } as const satisfies Record<
   TipoCarga,

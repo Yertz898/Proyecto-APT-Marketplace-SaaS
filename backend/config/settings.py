@@ -107,10 +107,8 @@ DATABASES = {"default": env.db("DATABASE_URL")}
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Modelo de usuario propio desde el inicio: cambiarlo después obliga a rehacer
-# las migraciones de todo el proyecto.
-# TODO(usuarios): definir apps.usuarios.models.Usuario y activar esta línea
-#                 ANTES de la primera migración.
-# AUTH_USER_MODEL = "usuarios.Usuario"
+# las migraciones de todo el proyecto. La cuenta se identifica por correo.
+AUTH_USER_MODEL = "usuarios.Usuario"
 
 
 # ── Contraseñas ─────────────────────────────────────────────────────────────
