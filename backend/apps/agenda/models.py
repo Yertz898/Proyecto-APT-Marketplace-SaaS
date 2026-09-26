@@ -108,34 +108,146 @@ class ConfiguracionAgenda(ModeloDeTienda):
 
 class BloqueHorario(ModeloDeTienda):
     """
-    Un tramo de atención de un día de la semana.
+    Un tramo de atención, semanal o de una fecha puntual.
 
     Varias filas del mismo día son lo que permite el horario partido: 10:00 a
     13:00 y 15:00 a 18:00 son dos bloques del lunes.
+
+    Cada bloque puede definir su propia duración, capacidad, nombre y forma de
+    confirmación. Lo que deja en blanco lo hereda de la configuración de la
+    tienda, así que crear un bloque simple sigue siendo elegir día y horario.
     """
 
-    dia_semana = models.IntegerField("día de la semana", choices=DiaSemana.choices)
+    nombre = models.CharField(
+        "nombre del bloque",
+        max_length=80,
+        blank=True,
+        help_text="Visible para el comprador, por ejemplo «Atención mayoristas».",
+    )
+
+    # Un bloque es semanal o de una fecha puntual, nunca las dos cosas.
+    dia_semana = models.IntegerField(
+        "día de la semana", choices=DiaSemana.choices, blank=True, null=True
+    )
+    fecha = models.DateField("fecha puntual", blank=True, null=True)
+
     hora_inicio = models.TimeField("hora de inicio")
     hora_fin = models.TimeField("hora de término")
 
+    # Los tres campos siguientes, en blanco, significan «lo que diga la tienda».
+    duracion_minutos = models.PositiveSmallIntegerField(
+        "duración de cada visita en minutos", blank=True, null=True
+    )
+    visitas_simultaneas = models.PositiveSmallIntegerField(
+        "visitas simultáneas", blank=True, null=True
+    )
+    confirmacion_automatica = models.BooleanField(
+        "confirmación automática", blank=True, null=True
+    )
+
     class Meta(ModeloDeTienda.Meta):
-        verbose_name = "bloque horario"
-        verbose_name_plural = "bloques horarios"
-        ordering = ["dia_semana", "hora_inicio"]
+        verbose_name = "bloque de atención"
+        verbose_name_plural = "bloques de atención"
+        ordering = ["fecha", "dia_semana", "hora_inicio"]
         constraints = [
             models.UniqueConstraint(
                 fields=["tienda", "dia_semana", "hora_inicio"],
-                name="agenda_bloque_unico_por_dia_y_hora",
+                condition=models.Q(dia_semana__isnull=False),
+                name="agenda_bloque_semanal_unico",
+            ),
+            models.UniqueConstraint(
+                fields=["tienda", "fecha", "hora_inicio"],
+                condition=models.Q(fecha__isnull=False),
+                name="agenda_bloque_puntual_unico",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(dia_semana__isnull=False, fecha__isnull=True)
+                    | models.Q(dia_semana__isnull=True, fecha__isnull=False)
+                ),
+                name="agenda_bloque_semanal_o_puntual",
             ),
             models.CheckConstraint(
                 condition=models.Q(hora_fin__gt=models.F("hora_inicio")),
                 name="agenda_bloque_termina_despues_de_empezar",
             ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(duracion_minutos__isnull=True)
+                    | models.Q(duracion_minutos__gt=0)
+                ),
+                name="agenda_bloque_duracion_positiva",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(visitas_simultaneas__isnull=True)
+                    | models.Q(visitas_simultaneas__gt=0)
+                ),
+                name="agenda_bloque_capacidad_positiva",
+            ),
         ]
 
     def __str__(self):
-        dia = self.get_dia_semana_display()
-        return f"{dia} {self.hora_inicio:%H:%M}–{self.hora_fin:%H:%M}"
+        cuando = (
+            f"{self.fecha:%d-%m-%Y}"
+            if self.es_puntual
+            else self.get_dia_semana_display()
+        )
+        etiqueta = f"{self.nombre}: " if self.nombre else ""
+        return f"{etiqueta}{cuando} {self.hora_inicio:%H:%M}–{self.hora_fin:%H:%M}"
+
+    @property
+    def es_puntual(self) -> bool:
+        return self.fecha is not None
+
+    def aplica_en(self, fecha) -> bool:
+        """Si este bloque abre atención en esa fecha."""
+        if self.es_puntual:
+            return self.fecha == fecha
+        return self.dia_semana == fecha.weekday()
+
+    # ── Valores efectivos: lo propio si está definido; si no, lo de la tienda ──
+
+    def duracion(self, configuracion) -> int:
+        return self.duracion_minutos or configuracion.duracion_minutos
+
+    def capacidad(self, configuracion) -> int:
+        return self.visitas_simultaneas or configuracion.visitas_por_bloque
+
+    def confirma_solo(self, configuracion) -> bool:
+        if self.confirmacion_automatica is None:
+            return configuracion.confirmacion_automatica
+        return self.confirmacion_automatica
+
+    def clean(self):
+        super().clean()
+        self.validar_sin_solapes()
+
+    def validar_sin_solapes(self):
+        """
+        Dos bloques del mismo día no pueden pisarse: las horas disponibles
+        saldrían duplicadas y el comprador vería el mismo cupo dos veces.
+        """
+        if not self.tienda_id or self.hora_inicio is None or self.hora_fin is None:
+            return
+        if self.dia_semana is None and self.fecha is None:
+            return
+
+        hermanos = BloqueHorario.objects.de_tienda(self.tienda_id).exclude(pk=self.pk)
+        if self.es_puntual:
+            hermanos = hermanos.filter(fecha=self.fecha)
+        else:
+            hermanos = hermanos.filter(dia_semana=self.dia_semana)
+
+        solapado = hermanos.filter(
+            hora_inicio__lt=self.hora_fin, hora_fin__gt=self.hora_inicio
+        ).first()
+
+        if solapado:
+            raise ValidationError(
+                {"hora_inicio": f"Este horario se cruza con «{solapado}»."},
+                code="bloques_solapados",
+            )
 
 
 class DiaBloqueado(ModeloDeTienda):
@@ -310,9 +422,7 @@ class Visita(ModeloDeTienda):
         """Mueve la visita de bloque conservando su identificador de calendario."""
         if self.estado not in (EstadoVisita.SOLICITADA, EstadoVisita.CONFIRMADA):
             raise ValidationError(
-                {
-                    "estado": "Solo se reprograma una visita solicitada o confirmada."
-                },
+                {"estado": "Solo se reprograma una visita solicitada o confirmada."},
                 code="reprogramacion_invalida",
             )
 
