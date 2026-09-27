@@ -28,6 +28,11 @@ export function Encabezado({ tienda }: { tienda: IdentidadTienda }) {
     { href: base, etiqueta: "Inicio", activa: ruta === base },
     { href: `${base}/lotes`, etiqueta: "Lotes", activa: ruta.startsWith(`${base}/lotes`) },
     { href: `${base}/granel`, etiqueta: "Granel", activa: ruta.startsWith(`${base}/granel`) },
+    {
+      href: `${base}/agenda`,
+      etiqueta: "Agendar visita",
+      activa: ruta.startsWith(`${base}/agenda`),
+    },
   ];
 
   return (

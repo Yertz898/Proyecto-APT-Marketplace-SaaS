@@ -184,3 +184,22 @@ export type PedidoConfirmado = {
   /** Enlace para coordinar el pago; el checkout es simulado. */
   enlaceWhatsapp: string | null;
 };
+
+// ── Agenda de visitas ───────────────────────────────────────────────────────
+
+export type HoraDisponible = {
+  /** Instante en ISO; se muestra siempre en hora de Chile. */
+  inicio: string;
+  fin: string;
+  bloqueId: number;
+  nombreBloque: string;
+  cuposLibres: number;
+  confirmacionAutomatica: boolean;
+};
+
+export type AgendaPublica = {
+  direccion: string;
+  indicaciones: string;
+  anticipacionMinimaHoras: number;
+  horas: HoraDisponible[];
+};

@@ -82,6 +82,9 @@ calcular el precio, no ocultando el tramo en el frontend.
 mayor cantidad mínima que la cantidad pedida alcance. Si no alcanza ninguno, precio de
 detalle. Validar al guardar que los tramos de una lista no se solapen.
 
+**Los umbrales son inclusivos.** "Sobre 20 mil" incluye los $20.000 exactos: la comparación
+es `>=`. Confirmado con el cliente el 27-09-2026.
+
 **Estados del pedido** — `borrador → confirmado → preparacion → entregado`, más `anulado`
 alcanzable desde cualquiera menos `entregado`. Las transiciones válidas se definen en un solo
 lugar del modelo; una transición no permitida es un error de validación, no un `assert`.

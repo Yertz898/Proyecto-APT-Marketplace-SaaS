@@ -34,3 +34,38 @@ const gramosChilenos = new Intl.NumberFormat("es-CL", {
 export function formatearGramos(gramos: number): string {
   return `${gramosChilenos.format(gramos)} g`;
 }
+
+const ZONA_TIENDA = "America/Santiago";
+
+const horaChilena = new Intl.DateTimeFormat("es-CL", {
+  hour: "2-digit",
+  minute: "2-digit",
+  timeZone: ZONA_TIENDA,
+});
+
+const diaLargoChileno = new Intl.DateTimeFormat("es-CL", {
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+  timeZone: ZONA_TIENDA,
+});
+
+/**
+ * Hora de un instante ISO, siempre en hora de Chile.
+ *
+ * Se fija la zona a propósito: un comprador que viaja no debe ver su visita a
+ * otra hora que la tienda.
+ */
+export function formatearHora(iso: string): string {
+  return horaChilena.format(new Date(iso));
+}
+
+/** "lunes, 5 de octubre", en hora de Chile. */
+export function formatearDiaLargo(iso: string): string {
+  return diaLargoChileno.format(new Date(iso));
+}
+
+/** Clave estable del día de un instante, para agrupar horas. */
+export function diaDe(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-CA", { timeZone: ZONA_TIENDA });
+}
