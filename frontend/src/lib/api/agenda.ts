@@ -1,22 +1,28 @@
 import type { AgendaPublica } from "@/lib/tipos";
 
+import { API_SERVIDOR as API } from "./base";
+
 /*
  * Agenda de visitas de la tienda pública.
  *
  * Las horas disponibles las calcula el backend con la configuración de la
  * tienda: horarios, días bloqueados, anticipación, ventana y cupos. El
  * navegador solo las muestra.
+ *
+ * Se piden de a pocos días. La ventana de una tienda puede ser de un mes, y
+ * traerse el mes entero son cientos de horas para una sola pantalla.
  */
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api";
+/** Días que trae cada pantalla de la agenda. */
+export const DIAS_POR_PANTALLA = 7;
 
 export async function obtenerAgenda(
   slug: string,
-  rango?: { desde?: string; hasta?: string },
+  rango?: { desde?: string; dias?: number },
 ): Promise<AgendaPublica | null> {
   const parametros = new URLSearchParams();
   if (rango?.desde) parametros.set("desde", rango.desde);
-  if (rango?.hasta) parametros.set("hasta", rango.hasta);
+  if (rango?.dias) parametros.set("dias", String(rango.dias));
 
   const consulta = parametros.size > 0 ? `?${parametros}` : "";
 

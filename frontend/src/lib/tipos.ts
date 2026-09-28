@@ -197,9 +197,19 @@ export type HoraDisponible = {
   confirmacionAutomatica: boolean;
 };
 
+/** Rango de días, en fechas aaaa-mm-dd. */
+export type RangoDeDias = {
+  desde: string;
+  hasta: string;
+};
+
 export type AgendaPublica = {
   direccion: string;
   indicaciones: string;
   anticipacionMinimaHoras: number;
+  /** Todo lo que la tienda acepta: los límites hasta donde se puede navegar. */
+  ventana: RangoDeDias;
+  /** El pedazo que trae esta respuesta. Las horas son solo de estos días. */
+  rango: RangoDeDias;
   horas: HoraDisponible[];
 };

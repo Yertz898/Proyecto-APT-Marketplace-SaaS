@@ -69,3 +69,26 @@ export function formatearDiaLargo(iso: string): string {
 export function diaDe(iso: string): string {
   return new Date(iso).toLocaleDateString("en-CA", { timeZone: ZONA_TIENDA });
 }
+
+/*
+ * Las fechas aaaa-mm-dd son días del calendario, no instantes: se formatean y
+ * se suman en UTC a propósito. Interpretarlas en hora de Chile las correría al
+ * día anterior, porque `new Date("2026-09-28")` es medianoche UTC.
+ */
+
+const fechaLargaChilena = new Intl.DateTimeFormat("es-CL", {
+  day: "numeric",
+  month: "long",
+  timeZone: "UTC",
+});
+
+/** "2026-09-28" → "28 de septiembre". */
+export function formatearFechaLarga(fecha: string): string {
+  return fechaLargaChilena.format(new Date(`${fecha}T00:00:00Z`));
+}
+
+/** Suma (o resta) días a una fecha aaaa-mm-dd y devuelve otra fecha aaaa-mm-dd. */
+export function sumarDias(fecha: string, dias: number): string {
+  const [ano, mes, dia] = fecha.split("-").map(Number);
+  return new Date(Date.UTC(ano, mes - 1, dia + dias)).toISOString().slice(0, 10);
+}

@@ -45,6 +45,11 @@ services:
     container_name: dealcommerce-web
     command: npm run dev
     env_file: .env
+    environment:
+      # Dentro de la red de Docker el backend no vive en localhost. El servidor
+      # de Next lo alcanza por el nombre del servicio; el navegador, que corre
+      # en el host, lo sigue alcanzando por el puerto publicado.
+      API_URL_INTERNO: http://api:8000/api
     volumes:
       - ./frontend:/app
       # Volumen anónimo: conserva los node_modules del contenedor (Linux) y

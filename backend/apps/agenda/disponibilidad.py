@@ -46,6 +46,27 @@ def momento_local(fecha: Fecha, hora: time) -> datetime:
     return local.astimezone(UTC)
 
 
+def _ventana(configuracion, ahora: datetime) -> tuple[datetime, datetime]:
+    """Primer y último instante que la tienda acepta, como momentos exactos."""
+    return (
+        ahora + timedelta(hours=configuracion.anticipacion_minima_horas),
+        ahora + timedelta(days=configuracion.ventana_maxima_dias),
+    )
+
+
+def ventana_de(configuracion, *, ahora: datetime | None = None) -> tuple[Fecha, Fecha]:
+    """
+    Primer y último día en que la tienda acepta visitas, en hora de Chile.
+
+    Lo usa el endpoint para decir hasta dónde puede navegar el comprador sin
+    tener que traerse todas las horas de la ventana de una vez.
+    """
+    ahora = ahora or timezone.now()
+    zona = timezone.get_current_timezone()
+    primero, ultimo = _ventana(configuracion, ahora)
+    return primero.astimezone(zona).date(), ultimo.astimezone(zona).date()
+
+
 def _horas_del_bloque(
     bloque: BloqueHorario, fecha: Fecha, duracion: int
 ) -> list[tuple[datetime, datetime]]:
@@ -99,8 +120,7 @@ def horas_disponibles(
     tienda_id = configuracion.tienda_id
 
     # Ventana permitida por la configuración de la tienda.
-    primer_momento = ahora + timedelta(hours=configuracion.anticipacion_minima_horas)
-    ultimo_momento = ahora + timedelta(days=configuracion.ventana_maxima_dias)
+    primer_momento, ultimo_momento = _ventana(configuracion, ahora)
 
     zona = timezone.get_current_timezone()
     primer_dia = primer_momento.astimezone(zona).date()

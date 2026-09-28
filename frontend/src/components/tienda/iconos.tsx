@@ -54,3 +54,37 @@ export function IconoWhatsapp({ tamano = 22, className }: PropsIcono) {
     </svg>
   );
 }
+
+/**
+ * Flecha de navegación.
+ *
+ * Usa `currentColor` en vez de un color literal porque tiene que apagarse junto
+ * con el texto cuando el paso no lleva a ninguna parte. `currentColor` sí se
+ * resuelve de forma confiable en un atributo de presentación; una variable CSS
+ * es la que no.
+ */
+export function IconoFlecha({
+  tamano = 13,
+  sentido,
+  className,
+}: PropsIcono & { sentido: "izquierda" | "derecha" }) {
+  return (
+    <svg
+      width={tamano}
+      height={tamano}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+      className={className}
+      style={sentido === "derecha" ? { transform: "rotate(180deg)" } : undefined}
+    >
+      <path
+        d="M15 5l-7 7 7 7"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}

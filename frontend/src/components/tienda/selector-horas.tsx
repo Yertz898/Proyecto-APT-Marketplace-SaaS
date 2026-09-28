@@ -22,7 +22,7 @@ export function SelectorDeHoras({ horas }: { horas: HoraDisponible[] }) {
   if (horas.length === 0) {
     return (
       <p className="rounded-2xl border border-lila/12 bg-superficie p-6 text-sm text-texto-suave">
-        No hay horas disponibles por ahora.
+        No hay horas disponibles en estos días. Prueba con la semana siguiente.
       </p>
     );
   }
