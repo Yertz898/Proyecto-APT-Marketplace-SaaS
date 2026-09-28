@@ -23,6 +23,21 @@ def _sin_redireccion_https(settings):
     settings.SECURE_SSL_REDIRECT = False
 
 
+@pytest.fixture(autouse=True)
+def _sin_intentos_acumulados():
+    """
+    Parte cada prueba con el contador de intentos en cero.
+
+    El control de frecuencia de la autenticación lleva la cuenta en la caché, y
+    la caché vive en memoria durante toda la corrida: sin esto, una prueba que
+    inicia sesión varias veces haría fallar a la siguiente por un 429 que no
+    tiene nada que ver con lo que está probando.
+    """
+    from django.core.cache import cache
+
+    cache.clear()
+
+
 # ── Fixtures base ───────────────────────────────────────────────────────────
 #
 # Siempre dos tiendas con datos. Una prueba que corre con una sola tienda no

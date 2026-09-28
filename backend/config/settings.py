@@ -19,6 +19,7 @@ env = environ.Env(
     CORS_ALLOWED_ORIGINS=(list, ["http://localhost:3000"]),
     JWT_ACCESS_TOKEN_LIFETIME_MINUTES=(int, 60),
     JWT_REFRESH_TOKEN_LIFETIME_DAYS=(int, 7),
+    THROTTLE_AUTENTICACION=(str, "20/min"),
     R2_BUCKET_NAME=(str, ""),
 )
 
@@ -137,6 +138,11 @@ REST_FRAMEWORK = {
     "DEFAULT_FILTER_BACKENDS": ("django_filters.rest_framework.DjangoFilterBackend",),
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 25,
+    # Solo limita las vistas que declaran un `throttle_scope`; el resto pasa sin
+    # contar. Hoy la única en la lista es la autenticación, que es donde probar
+    # contraseñas a ciegas no debe salir gratis.
+    "DEFAULT_THROTTLE_CLASSES": ("rest_framework.throttling.ScopedRateThrottle",),
+    "DEFAULT_THROTTLE_RATES": {"autenticacion": env("THROTTLE_AUTENTICACION")},
 }
 
 from datetime import timedelta  # noqa: E402

@@ -198,9 +198,9 @@ def test_la_semana_siguiente_no_repite_las_horas_de_la_primera(
     # El bloque es semanal, así que las dos semanas traen la misma cantidad de
     # horas pero en días distintos.
     assert len(primera["horas"]) == len(segunda["horas"]) == 6
-    assert not set(hora["inicio"] for hora in primera["horas"]) & set(
+    assert not {hora["inicio"] for hora in primera["horas"]} & {
         hora["inicio"] for hora in segunda["horas"]
-    )
+    }
 
 
 def test_un_desde_anterior_a_la_ventana_se_corrige_al_primer_dia(
