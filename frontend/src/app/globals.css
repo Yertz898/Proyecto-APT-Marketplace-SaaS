@@ -24,6 +24,31 @@
   --color-texto-apagado: #6a6676;
 
   --ease-joya: cubic-bezier(0.22, 0.7, 0.3, 1);
+
+  /*
+   * Paleta de la portada de DealCommerce.
+   *
+   * Es la marca de la plataforma y no tiene nada que ver con la de arriba, que
+   * es la del mockup de Joyas Ye. Conviven a propósito: la portada le habla al
+   * vendedor y cada tienda se ve como quiera.
+   */
+  --color-hueso: #f7f6f2;
+  --color-marino: #14213d;
+  --color-pizarra: #4a5468;
+  --color-acero: #1f4e79;
+  --color-acero-hondo: #173d5f;
+  --color-ambar: #e0a526;
+  --color-ambar-hondo: #c98f17;
+  --color-jade: #1e7f53;
+  --color-jade-claro: #ddeee4;
+  --color-arena: #e3e0d6;
+  --color-arena-honda: #d6d2c6;
+  --color-niebla: #c9d3df;
+  --color-cielo: #e8eef4;
+  --color-lino: #f1efe9;
+  --color-lino-claro: #eeebe3;
+  --color-crema: #fbfaf7;
+  --color-trigo: #f6edd6;
 }
 
 @theme inline {
@@ -31,6 +56,10 @@
   --font-serif: var(--font-cormorant), serif;
   --font-heading: var(--font-cormorant), serif;
   --font-mono: ui-monospace, monospace;
+
+  /* Tipografías de la portada: Inter para el texto, Plus Jakarta para títulos. */
+  --font-inter: var(--fuente-inter), Inter, system-ui, sans-serif;
+  --font-jakarta: var(--fuente-jakarta), "Plus Jakarta Sans", sans-serif;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -80,6 +109,16 @@
   --input: rgb(167 139 250 / 20%);
   --ring: #a78bfa;
   --radius: 0.625rem;
+}
+
+/*
+ * La portada de DealCommerce va sobre fondo claro y el resto del sitio es
+ * oscuro. El fondo se corrige en el body, y no solo dentro de la página, porque
+ * el que se ve al rebotar el scroll es el del documento: sin esto, estirar la
+ * portada hacia arriba mostraría el fondo de la vitrina.
+ */
+html:has([data-tema="claro"]) body {
+  background: var(--color-hueso);
 }
 
 @layer base {

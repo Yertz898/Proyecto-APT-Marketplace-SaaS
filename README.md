@@ -137,8 +137,11 @@ Todo cuelga de `/api`. Lo que existe hoy:
 | `GET` | `/api/t/<slug>/tienda` | público |
 | `GET` | `/api/t/<slug>/agenda/horas` | público |
 | `POST` | `/api/t/<slug>/agenda/visitas` | comprador |
+| `POST` | `/api/solicitudes-de-acceso` | cualquiera |
 
-Las tres primeras comparten un límite de intentos por IP (`THROTTLE_AUTENTICACION`).
+Las tres de sesión comparten un límite de intentos por IP
+(`THROTTLE_AUTENTICACION`); las solicitudes de acceso tienen el suyo
+(`THROTTLE_SOLICITUDES`).
 
 Un error siempre tiene la misma forma, con el mensaje ya redactado en español:
 
@@ -149,8 +152,13 @@ Un error siempre tiene la misma forma, con el mensaje ya redactado en español:
 
 ## Estado
 
-En construcción. Funcionan de punta a punta la identidad pública de la tienda, la
-agenda de visitas (ver horas y reservar) y la sesión con sus tres pantallas.
+En construcción. Funcionan de punta a punta la portada con su solicitud de acceso,
+la identidad pública de la tienda, la agenda de visitas (ver horas y reservar) y la
+sesión con sus tres pantallas.
+
+La portada (`/`) es la única parte del sitio con la marca de la plataforma: paleta
+clara, Plus Jakarta Sans e Inter. La vitrina de cada tienda se ve como esa tienda
+quiera, y por eso no comparten ni un componente.
 
 Pendiente: el catálogo de lotes y granel, el carrito y los pedidos, la ingesta de
 planillas y la analítica. Las pantallas de esas partes ya están hechas contra
