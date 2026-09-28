@@ -7,6 +7,7 @@ import type { IdentidadTienda } from "@/lib/tipos";
 import { cn } from "@/lib/utils";
 
 import { ContadorCarrito } from "./carrito";
+import { Cuenta } from "./cuenta";
 import { EncabezadoMovil } from "./encabezado-movil";
 import { IconoLupa } from "./iconos";
 import { Marca } from "./marca";
@@ -64,14 +65,7 @@ export function Encabezado({ tienda }: { tienda: IdentidadTienda }) {
 
             <ContadorCarrito variante="escritorio" />
 
-            <button
-              type="button"
-              aria-disabled="true"
-              data-pendiente="iniciar-sesion"
-              className="h-10 cursor-pointer rounded-[20px] border border-lila/40 bg-transparent px-[18px] text-[13px] font-medium text-texto transition-colors hover:bg-violeta/18"
-            >
-              Iniciar sesión
-            </button>
+            <Cuenta slug={tienda.slug} variante="escritorio" />
           </div>
         </div>
       </header>

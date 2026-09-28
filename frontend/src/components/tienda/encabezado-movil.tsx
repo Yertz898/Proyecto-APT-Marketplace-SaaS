@@ -7,6 +7,7 @@ import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from "@/com
 import type { IdentidadTienda } from "@/lib/tipos";
 
 import { ContadorCarrito } from "./carrito";
+import { Cuenta } from "./cuenta";
 import { IconoLupa } from "./iconos";
 import { Marca } from "./marca";
 import { clasesPanelLateral } from "./panel-lateral";
@@ -75,14 +76,7 @@ export function EncabezadoMovil({
               ))}
             </nav>
 
-            <button
-              type="button"
-              aria-disabled="true"
-              data-pendiente="iniciar-sesion"
-              className="mt-[26px] h-[46px] w-full cursor-pointer rounded-[23px] border border-lila/40 bg-transparent text-[13px] font-medium text-texto"
-            >
-              Iniciar sesión
-            </button>
+            <Cuenta slug={tienda.slug} variante="movil" onNavegar={() => setAbierto(false)} />
           </SheetContent>
         </Sheet>
 

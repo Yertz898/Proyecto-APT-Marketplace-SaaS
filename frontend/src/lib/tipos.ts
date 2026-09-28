@@ -43,6 +43,33 @@ export type IdentidadTienda = {
   };
 };
 
+// ── Sesión ──────────────────────────────────────────────────────────────────
+
+/** Los cuatro roles del sistema, y no hay más (CONVENCIONES.md > Roles). */
+export type Rol = "admin_plataforma" | "dueno_tienda" | "vendedor" | "comprador";
+
+export type TiendaDeLaSesion = {
+  slug: string;
+  nombre: string;
+};
+
+/**
+ * Quién inició sesión.
+ *
+ * Sirve para decidir qué dibujar, nunca qué se puede hacer: eso lo resuelve el
+ * backend en cada endpoint. Esconder un botón no protege nada.
+ */
+export type UsuarioSesion = {
+  id: number;
+  nombre: string;
+  email: string;
+  rol: Rol;
+  /** El rol escrito para mostrar: "Dueño de tienda". */
+  rolNombre: string;
+  /** Null para el comprador y el administrador: no pertenecen a una tienda. */
+  tienda: TiendaDeLaSesion | null;
+};
+
 // ── Productos ───────────────────────────────────────────────────────────────
 
 /**
