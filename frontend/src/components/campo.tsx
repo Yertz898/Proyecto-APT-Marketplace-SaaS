@@ -1,6 +1,11 @@
 import { cn } from "@/lib/utils";
 
-/** Campo de texto con su etiqueta y el error que le corresponde. */
+/*
+ * Campo de texto compartido por los formularios del proyecto: la sesión y la
+ * reserva de una visita. No es de shadcn, por eso no vive en components/ui.
+ */
+
+/** Un campo con su etiqueta y el error que le corresponde. */
 export function Campo({
   id,
   etiqueta,

@@ -230,6 +230,36 @@ export type RangoDeDias = {
   hasta: string;
 };
 
+export type EstadoVisita =
+  | "solicitada"
+  | "confirmada"
+  | "asistida"
+  | "no_asistio"
+  | "rechazada"
+  | "cancelada";
+
+/** Una visita ya pedida, como la ve el comprador. */
+export type Visita = {
+  uid: string;
+  inicio: string;
+  fin: string;
+  estado: EstadoVisita;
+  /** El estado escrito para mostrar: "Solicitada". */
+  estadoNombre: string;
+  nombreContacto: string;
+  correoContacto: string;
+  telefonoContacto: string;
+  motivo: string;
+};
+
+export type SolicitudDeVisita = {
+  inicio: string;
+  nombreContacto: string;
+  correoContacto: string;
+  telefonoContacto: string;
+  motivo?: string;
+};
+
 export type AgendaPublica = {
   direccion: string;
   indicaciones: string;

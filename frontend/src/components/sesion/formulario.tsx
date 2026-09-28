@@ -4,10 +4,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { Campo } from "@/components/campo";
 import { ErrorDeApi } from "@/lib/api/errores";
 import { iniciarSesion, registrarComprador } from "@/lib/api/sesion";
-
-import { Campo } from "./campo";
 
 /*
  * Formulario de inicio de sesión y de creación de cuenta.

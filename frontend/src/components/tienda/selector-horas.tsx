@@ -6,17 +6,18 @@ import { diaDe, formatearDiaLargo, formatearHora } from "@/lib/formato";
 import type { HoraDisponible } from "@/lib/tipos";
 import { cn } from "@/lib/utils";
 
+import { ReservaDeVisita } from "./reserva-visita";
+
 /*
  * Selección de la hora de una visita.
  *
  * Las horas llegan calculadas por el backend y agrupadas acá por día. Todo se
  * muestra en hora de Chile, sin importar dónde esté el comprador.
  *
- * Reservar exige que el comprador tenga sesión, y eso todavía no existe: por
- * ahora se puede elegir la hora, pero el paso siguiente queda bloqueado con el
- * motivo a la vista.
+ * Elegir una hora acá no reserva nada: el panel del costado pide los datos de
+ * contacto, y es el backend el que vuelve a comprobar que la hora siga libre.
  */
-export function SelectorDeHoras({ horas }: { horas: HoraDisponible[] }) {
+export function SelectorDeHoras({ slug, horas }: { slug: string; horas: HoraDisponible[] }) {
   const [elegida, setElegida] = useState<HoraDisponible | null>(null);
 
   if (horas.length === 0) {
@@ -63,45 +64,7 @@ export function SelectorDeHoras({ horas }: { horas: HoraDisponible[] }) {
         ))}
       </div>
 
-      <aside className="rounded-2xl border border-lila/16 p-5">
-        <h2 className="text-[13px] font-semibold text-texto">Tu visita</h2>
-
-        {elegida ? (
-          <>
-            <p className="mt-3 text-sm text-texto first-letter:uppercase">
-              {formatearDiaLargo(elegida.inicio)}
-            </p>
-            <p className="text-sm text-texto-suave">
-              {formatearHora(elegida.inicio)} a {formatearHora(elegida.fin)}
-            </p>
-
-            {elegida.nombreBloque && (
-              <p className="mt-2 text-[13px] text-lila">{elegida.nombreBloque}</p>
-            )}
-
-            <p className="mt-3 text-xs text-texto-suave">
-              {elegida.confirmacionAutomatica
-                ? "Se confirma al instante."
-                : "Queda pendiente hasta que la tienda la acepte."}
-            </p>
-          </>
-        ) : (
-          <p className="mt-3 text-[13px] text-texto-suave">Elige una hora para continuar.</p>
-        )}
-
-        <button
-          type="button"
-          disabled
-          data-pendiente="reservar-visita"
-          className="mt-5 h-12 w-full rounded-full bg-violeta text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          Continuar
-        </button>
-
-        <p className="mt-3 text-xs leading-[1.5] text-texto-suave">
-          Para reservar hay que iniciar sesión, y esa parte todavía no está construida.
-        </p>
-      </aside>
+      <ReservaDeVisita slug={slug} hora={elegida} />
     </div>
   );
 }

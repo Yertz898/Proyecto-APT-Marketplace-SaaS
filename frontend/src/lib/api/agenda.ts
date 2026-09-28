@@ -1,6 +1,8 @@
-import type { AgendaPublica } from "@/lib/tipos";
+import type { AgendaPublica, SolicitudDeVisita, Visita } from "@/lib/tipos";
 
 import { API_SERVIDOR as API } from "./base";
+import { leerError } from "./errores";
+import { pedirConSesion } from "./sesion";
 
 /*
  * Agenda de visitas de la tienda pública.
@@ -40,4 +42,24 @@ export async function obtenerAgenda(
   } catch {
     return null;
   }
+}
+
+/**
+ * Pide una hora para visitar la tienda.
+ *
+ * Sale del navegador con el token de la sesión. La hora se manda tal cual
+ * llegó: el backend la vuelve a validar contra la disponibilidad, así que una
+ * hora vieja o inventada no reserva nada.
+ */
+export async function reservarVisita(slug: string, datos: SolicitudDeVisita): Promise<Visita> {
+  const respuesta = await pedirConSesion(`/t/${encodeURIComponent(slug)}/agenda/visitas`, {
+    method: "POST",
+    body: JSON.stringify(datos),
+  });
+
+  if (!respuesta.ok) {
+    throw await leerError(respuesta);
+  }
+
+  return (await respuesta.json()) as Visita;
 }

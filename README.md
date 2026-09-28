@@ -124,7 +124,37 @@ La capa común vive en `backend/apps/core/`; el resto de las apps la usa, no la 
 Toda funcionalidad que lea datos de tienda lleva su prueba de aislamiento marcada con
 `@pytest.mark.aislamiento`.
 
+## API
+
+Todo cuelga de `/api`. Lo que existe hoy:
+
+| Método | Ruta | Quién |
+|---|---|---|
+| `POST` | `/api/auth/sesion` | cualquiera |
+| `POST` | `/api/auth/sesion/renovar` | cualquiera |
+| `POST` | `/api/auth/registro` | cualquiera (crea compradores) |
+| `GET` | `/api/auth/yo` | con sesión |
+| `GET` | `/api/t/<slug>/tienda` | público |
+| `GET` | `/api/t/<slug>/agenda/horas` | público |
+| `POST` | `/api/t/<slug>/agenda/visitas` | comprador |
+
+Las tres primeras comparten un límite de intentos por IP (`THROTTLE_AUTENTICACION`).
+
+Un error siempre tiene la misma forma, con el mensaje ya redactado en español:
+
+```json
+{"error": {"codigo": "validacion", "mensaje": "Revisa los datos marcados.",
+           "detalles": {"email": ["Ya hay una cuenta con este correo."]}}}
+```
+
 ## Estado
 
-Andamiaje. La configuración, el entorno y la estructura están listos; el código del
-dominio está por escribirse.
+En construcción. Funcionan de punta a punta la identidad pública de la tienda, la
+agenda de visitas (ver horas y reservar) y la sesión con sus tres pantallas.
+
+Pendiente: el catálogo de lotes y granel, el carrito y los pedidos, la ingesta de
+planillas y la analítica. Las pantallas de esas partes ya están hechas contra
+clientes de API que todavía no tienen endpoint detrás.
+
+Pendientes conocidos de la agenda: la bandeja del dueño para aceptar o rechazar
+visitas, los correos con el archivo `.ics` y el recordatorio de 24 horas.

@@ -2,14 +2,27 @@
 
 from datetime import datetime, timedelta
 
+from django.db import transaction
+from rest_framework import status
 from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.agenda.disponibilidad import horas_disponibles, ventana_de
-from apps.agenda.models import ConfiguracionAgenda
-from apps.agenda.serializers import HoraDisponibleSerializer
+from apps.agenda.disponibilidad import asiento_libre, horas_disponibles, ventana_de
+from apps.agenda.models import (
+    ESTADOS_QUE_OCUPAN,
+    BloqueHorario,
+    ConfiguracionAgenda,
+    EstadoVisita,
+    Visita,
+)
+from apps.agenda.serializers import (
+    HoraDisponibleSerializer,
+    SolicitudDeVisitaSerializer,
+    VisitaSerializer,
+)
+from apps.core.permissions import EsComprador
 from apps.tiendas.models import Tienda
 
 FORMATO_FECHA = "%Y-%m-%d"
@@ -70,14 +83,7 @@ class HorasDisponibles(APIView):
     authentication_classes = []
 
     def get(self, request, slug):
-        try:
-            tienda = Tienda.objects.get(slug=slug, activa=True)
-        except Tienda.DoesNotExist:
-            raise NotFound() from None
-
-        configuracion = ConfiguracionAgenda.objects.de_tienda(tienda).first()
-        if configuracion is None:
-            raise NotFound("Esta tienda no recibe visitas con hora.")
+        _, configuracion = _tienda_con_agenda(slug)
 
         pedido_desde = _fecha(request.query_params.get("desde"), "desde")
         pedido_hasta = _fecha(request.query_params.get("hasta"), "hasta")
@@ -106,3 +112,92 @@ class HorasDisponibles(APIView):
                 "horas": HoraDisponibleSerializer(horas, many=True).data,
             }
         )
+
+
+def _tienda_con_agenda(slug):
+    """La tienda de la ruta y su configuración, o 404 si no recibe visitas."""
+    try:
+        tienda = Tienda.objects.get(slug=slug, activa=True)
+    except Tienda.DoesNotExist:
+        raise NotFound() from None
+
+    configuracion = ConfiguracionAgenda.objects.de_tienda(tienda).first()
+    if configuracion is None:
+        raise NotFound("Esta tienda no recibe visitas con hora.")
+
+    return tienda, configuracion
+
+
+class PedirVisita(APIView):
+    """
+    Reserva de una hora.
+
+    Pide sesión de comprador. Mirar la agenda no la necesita, reservar sí: la
+    visita queda a nombre de alguien y la tienda tiene que poder responderle.
+
+    La hora que llega en el cuerpo no se acepta porque sí: se vuelve a calcular
+    la disponibilidad y tiene que estar entre las ofrecidas. Esa sola
+    comprobación cubre la anticipación mínima, la ventana, los días bloqueados,
+    que el bloque exista y que quede cupo, sin repetir ninguna de esas reglas.
+    """
+
+    permission_classes = [EsComprador]
+
+    def post(self, request, slug):
+        tienda, configuracion = _tienda_con_agenda(slug)
+
+        solicitud = SolicitudDeVisitaSerializer(data=request.data)
+        solicitud.is_valid(raise_exception=True)
+        datos = solicitud.validated_data
+        inicio = datos.pop("inicio")
+
+        hora = next(
+            (
+                disponible
+                for disponible in horas_disponibles(configuracion)
+                if disponible.inicio == inicio
+            ),
+            None,
+        )
+        if hora is None:
+            raise ValidationError(
+                {"inicio": "Esa hora ya no está disponible. Elige otra."}
+            )
+
+        # Una misma persona pidiendo dos veces la misma hora casi siempre es un
+        # botón apretado dos veces, no dos visitas.
+        if Visita.objects.filter(
+            tienda=tienda,
+            comprador=request.user,
+            inicio=inicio,
+            estado__in=ESTADOS_QUE_OCUPAN,
+        ).exists():
+            raise ValidationError({"inicio": "Ya tienes una visita pedida a esa hora."})
+
+        with transaction.atomic():
+            # Bloquear el bloque serializa las reservas que compiten por sus
+            # cupos. El asiento numerado y su índice único son la segunda
+            # defensa: aunque esto fallara, la base no deja pasarse del cupo.
+            bloque = BloqueHorario.objects.select_for_update().get(pk=hora.bloque_id)
+
+            asiento = asiento_libre(tienda.pk, inicio, bloque.capacidad(configuracion))
+            if asiento is None:
+                raise ValidationError(
+                    {"inicio": "Esa hora se acaba de ocupar. Elige otra."}
+                )
+
+            visita = Visita.objects.create(
+                tienda=tienda,
+                comprador=request.user,
+                inicio=inicio,
+                fin=hora.fin,
+                posicion=asiento,
+                estado=(
+                    EstadoVisita.CONFIRMADA
+                    if bloque.confirma_solo(configuracion)
+                    else EstadoVisita.SOLICITADA
+                ),
+                **datos,
+            )
+
+        return Response(VisitaSerializer(visita).data, status=status.HTTP_201_CREATED)

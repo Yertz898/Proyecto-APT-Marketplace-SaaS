@@ -65,7 +65,7 @@ export default async function PaginaAgenda({ params, searchParams }: PageProps<"
       </div>
 
       <div className="mt-8">
-        <SelectorDeHoras horas={agenda.horas} />
+        <SelectorDeHoras slug={slug} horas={agenda.horas} />
       </div>
     </main>
   );

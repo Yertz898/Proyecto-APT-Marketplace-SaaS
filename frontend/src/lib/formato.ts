@@ -40,6 +40,8 @@ const ZONA_TIENDA = "America/Santiago";
 const horaChilena = new Intl.DateTimeFormat("es-CL", {
   hour: "2-digit",
   minute: "2-digit",
+  // En Chile la hora se escribe de corrido: "15:30", no "3:30 p. m.".
+  hour12: false,
   timeZone: ZONA_TIENDA,
 });
 
