@@ -73,3 +73,56 @@ class Tienda(models.Model):
 
     def __str__(self):
         return self.nombre
+
+
+class EstadoSolicitud(models.TextChoices):
+    NUEVA = "nueva", "Nueva"
+    CONTACTADA = "contactada", "Contactada"
+    ACTIVADA = "activada", "Activada"
+    DESCARTADA = "descartada", "Descartada"
+
+
+class SolicitudDeAcceso(models.Model):
+    """
+    Un negocio que pidió entrar a la plataforma desde la portada.
+
+    Es el único modelo del sistema que no cuelga de una Tienda, y no es un
+    descuido: es exactamente lo que existe *antes* de que haya una. Por eso no
+    hereda de ModeloDeTienda ni se acota por tienda.
+
+    Lo escribe cualquiera desde internet, así que la vista que lo crea limita
+    la frecuencia y no expone nada de vuelta salvo lo que la propia persona
+    acaba de escribir.
+    """
+
+    negocio = models.CharField("nombre del negocio", max_length=150)
+    nombre = models.CharField("nombre de contacto", max_length=150)
+
+    # Único para que insistir con el mismo correo no llene la bandeja de
+    # duplicados. La comparación se hace sin distinguir mayúsculas.
+    email = models.EmailField("correo", unique=True)
+    telefono = models.CharField("teléfono o WhatsApp", max_length=30)
+    mensaje = models.TextField("qué vende", blank=True)
+
+    estado = models.CharField(
+        "estado",
+        max_length=20,
+        choices=EstadoSolicitud.choices,
+        default=EstadoSolicitud.NUEVA,
+    )
+    notas = models.TextField("notas internas", blank=True)
+
+    fecha_creacion = models.DateTimeField("fecha de la solicitud", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "solicitud de acceso"
+        verbose_name_plural = "solicitudes de acceso"
+        ordering = ["-fecha_creacion"]
+        indexes = [models.Index(fields=["estado", "-fecha_creacion"])]
+
+    def __str__(self):
+        return f"{self.negocio} <{self.email}>"
+
+    def clean(self):
+        super().clean()
+        self.email = self.email.lower()

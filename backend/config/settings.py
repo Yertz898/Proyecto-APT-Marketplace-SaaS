@@ -20,6 +20,7 @@ env = environ.Env(
     JWT_ACCESS_TOKEN_LIFETIME_MINUTES=(int, 60),
     JWT_REFRESH_TOKEN_LIFETIME_DAYS=(int, 7),
     THROTTLE_AUTENTICACION=(str, "20/min"),
+    THROTTLE_SOLICITUDES=(str, "10/hour"),
     R2_BUCKET_NAME=(str, ""),
 )
 
@@ -145,7 +146,10 @@ REST_FRAMEWORK = {
     # contar. Hoy la única en la lista es la autenticación, que es donde probar
     # contraseñas a ciegas no debe salir gratis.
     "DEFAULT_THROTTLE_CLASSES": ("rest_framework.throttling.ScopedRateThrottle",),
-    "DEFAULT_THROTTLE_RATES": {"autenticacion": env("THROTTLE_AUTENTICACION")},
+    "DEFAULT_THROTTLE_RATES": {
+        "autenticacion": env("THROTTLE_AUTENTICACION"),
+        "solicitudes": env("THROTTLE_SOLICITUDES"),
+    },
 }
 
 from datetime import timedelta  # noqa: E402

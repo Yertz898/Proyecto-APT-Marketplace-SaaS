@@ -1,8 +1,9 @@
 """Serializadores de la tienda."""
 
 from rest_framework import serializers
+from rest_framework.validators import UniqueValidator
 
-from apps.tiendas.models import Tienda
+from apps.tiendas.models import SolicitudDeAcceso, Tienda
 
 
 class TiendaPublicaSerializer(serializers.ModelSerializer):
@@ -58,3 +59,32 @@ class TiendaPublicaSerializer(serializers.ModelSerializer):
             "whatsapp": tienda.whatsapp or None,
             "instagram": tienda.instagram or None,
         }
+
+
+class SolicitudDeAccesoSerializer(serializers.ModelSerializer):
+    """
+    Lo que escribe un negocio en la portada para pedir entrar.
+
+    `estado` y `notas` no son campos: los maneja el equipo desde el panel de
+    administración. Mandarlos en el cuerpo no sirve de nada.
+    """
+
+    email = serializers.EmailField(
+        validators=[
+            UniqueValidator(
+                queryset=SolicitudDeAcceso.objects.all(),
+                lookup="iexact",
+                message=(
+                    "Ya recibimos una solicitud con este correo. Te vamos a escribir."
+                ),
+            )
+        ]
+    )
+
+    class Meta:
+        model = SolicitudDeAcceso
+        fields = ["negocio", "nombre", "email", "telefono", "mensaje"]
+
+    def create(self, datos):
+        datos["email"] = datos["email"].lower()
+        return super().create(datos)
