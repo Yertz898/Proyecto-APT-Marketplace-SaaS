@@ -136,6 +136,9 @@ REST_FRAMEWORK = {
     # olvide declararlo. Abrir explícitamente el que deba ser público.
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_FILTER_BACKENDS": ("django_filters.rest_framework.DjangoFilterBackend",),
+    # Formato único de error para toda la API, en español y sin detalles
+    # internos (CONVENCIONES.md > Errores y respuestas de la API).
+    "EXCEPTION_HANDLER": "apps.core.excepciones.manejador_de_errores",
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 25,
     # Solo limita las vistas que declaran un `throttle_scope`; el resto pasa sin

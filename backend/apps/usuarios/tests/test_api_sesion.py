@@ -178,25 +178,27 @@ def test_no_se_puede_registrar_con_otro_rol(client, tienda_a):
     assert cuenta.is_superuser is False
 
 
-def test_un_correo_repetido_se_rechaza(client, comprador):
+def test_un_correo_repetido_se_rechaza(client, comprador, detalles_de_error):
     respuesta = registrar(client, email=comprador.email)
 
     assert respuesta.status_code == 400
-    assert "email" in respuesta.json()
+    assert "email" in detalles_de_error(respuesta)
 
 
-def test_un_correo_repetido_con_otras_mayusculas_tambien_se_rechaza(client, comprador):
+def test_un_correo_repetido_con_otras_mayusculas_tambien_se_rechaza(
+    client, comprador, detalles_de_error
+):
     respuesta = registrar(client, email=comprador.email.upper())
 
     assert respuesta.status_code == 400
-    assert "email" in respuesta.json()
+    assert "email" in detalles_de_error(respuesta)
 
 
-def test_una_contrasena_debil_se_rechaza(client, db):
+def test_una_contrasena_debil_se_rechaza(client, db, detalles_de_error):
     respuesta = registrar(client, password="12345")
 
     assert respuesta.status_code == 400
-    assert "password" in respuesta.json()
+    assert "password" in detalles_de_error(respuesta)
 
 
 def test_dos_cuentas_sin_rut_conviven(client, db):
@@ -210,20 +212,20 @@ def test_el_rut_se_guarda_normalizado(client, db):
     assert Usuario.objects.get(email="camila@ejemplo.cl").rut == "12345678-5"
 
 
-def test_un_rut_invalido_se_rechaza(client, db):
+def test_un_rut_invalido_se_rechaza(client, db, detalles_de_error):
     respuesta = registrar(client, rut="12345678-9")
 
     assert respuesta.status_code == 400
-    assert "rut" in respuesta.json()
+    assert "rut" in detalles_de_error(respuesta)
 
 
-def test_un_rut_repetido_con_otro_formato_se_rechaza(client, db):
+def test_un_rut_repetido_con_otro_formato_se_rechaza(client, db, detalles_de_error):
     registrar(client, rut="12345678-5")
 
     respuesta = registrar(client, email="otra@ejemplo.cl", rut="12.345.678-5")
 
     assert respuesta.status_code == 400
-    assert "rut" in respuesta.json()
+    assert "rut" in detalles_de_error(respuesta)
 
 
 # ── Quién soy ───────────────────────────────────────────────────────────────

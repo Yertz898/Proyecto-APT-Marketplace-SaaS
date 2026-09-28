@@ -76,11 +76,13 @@ def test_una_tienda_inactiva_responde_404(client, tienda_a, configuracion_a):
     assert client.get(url_de(tienda_a.slug)).status_code == 404
 
 
-def test_una_fecha_mal_escrita_es_error_de_peticion(client, tienda_a, configuracion_a):
+def test_una_fecha_mal_escrita_es_error_de_peticion(
+    client, tienda_a, configuracion_a, detalles_de_error
+):
     respuesta = client.get(url_de(tienda_a.slug), {"desde": "05-10-2026"})
 
     assert respuesta.status_code == 400
-    assert "desde" in respuesta.json()
+    assert "desde" in detalles_de_error(respuesta)
 
 
 def test_el_rango_acota_los_dias(client, tienda_a, configuracion_a, dia_con_atencion):
@@ -213,9 +215,9 @@ def test_un_desde_anterior_a_la_ventana_se_corrige_al_primer_dia(
 
 @pytest.mark.parametrize("valor", ["0", "40", "muchos"])
 def test_un_dias_fuera_de_rango_es_error_de_peticion(
-    client, tienda_a, configuracion_a, valor
+    client, tienda_a, configuracion_a, detalles_de_error, valor
 ):
     respuesta = client.get(url_de(tienda_a.slug), {"dias": valor})
 
     assert respuesta.status_code == 400
-    assert "dias" in respuesta.json()
+    assert "dias" in detalles_de_error(respuesta)

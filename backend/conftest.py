@@ -38,6 +38,21 @@ def _sin_intentos_acumulados():
     cache.clear()
 
 
+@pytest.fixture
+def detalles_de_error():
+    """
+    Los errores campo por campo de una respuesta.
+
+    La API tiene un formato único de error (CONVENCIONES.md > Errores y respuestas de
+    la API); esto evita repetir la ruta hasta los detalles en cada prueba.
+    """
+
+    def _detalles(respuesta):
+        return respuesta.json()["error"]["detalles"]
+
+    return _detalles
+
+
 # ── Fixtures base ───────────────────────────────────────────────────────────
 #
 # Siempre dos tiendas con datos. Una prueba que corre con una sola tienda no
@@ -106,6 +121,17 @@ def admin_plataforma(db):
         password="clave-de-prueba",
         nombre="Plataforma",
         rol=Rol.ADMIN_PLATAFORMA,
+    )
+
+
+@pytest.fixture
+def configuracion_a(tienda_a):
+    from apps.agenda.models import ConfiguracionAgenda
+
+    return ConfiguracionAgenda.objects.create(
+        tienda=tienda_a,
+        direccion="Av. Siempre Viva 742, Ñuñoa",
+        correo_notificaciones="agenda.a@ejemplo.cl",
     )
 
 

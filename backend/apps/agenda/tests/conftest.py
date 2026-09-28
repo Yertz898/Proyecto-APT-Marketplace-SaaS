@@ -7,17 +7,6 @@ from django.utils import timezone
 
 
 @pytest.fixture
-def configuracion_a(tienda_a):
-    from apps.agenda.models import ConfiguracionAgenda
-
-    return ConfiguracionAgenda.objects.create(
-        tienda=tienda_a,
-        direccion="Av. Siempre Viva 742, Ñuñoa",
-        correo_notificaciones="agenda.a@ejemplo.cl",
-    )
-
-
-@pytest.fixture
 def crear_visita(comprador):
     """Crea una visita en un bloque futuro; por omisión, en dos días a las 10:00."""
 
