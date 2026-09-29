@@ -1,0 +1,141 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Paleta del mockup "Joyas Ye - Tienda". Es un tema oscuro único: el mockup no
+ * tiene versión clara. Los tokens de shadcn (más abajo) apuntan a estos mismos
+ * colores para que los componentes de la librería calcen con el diseño.
+ */
+@theme {
+  --color-violeta: #7c3aed;
+  --color-violeta-hover: #8b5cf6;
+  --color-lila: #a78bfa;
+  --color-lila-claro: #c4b5fd;
+  --color-oro: #c9a227;
+  --color-tinta: #0b0a0f; /* fondo de página */
+  --color-tinta-honda: #07060b; /* pie de página */
+  --color-superficie: #16141d; /* tarjetas y paneles */
+  --color-superficie-alta: #100e18; /* panel lateral móvil */
+  --color-texto: #f5f3f7;
+  --color-texto-suave: #a09cab;
+  --color-texto-apagado: #6a6676;
+
+  --ease-joya: cubic-bezier(0.22, 0.7, 0.3, 1);
+
+  /*
+   * Paleta de la portada de DealCommerce.
+   *
+   * Es la marca de la plataforma y no tiene nada que ver con la de arriba, que
+   * es la del mockup de Joyas Ye. Conviven a propósito: la portada le habla al
+   * vendedor y cada tienda se ve como quiera.
+   */
+  --color-hueso: #f7f6f2;
+  --color-marino: #14213d;
+  --color-pizarra: #4a5468;
+  --color-acero: #1f4e79;
+  --color-acero-hondo: #173d5f;
+  --color-ambar: #e0a526;
+  --color-ambar-hondo: #c98f17;
+  --color-jade: #1e7f53;
+  --color-jade-claro: #ddeee4;
+  --color-arena: #e3e0d6;
+  --color-arena-honda: #d6d2c6;
+  --color-niebla: #c9d3df;
+  --color-cielo: #e8eef4;
+  --color-lino: #f1efe9;
+  --color-lino-claro: #eeebe3;
+  --color-crema: #fbfaf7;
+  --color-trigo: #f6edd6;
+}
+
+@theme inline {
+  --font-sans: var(--font-manrope), "Helvetica Neue", sans-serif;
+  --font-serif: var(--font-cormorant), serif;
+  --font-heading: var(--font-cormorant), serif;
+  --font-mono: ui-monospace, monospace;
+
+  /* Tipografías de la portada: Inter para el texto, Plus Jakarta para títulos. */
+  --font-inter: var(--fuente-inter), Inter, system-ui, sans-serif;
+  --font-jakarta: var(--fuente-jakarta), "Plus Jakarta Sans", sans-serif;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  --background: #0b0a0f;
+  --foreground: #f5f3f7;
+  --card: #16141d;
+  --card-foreground: #f5f3f7;
+  --popover: #16141d;
+  --popover-foreground: #f5f3f7;
+  --primary: #7c3aed;
+  --primary-foreground: #ffffff;
+  --secondary: #16141d;
+  --secondary-foreground: #f5f3f7;
+  --muted: #16141d;
+  --muted-foreground: #a09cab;
+  --accent: rgb(124 58 237 / 14%);
+  --accent-foreground: #f5f3f7;
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: rgb(167 139 250 / 14%);
+  --input: rgb(167 139 250 / 20%);
+  --ring: #a78bfa;
+  --radius: 0.625rem;
+}
+
+/*
+ * La portada de DealCommerce va sobre fondo claro y el resto del sitio es
+ * oscuro. El fondo se corrige en el body, y no solo dentro de la página, porque
+ * el que se ve al rebotar el scroll es el del documento: sin esto, estirar la
+ * portada hacia arriba mostraría el fondo de la vitrina.
+ */
+html:has([data-tema="claro"]) body {
+  background: var(--color-hueso);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+    -webkit-font-smoothing: antialiased;
+    /*
+     * El mockup se apoya en el interlineado por defecto del navegador. Tailwind
+     * lo fuerza a 1.5, lo que estira todos los textos: se vuelve al valor normal
+     * y cada bloque que necesita otro interlineado lo declara por su cuenta.
+     */
+    line-height: normal;
+  }
+}

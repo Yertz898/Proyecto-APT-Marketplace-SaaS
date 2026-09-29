@@ -1,0 +1,65 @@
+# DealCommerce — entorno de desarrollo completo.
+#
+#   docker compose up -d          levanta base de datos, backend y frontend
+#   docker compose logs -f api    sigue los logs del backend
+#   docker compose down           detiene todo (los datos sobreviven en el volumen)
+#
+# Requiere un archivo .env en la raíz. Partir desde .env.example.
+
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: dealcommerce-db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      # Expuesto al host para poder conectar un cliente SQL o correr Django
+      # fuera del contenedor durante el desarrollo.
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: ./backend
+    container_name: dealcommerce-api
+    command: python manage.py runserver 0.0.0.0:8000
+    env_file: .env
+    volumes:
+      # Código montado desde el host: los cambios recargan sin reconstruir.
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build: ./frontend
+    container_name: dealcommerce-web
+    command: npm run dev
+    env_file: .env
+    environment:
+      # Dentro de la red de Docker el backend no vive en localhost. El servidor
+      # de Next lo alcanza por el nombre del servicio; el navegador, que corre
+      # en el host, lo sigue alcanzando por el puerto publicado.
+      API_URL_INTERNO: http://api:8000/api
+    volumes:
+      - ./frontend:/app
+      # Volumen anónimo: conserva los node_modules del contenedor (Linux) y
+      # evita que los del host (Windows) los pisen al montar el código.
+      - /app/node_modules
+      - /app/.next
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:

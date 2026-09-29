@@ -1,0 +1,8 @@
+# Normaliza los fin de línea: el equipo trabaja en Windows y los contenedores
+# corren Linux. Sin esto, cada checkout produce diferencias falsas en los PR.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.ico binary
+*.woff2 binary

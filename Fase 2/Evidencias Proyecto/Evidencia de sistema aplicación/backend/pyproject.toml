@@ -1,0 +1,31 @@
+# Configuración de herramientas del backend.
+# No declara un paquete instalable: el backend se ejecuta con manage.py.
+
+[tool.ruff]
+line-length = 88
+target-version = "py314"
+exclude = [".venv", "migrations", "staticfiles", "media"]
+
+[tool.ruff.lint]
+# E/W: PEP 8 · F: errores reales · I: orden de imports
+# B: bugs frecuentes · DJ: reglas propias de Django · UP: sintaxis moderna
+select = ["E", "W", "F", "I", "B", "DJ", "UP", "C4"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["apps", "config"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings"
+python_files = ["test_*.py", "*_test.py"]
+testpaths = ["apps", "tests"]
+addopts = "--reuse-db --strict-markers"
+markers = [
+    "aislamiento: prueba que verifica que una tienda no accede a datos de otra",
+]
+
+[tool.coverage.run]
+source = ["apps"]
+omit = ["*/migrations/*", "*/tests/*", "*/apps.py"]
