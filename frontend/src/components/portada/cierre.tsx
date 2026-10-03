@@ -57,7 +57,7 @@ const PREGUNTAS = [
   {
     pregunta: "¿Puedo cargar mi catálogo desde Excel?",
     respuesta:
-      "Sí. Subes tu planilla con productos, precios y tramos por volumen, y tu catálogo queda armado. Después puedes editar lo que quieras a mano.",
+      "Sí. Subes tu planilla con productos, precios y tramos por cantidad, y tu catálogo queda armado. Después puedes editar lo que quieras a mano.",
   },
   {
     pregunta: "¿Cobran comisión por venta?",

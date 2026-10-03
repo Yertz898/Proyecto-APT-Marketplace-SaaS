@@ -20,14 +20,23 @@ type Plan = {
   destacado?: boolean;
 };
 
+/*
+ * Lo que entra acá sirve a cualquier tienda de la plataforma.
+ *
+ * DealCommerce aloja comercios de rubros distintos, así que las formas de
+ * vender propias de uno —los lotes cerrados y la venta por gramo de la
+ * joyería— no se nombran como si fueran de la plataforma. Un almacén, una
+ * distribuidora o una tienda de cosmética tienen que verse reflejados en esta
+ * misma lista.
+ */
 const PLANES: Plan[] = [
   {
     nombre: "Básico",
     para: "Para dejar de cotizar a mano.",
     precio: "$10.990",
     incluye: [
-      "Catálogo mayorista en línea",
-      "Precios por volumen automáticos",
+      "Tu catálogo en línea",
+      "Precios por cantidad automáticos",
       "Carga desde Excel",
       "Pedidos por enlace",
     ],
@@ -39,10 +48,10 @@ const PLANES: Plan[] = [
     destacado: true,
     incluye: [
       "Todo lo del plan Básico",
-      "Lotes con cupos",
-      "Venta por gramo",
-      "Panel de ventas",
       "Tu logo, colores y tipografía",
+      "Panel de ventas",
+      "Agenda de visitas",
+      "Varias cuentas para tu equipo",
     ],
   },
   {

@@ -3,33 +3,41 @@ import { FranjaClara, TituloDeSeccion } from "./secciones";
 /*
  * Las ocho funciones del producto.
  *
+ * Todas sirven a cualquier tienda de la plataforma. Las formas de vender
+ * propias de un rubro —los lotes cerrados o la venta por gramo de una
+ * joyería— son del catálogo de esa tienda, no una función de DealCommerce, y
+ * por eso no se nombran acá.
+ *
  * Las tarjetas se levantan al pasar el mouse. El movimiento se apaga solo
  * cuando el sistema pide menos animación.
  */
 
 const FUNCIONES = [
   {
-    titulo: "Precios por volumen automáticos",
+    titulo: "Precios por cantidad automáticos",
     detalle: "Defines los tramos una vez y el total se calcula solo.",
     icono: <path d="M3 20h4v-5h5v-5h5V5h4" />,
   },
   {
-    titulo: "Lotes con cupos",
-    detalle: "Abre una compra conjunta y ciérrala cuando se llenen los cupos.",
+    titulo: "Tu tienda con tu marca",
+    detalle: "Tu logo, tus colores y tu tipografía. Se ve tuya, no nuestra.",
     icono: (
       <>
-        <path d="M3 7.5L12 3l9 4.5-9 4.5-9-4.5z" />
-        <path d="M3 7.5v9L12 21l9-4.5v-9M12 12v9" />
+        <path d="M12 3a9 9 0 000 18c1.1 0 2-.9 2-2 0-.52-.2-.99-.53-1.34A1.98 1.98 0 0113 16.2c0-1.1.9-2 2-2h2.2A3.8 3.8 0 0021 10.4C21 6.3 16.97 3 12 3z" />
+        <circle cx="7.5" cy="11.5" r="1" />
+        <circle cx="12" cy="7.5" r="1" />
+        <circle cx="16.5" cy="11.5" r="1" />
       </>
     ),
   },
   {
-    titulo: "Venta por gramo",
-    detalle: "Tu cliente pide 250 g o 3 kg y el precio se ajusta.",
+    titulo: "Agenda de visitas",
+    detalle: "Tus clientes reservan hora para ir a verte, sin cruces.",
     icono: (
       <>
-        <path d="M12 4v16M7 20h10M5 7h14" />
-        <path d="M5 7l-3 6h6l-3-6zM19 7l-3 6h6l-3-6z" />
+        <rect x="3" y="5" width="18" height="16" rx="2" />
+        <path d="M3 10h18M8 3v4M16 3v4" />
+        <path d="M8.5 14.5l2 2 4-4" />
       </>
     ),
   },

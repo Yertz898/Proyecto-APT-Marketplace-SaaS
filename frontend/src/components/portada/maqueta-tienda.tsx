@@ -70,7 +70,7 @@ export function MaquetaTienda() {
           </div>
 
           <div className="flex items-center justify-between gap-2 rounded-[10px] bg-jade-claro px-3 py-2.5">
-            <span className="min-w-0 text-[11px] text-marino">24 u. · precio por volumen aplicado</span>
+            <span className="min-w-0 text-[11px] text-marino">24 u. · precio por cantidad aplicado</span>
             <span className="flex-none text-[13px] font-bold text-jade">$263.760</span>
           </div>
 
