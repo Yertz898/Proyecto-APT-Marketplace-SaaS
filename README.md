@@ -126,7 +126,7 @@ Para tener cuentas con las que probar:
 docker compose exec api python manage.py cuentas_demo
 ```
 
-Crea cuatro: administrador de plataforma, dueño, vendedora y compradora. Se puede correr
+Crea tres: administrador de plataforma, dueño de la tienda y compradora. Se puede correr
 las veces que haga falta. La contraseña sale de `DEMO_PASSWORD`; si esa variable no está
 definida, el comando genera una al azar y la muestra al terminar. Son cuentas de
 demostración y no deben existir en producción.

@@ -62,7 +62,7 @@ const PREGUNTAS = [
   {
     pregunta: "¿Cobran comisión por venta?",
     respuesta:
-      "Los precios de los planes aún están por definir. Te los vamos a contar con claridad antes de que actives tu tienda, sin letra chica.",
+      "No. Pagas el plan mensual y nada más: lo que vendas es tuyo. Los precios están en la sección de planes, sin letra chica.",
   },
   {
     pregunta: "¿Cómo me pagan mis clientes?",

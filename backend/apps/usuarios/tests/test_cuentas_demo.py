@@ -23,10 +23,10 @@ def correr(monkeypatch):
     return _correr
 
 
-def test_crea_las_cuatro_cuentas(correr):
+def test_crea_una_cuenta_por_rol_en_uso(correr):
     correr()
 
-    assert Usuario.objects.count() == 4
+    assert Usuario.objects.count() == 3
 
 
 def test_separa_los_dos_accesos_por_rol(correr):
@@ -34,20 +34,23 @@ def test_separa_los_dos_accesos_por_rol(correr):
     correr()
 
     plataforma = Usuario.objects.exclude(rol=Rol.COMPRADOR)
-    assert {u.rol for u in plataforma} == {
-        Rol.ADMIN_PLATAFORMA,
-        Rol.DUENO_TIENDA,
-        Rol.VENDEDOR,
-    }
+    assert {u.rol for u in plataforma} == {Rol.ADMIN_PLATAFORMA, Rol.DUENO_TIENDA}
     assert Usuario.objects.get(rol=Rol.COMPRADOR).tienda_id is None
 
 
-def test_el_dueno_y_el_vendedor_quedan_en_la_tienda_de_ejemplo(correr):
+def test_el_dueno_queda_en_la_tienda_de_ejemplo(correr):
     correr()
 
-    tienda = Tienda.objects.get(slug="joyas-ye")
-    for rol in (Rol.DUENO_TIENDA, Rol.VENDEDOR):
-        assert Usuario.objects.get(rol=rol).tienda == tienda
+    assert Usuario.objects.get(rol=Rol.DUENO_TIENDA).tienda == Tienda.objects.get(
+        slug="joyas-ye"
+    )
+
+
+def test_la_tienda_de_ejemplo_no_tiene_una_cuenta_de_vendedor(correr):
+    """En Joyas Ye el dueño es quien vende: una persona, una cuenta."""
+    correr()
+
+    assert not Usuario.objects.filter(rol=Rol.VENDEDOR).exists()
 
 
 def test_el_administrador_de_plataforma_no_cuelga_de_una_tienda(correr):
@@ -82,7 +85,7 @@ def test_correrlo_dos_veces_no_duplica_ni_falla(correr):
     correr()
     correr()
 
-    assert Usuario.objects.count() == 4
+    assert Usuario.objects.count() == 3
     assert Tienda.objects.filter(slug="joyas-ye").count() == 1
 
 
@@ -104,7 +107,7 @@ def test_sin_la_variable_de_entorno_genera_una_contrasena(correr, capsys):
 
     salida = capsys.readouterr().out
     assert "Contraseña generada:" in salida
-    assert Usuario.objects.count() == 4
+    assert Usuario.objects.count() == 3
 
 
 def test_respeta_una_tienda_que_ya_existe(correr):

@@ -4,8 +4,11 @@ Crea las cuentas de demostración de los dos accesos del sistema.
 Son dos accesos distintos y no se mezclan:
 
 - El de **DealCommerce** (`/panel/entrar`) es para quienes trabajan en la
-  plataforma: el administrador, y el dueño y los vendedores de cada tienda
-  suscrita.
+  plataforma: el administrador, y quienes atienden cada tienda suscrita.
+
+  En Joyas Ye el dueño es también quien vende, así que tiene una sola cuenta.
+  El rol `vendedor` existe para una tienda que sí tenga empleados, pero acá no
+  se usa y por eso no hay una cuenta de demostración con ese rol.
 - El de **cada tienda** (`/t/<slug>/entrar`) es para quien compra en esa
   tienda. Un comprador no pertenece a ninguna tienda.
 
@@ -49,15 +52,7 @@ CUENTAS = [
         "rol": Rol.DUENO_TIENDA,
         "con_tienda": True,
         "acceso": "DealCommerce",
-        "para": "administra su propia tienda",
-    },
-    {
-        "email": "vendedor@joyasye.cl",
-        "nombre": "Vendedora de Joyas Ye",
-        "rol": Rol.VENDEDOR,
-        "con_tienda": True,
-        "acceso": "DealCommerce",
-        "para": "igual que el dueño, sin facturación ni usuarios",
+        "para": "administra y vende en su tienda",
     },
     {
         "email": "compradora@ejemplo.cl",

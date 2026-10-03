@@ -15,6 +15,8 @@ type Plan = {
   nombre: string;
   para: string;
   incluye: string[];
+  /** Mensual, neto, en pesos chilenos. */
+  precio: string;
   destacado?: boolean;
 };
 
@@ -22,6 +24,7 @@ const PLANES: Plan[] = [
   {
     nombre: "Básico",
     para: "Para dejar de cotizar a mano.",
+    precio: "$10.990",
     incluye: [
       "Catálogo mayorista en línea",
       "Precios por volumen automáticos",
@@ -32,6 +35,7 @@ const PLANES: Plan[] = [
   {
     nombre: "Premium",
     para: "Para vender más y ordenar tu negocio.",
+    precio: "$20.990",
     destacado: true,
     incluye: [
       "Todo lo del plan Básico",
@@ -44,6 +48,7 @@ const PLANES: Plan[] = [
   {
     nombre: "Ultimate",
     para: "Para decidir con tus datos.",
+    precio: "$35.990",
     incluye: [
       "Todo lo del plan Premium",
       "Pronóstico de demanda",
@@ -58,7 +63,7 @@ export function Planes() {
     <FranjaClara id="planes">
       <TituloDeSeccion
         antetitulo="Planes"
-        bajada="Estamos definiendo los precios. Solicita acceso y te contamos primero."
+        bajada="Precios mensuales por tienda. Sin permanencia: se cancela cuando quieras."
       >
         Elige cómo quieres partir
       </TituloDeSeccion>
@@ -74,7 +79,7 @@ function Normal({ plan }: { plan: Plan }) {
   return (
     <div className="flex flex-col gap-5 rounded-[18px] border border-arena bg-hueso p-8">
       <Cabecera plan={plan} />
-      <Precio />
+      <Precio valor={plan.precio} />
       <ul className="flex flex-1 list-none flex-col gap-3 border-t border-arena p-0 pt-5 text-[15px] leading-[1.4]">
         {plan.incluye.map((linea) => (
           <li key={linea} className="flex gap-2.5">
@@ -106,7 +111,7 @@ function Destacado({ plan }: { plan: Plan }) {
         <span className="text-[15px] text-[#DCE6F0]">{plan.para}</span>
       </div>
 
-      <Precio />
+      <Precio valor={plan.precio} claro />
 
       <ul className="flex flex-1 list-none flex-col gap-3 border-t border-white/22 p-0 pt-5 text-[15px] leading-[1.4]">
         {plan.incluye.map((linea) => (
@@ -138,6 +143,11 @@ function Cabecera({ plan }: { plan: Plan }) {
   );
 }
 
-function Precio() {
-  return <span className="font-jakarta text-xl font-bold">Precio por definir</span>;
+function Precio({ valor, claro = false }: { valor: string; claro?: boolean }) {
+  return (
+    <p className="flex items-baseline gap-1.5">
+      <span className="font-jakarta text-[32px] font-extrabold tracking-[-0.02em]">{valor}</span>
+      <span className={claro ? "text-sm text-[#DCE6F0]" : "text-sm text-pizarra"}>al mes</span>
+    </p>
+  );
 }

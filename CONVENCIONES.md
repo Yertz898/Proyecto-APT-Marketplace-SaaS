@@ -90,7 +90,8 @@ público de una tienda, la tienda va en la ruta (`/t/<slug>/...`) y solo expone 
 - `admin_plataforma` — nosotros. Ve todas las tiendas. No se crea desde la interfaz.
 - `dueno_tienda` — el vendedor suscrito. Ve y administra solo su tienda.
 - `vendedor` — empleado del dueño. Igual que el dueño pero sin acceso a facturación
-  ni a la gestión de usuarios.
+  ni a la gestión de usuarios. En Joyas_ye el dueño es también quien vende, así que
+  este rol existe para una tienda que sí tenga empleados, pero hoy no se usa.
 - `comprador` — cliente final o mayorista. No pertenece a ninguna tienda.
 
 **Tramos de precio del granel** — Los umbrales en gramos (medio kilo, kilo) tienen
@@ -201,7 +202,9 @@ Pendientes del equipo:
 
 - Qué proveedor de modelo de lenguaje usa el asistente conversacional, y con qué presupuesto.
 - Si el asistente responde solo sobre datos de la tienda o también sobre el catálogo público.
-- Cómo se cobra la suscripción del vendedor, si es que se modela en esta fase.
+- Cómo se cobra la suscripción: los precios de los planes están fijados (Básico
+  $10.990, Premium $20.990 y Ultimate $35.990 al mes, netos), pero no está decidido por
+  dónde se cobran ni si se modela en esta fase.
 - Si el vendedor puede ver el pronóstico. En el código es un permiso de una línea.
 - Qué entra a la demostración de noviembre y qué queda como trabajo futuro.
 - Qué versión de PostgreSQL es la única: el diagrama dice 16 y el CI usa 17.
