@@ -108,6 +108,29 @@ El aislamiento entre tiendas no se implementa dos veces: la capa común vive en
 `backend/apps/core/` y el resto de las apps la usa. Toda funcionalidad que lea datos de
 tienda lleva su prueba marcada con `@pytest.mark.aislamiento`.
 
+## Los dos accesos
+
+El sistema tiene dos entradas distintas y no se mezclan.
+
+| | DealCommerce | Cada tienda |
+|---|---|---|
+| Dirección | `/panel/entrar` | `/t/<slug>/entrar` |
+| Para quién | Administración de la plataforma, dueños y vendedores | Quien compra en esa tienda |
+| Aspecto | La marca de DealCommerce | La identidad de esa tienda |
+| Crear cuenta | No: las crea la plataforma | Sí |
+| A dónde llega | `/plataforma` el administrador, `/panel` la tienda | La tienda donde estaba |
+
+Para tener cuentas con las que probar:
+
+```bash
+docker compose exec api python manage.py cuentas_demo
+```
+
+Crea cuatro: administrador de plataforma, dueño, vendedora y compradora. Se puede correr
+las veces que haga falta. La contraseña sale de `DEMO_PASSWORD`; si esa variable no está
+definida, el comando genera una al azar y la muestra al terminar. Son cuentas de
+demostración y no deben existir en producción.
+
 ## API
 
 Todo cuelga de `/api`.

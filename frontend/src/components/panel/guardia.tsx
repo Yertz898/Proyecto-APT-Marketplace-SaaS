@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
 
-import { trabajaEnTienda, useSesion } from "@/components/sesion/usar-sesion";
+import { esAdminDePlataforma, trabajaEnTienda, useSesion } from "@/components/sesion/usar-sesion";
 import { cerrarSesion } from "@/lib/api/sesion";
 
 /*
@@ -36,7 +36,7 @@ export function GuardiaDelPanel({ children }: { children: ReactNode }) {
   }
 
   if (!puedeEntrar) {
-    return <CuentaSinPanel />;
+    return <CuentaSinPanel esDePlataforma={esAdminDePlataforma(sesion)} />;
   }
 
   return <>{children}</>;
@@ -51,17 +51,20 @@ function Espera() {
 }
 
 /**
- * Hay sesión, pero es de un comprador.
+ * Hay sesión, pero no es de alguien que trabaje en esta tienda.
  *
- * Se explica en vez de redirigir: mandarlo de vuelta al formulario con la
- * sesión iniciada lo dejaría dando vueltas sin entender por qué.
+ * Se explica en vez de redirigir: mandar de vuelta al formulario con la sesión
+ * iniciada deja dando vueltas sin entender por qué. Y a quien sí tiene un lugar
+ * a dónde ir, se le ofrece.
  */
-function CuentaSinPanel() {
+function CuentaSinPanel({ esDePlataforma }: { esDePlataforma: boolean }) {
   return (
     <div className="mx-auto max-w-[460px] py-16 text-center">
       <h1 className="font-serif text-[28px] text-texto">Esta cuenta no tiene panel</h1>
       <p className="mt-3 text-sm text-texto-suave">
-        El panel es para el dueño y los vendedores de una tienda. Tu cuenta es de comprador.
+        {esDePlataforma
+          ? "Tu cuenta administra la plataforma, no una tienda en particular."
+          : "El panel es para el dueño y los vendedores de una tienda. Tu cuenta es de comprador."}
       </p>
 
       <div className="mt-6 flex justify-center gap-3">
@@ -73,10 +76,10 @@ function CuentaSinPanel() {
           Cerrar sesión
         </button>
         <Link
-          href="/"
+          href={esDePlataforma ? "/plataforma" : "/"}
           className="flex h-11 items-center rounded-full bg-violeta px-5 text-[13px] font-semibold text-white"
         >
-          Ir al inicio
+          {esDePlataforma ? "Ir a la administración" : "Ir al inicio"}
         </Link>
       </div>
     </div>

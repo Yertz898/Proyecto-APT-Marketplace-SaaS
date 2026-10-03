@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { useState } from "react";
 
+import { Campo } from "@/components/campo";
 import { ErrorDeApi } from "@/lib/api/errores";
 import { pedirAcceso } from "@/lib/api/solicitudes";
 
-import { Campo } from "./campo";
 import { TIENDA_DE_EJEMPLO } from "./enlaces";
 
 /*
@@ -66,6 +66,7 @@ export function FormularioDeAcceso() {
       )}
 
       <Campo
+        tema="claro"
         id="negocio"
         etiqueta="Nombre del negocio"
         valor={negocio}
@@ -75,6 +76,7 @@ export function FormularioDeAcceso() {
       />
 
       <Campo
+        tema="claro"
         id="nombre"
         etiqueta="Tu nombre"
         valor={nombre}
@@ -84,6 +86,7 @@ export function FormularioDeAcceso() {
       />
 
       <Campo
+        tema="claro"
         id="email"
         etiqueta="Correo"
         tipo="email"
@@ -94,6 +97,7 @@ export function FormularioDeAcceso() {
       />
 
       <Campo
+        tema="claro"
         id="telefono"
         etiqueta="Teléfono o WhatsApp"
         tipo="tel"
@@ -105,6 +109,7 @@ export function FormularioDeAcceso() {
       />
 
       <Campo
+        tema="claro"
         id="mensaje"
         etiqueta="¿Qué vendes?"
         valor={mensaje}

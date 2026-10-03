@@ -42,3 +42,13 @@ const ROLES_DE_TIENDA: Rol[] = ["dueno_tienda", "vendedor"];
 export function trabajaEnTienda(sesion: Sesion | null): boolean {
   return Boolean(sesion && ROLES_DE_TIENDA.includes(sesion.usuario.rol) && sesion.usuario.tienda);
 }
+
+/**
+ * Nosotros, no el vendedor suscrito.
+ *
+ * El administrador de plataforma no cuelga de ninguna tienda, así que el panel
+ * de una tienda no le sirve: su lugar es /plataforma.
+ */
+export function esAdminDePlataforma(sesion: Sesion | null): boolean {
+  return sesion?.usuario.rol === "admin_plataforma";
+}

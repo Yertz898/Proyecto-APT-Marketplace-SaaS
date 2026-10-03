@@ -1,9 +1,37 @@
 import { cn } from "@/lib/utils";
 
 /*
- * Campo de texto compartido por los formularios del proyecto: la sesión y la
- * reserva de una visita. No es de shadcn, por eso no vive en components/ui.
+ * Campo de formulario, compartido por todo el proyecto.
+ *
+ * Sirve a dos paletas porque el sistema tiene dos caras: DealCommerce es claro
+ * y la vitrina de cada tienda se ve como esa tienda quiera, que hoy es oscura.
+ * Lo que comparten es la forma —etiqueta, ayuda, error asociado por aria— y no
+ * los colores. No es de shadcn, por eso no vive en components/ui.
  */
+
+export type TemaDeFormulario = "claro" | "oscuro";
+
+const PALETA = {
+  claro: {
+    etiqueta: "text-marino",
+    opcional: "text-pizarra",
+    campo: "bg-white text-marino",
+    normal: "border-niebla focus-visible:border-acero",
+    conError: "border-ambar",
+    ayuda: "text-pizarra",
+    error: "text-ambar-hondo",
+  },
+  oscuro: {
+    etiqueta: "text-texto",
+    opcional: "text-texto-suave",
+    campo: "bg-superficie text-texto",
+    normal: "border-lila/20 focus-visible:border-lila",
+    // El oro es el color que la vitrina ya usa para lo que hay que revisar.
+    conError: "border-oro/70",
+    ayuda: "text-texto-suave",
+    error: "text-oro",
+  },
+} as const;
 
 /** Un campo con su etiqueta y el error que le corresponde. */
 export function Campo({
@@ -16,6 +44,9 @@ export function Campo({
   ayuda,
   requerido = true,
   autoComplete,
+  multilinea = false,
+  placeholder,
+  tema = "oscuro",
 }: {
   id: string;
   etiqueta: string;
@@ -26,41 +57,51 @@ export function Campo({
   ayuda?: string;
   requerido?: boolean;
   autoComplete?: string;
+  multilinea?: boolean;
+  placeholder?: string;
+  tema?: TemaDeFormulario;
 }) {
+  const color = PALETA[tema];
   const idAyuda = ayuda ? `${id}-ayuda` : undefined;
   const idError = error ? `${id}-error` : undefined;
 
+  const comunes = {
+    id,
+    value: valor,
+    required: requerido,
+    autoComplete,
+    placeholder,
+    "aria-invalid": Boolean(error),
+    "aria-describedby": [idError, idAyuda].filter(Boolean).join(" ") || undefined,
+    className: cn(
+      "mt-2 w-full rounded-[12px] border px-4 text-base outline-none",
+      color.campo,
+      multilinea ? "resize-none py-3" : "h-12",
+      error ? color.conError : color.normal,
+    ),
+  };
+
   return (
     <div>
-      <label htmlFor={id} className="text-[13px] font-semibold text-texto">
+      <label htmlFor={id} className={cn("text-[13px] font-semibold", color.etiqueta)}>
         {etiqueta}
-        {!requerido && <span className="ml-1.5 font-normal text-texto-suave">(opcional)</span>}
+        {!requerido && <span className={cn("ml-1.5 font-normal", color.opcional)}>(opcional)</span>}
       </label>
 
-      <input
-        id={id}
-        type={tipo}
-        value={valor}
-        required={requerido}
-        autoComplete={autoComplete}
-        aria-invalid={Boolean(error)}
-        aria-describedby={[idError, idAyuda].filter(Boolean).join(" ") || undefined}
-        onChange={(evento) => onCambio(evento.target.value)}
-        className={cn(
-          "mt-2 h-12 w-full rounded-xl border bg-superficie px-4 text-base text-texto outline-none",
-          // El oro es el color que ya usa el panel para lo que hay que revisar.
-          error ? "border-oro/70" : "border-lila/20 focus-visible:border-lila",
-        )}
-      />
+      {multilinea ? (
+        <textarea {...comunes} rows={4} onChange={(evento) => onCambio(evento.target.value)} />
+      ) : (
+        <input {...comunes} type={tipo} onChange={(evento) => onCambio(evento.target.value)} />
+      )}
 
       {ayuda && !error && (
-        <p id={idAyuda} className="mt-1.5 text-xs text-texto-suave">
+        <p id={idAyuda} className={cn("mt-1.5 text-xs", color.ayuda)}>
           {ayuda}
         </p>
       )}
 
       {error && (
-        <p id={idError} className="mt-1.5 text-xs text-oro">
+        <p id={idError} className={cn("mt-1.5 text-xs font-medium", color.error)}>
           {error}
         </p>
       )}
