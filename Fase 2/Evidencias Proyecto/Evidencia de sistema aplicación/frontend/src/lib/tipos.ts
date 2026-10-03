@@ -45,7 +45,7 @@ export type IdentidadTienda = {
 
 // ── Sesión ──────────────────────────────────────────────────────────────────
 
-/** Los cuatro roles del sistema, y no hay más (CLAUDE.md > Roles). */
+/** Los cuatro roles del sistema, y no hay más (CONVENCIONES.md > Roles). */
 export type Rol = "admin_plataforma" | "dueno_tienda" | "vendedor" | "comprador";
 
 export type TiendaDeLaSesion = {

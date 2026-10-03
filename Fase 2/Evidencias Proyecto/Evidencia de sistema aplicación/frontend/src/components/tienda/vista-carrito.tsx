@@ -18,7 +18,7 @@ import { EnlaceExterno } from "./enlace-externo";
  * falta para el siguiente tramo por cantidad de lotes.
  *
  * Al confirmar no se cobra nada: se genera el pedido y el pago se coordina por
- * fuera (CLAUDE.md > Pedido).
+ * fuera (CONVENCIONES.md > Pedido).
  */
 export function VistaCarrito({ slugTienda }: { slugTienda: string }) {
   const { lineas, quitar, vaciar } = useCarrito();

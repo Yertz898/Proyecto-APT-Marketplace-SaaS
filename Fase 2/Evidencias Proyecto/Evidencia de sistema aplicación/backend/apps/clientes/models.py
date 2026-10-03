@@ -23,7 +23,7 @@ class AprobacionMayorista(ModeloDeTienda):
 
     La aprobación es por tienda: que Joyas_ye apruebe a un comprador no lo
     aprueba en otra tienda. De acá sale la regla de qué precios puede ver
-    (CLAUDE.md > Precio mayorista), que se aplica en el backend al calcular el
+    (CONVENCIONES.md > Precio mayorista), que se aplica en el backend al calcular el
     precio y no ocultando nada en el frontend.
     """
 

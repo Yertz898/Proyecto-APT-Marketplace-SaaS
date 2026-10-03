@@ -13,7 +13,7 @@ import type { CarritoCotizado, LineaCarrito, PedidoConfirmado } from "@/lib/tipo
  *   POST /t/{slug}/carrito/cotizar
  *   POST /t/{slug}/pedidos
  *
- * Al implementarlos (CLAUDE.md):
+ * Al implementarlos (CONVENCIONES.md):
  * - El checkout es simulado: se genera el pedido y se descuenta stock, pero no
  *   se cobra. El pago se coordina fuera de la plataforma.
  * - El stock se descuenta al pasar a `confirmado`, dentro de una transacción

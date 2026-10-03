@@ -1,7 +1,7 @@
 """
 Configuración común de pytest para todo el backend.
 
-Las fixtures base de datos (siempre dos tiendas, ver CLAUDE.md > Pruebas) se
+Las fixtures base de datos (siempre dos tiendas, ver CONVENCIONES.md > Pruebas) se
 agregan acá cuando existan los modelos.
 """
 
@@ -43,7 +43,7 @@ def detalles_de_error():
     """
     Los errores campo por campo de una respuesta.
 
-    La API tiene un formato único de error (CLAUDE.md > Errores y respuestas de
+    La API tiene un formato único de error (CONVENCIONES.md > Errores y respuestas de
     la API); esto evita repetir la ruta hasta los detalles en cada prueba.
     """
 
@@ -57,7 +57,7 @@ def detalles_de_error():
 #
 # Siempre dos tiendas con datos. Una prueba que corre con una sola tienda no
 # puede detectar una fuga de aislamiento, que es el error más grave del sistema
-# (CLAUDE.md > Pruebas).
+# (CONVENCIONES.md > Pruebas).
 
 
 @pytest.fixture

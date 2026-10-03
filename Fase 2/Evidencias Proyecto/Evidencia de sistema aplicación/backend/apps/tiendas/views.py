@@ -17,7 +17,7 @@ class TiendaPublica(generics.RetrieveAPIView):
 
     Va sin sesión, porque la vitrina la ve cualquiera.
     La tienda se resuelve por el slug de la ruta, que es lo que corresponde para
-    el catálogo público (CLAUDE.md > Cómo se resuelve la tienda en cada
+    el catálogo público (CONVENCIONES.md > Cómo se resuelve la tienda en cada
     petición). Todo lo demás sigue sacando la tienda del token.
 
     Una tienda inactiva o inexistente responde 404, sin distinguir entre las dos

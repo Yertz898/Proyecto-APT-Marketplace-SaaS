@@ -2,7 +2,7 @@
 Formato único de error de la API.
 
 Una respuesta de error siempre tiene la misma forma
-(CLAUDE.md > Errores y respuestas de la API):
+(CONVENCIONES.md > Errores y respuestas de la API):
 
     {"error": {"codigo": "...", "mensaje": "...", "detalles": {...}}}
 

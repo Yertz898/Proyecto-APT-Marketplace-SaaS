@@ -17,7 +17,7 @@ import { IconoBolsa } from "./iconos";
  *
  * Vive en el almacenamiento del navegador para sobrevivir a una recarga. Es
  * temporal: el carrito de verdad es un pedido en estado `borrador` del backend
- * (CLAUDE.md > Estados del pedido), y lo reemplaza cuando exista la API.
+ * (CONVENCIONES.md > Estados del pedido), y lo reemplaza cuando exista la API.
  *
  * Se usa useSyncExternalStore porque el almacenamiento del navegador es
  * justamente eso, un sistema externo: así el servidor entrega un carrito vacío,

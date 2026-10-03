@@ -13,7 +13,7 @@ import type { CotizacionGranel, LineaGranel, Lote, PaginaDeLotes } from "@/lib/t
  *   GET  /t/{slug}/granel/{codigo}
  *   POST /t/{slug}/granel/{codigo}/cotizar
  *
- * Recordatorios al implementarlos (CLAUDE.md y prompt de actualización):
+ * Recordatorios al implementarlos (ver CONVENCIONES.md):
  * - Solo se exponen datos publicados de esa tienda.
  * - El precio del granel lo calcula el backend, incluido el aviso de
  *   conveniencia y el rechazo por bajo el mínimo.

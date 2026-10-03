@@ -5,7 +5,7 @@ import { Franja, TituloDeSeccion } from "./secciones";
  *
  * Los números son inventados y la sección lo dice con una etiqueta a la vista.
  * No es un detalle de diseño: el proyecto trabaja con datos sintéticos y todo
- * gráfico hecho con ellos se rotula como tal (CLAUDE.md > Ingesta de planillas).
+ * gráfico hecho con ellos se rotula como tal (CONVENCIONES.md > Ingesta de planillas).
  *
  * Las alturas van en porcentaje del alto del gráfico. La línea del pronóstico
  * se deriva de esas mismas alturas en vez de repetirlas: si un mes cambia, la

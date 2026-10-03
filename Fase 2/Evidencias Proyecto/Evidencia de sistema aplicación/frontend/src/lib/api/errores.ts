@@ -2,7 +2,7 @@
  * Errores de la API.
  *
  * El backend responde siempre con la misma forma
- * (CLAUDE.md > Errores y respuestas de la API):
+ * (CONVENCIONES.md > Errores y respuestas de la API):
  *
  *   {"error": {"codigo": "...", "mensaje": "...", "detalles": {"campo": [...]}}}
  *

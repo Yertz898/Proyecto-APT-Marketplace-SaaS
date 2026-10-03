@@ -8,7 +8,7 @@ import { FranjaClara, TituloDeSeccion } from "./secciones";
  *
  * Ninguno tiene precio todavía y la sección lo dice de frente en vez de
  * inventar cifras: cómo se cobra la suscripción es una de las cosas que el
- * equipo aún no decide (CLAUDE.md > Lo que no está decidido).
+ * equipo aún no decide (CONVENCIONES.md > Lo que no está decidido).
  */
 
 type Plan = {

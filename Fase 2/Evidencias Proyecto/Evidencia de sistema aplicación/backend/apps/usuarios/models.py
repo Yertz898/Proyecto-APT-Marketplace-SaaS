@@ -2,7 +2,7 @@
 Cuentas, roles y pertenencia a una tienda.
 
 El rol determina qué puede hacer una persona; la tienda a la que pertenece
-determina qué datos puede ver. Los cuatro roles son los del CLAUDE.md y no hay
+determina qué datos puede ver. Los cuatro roles son los del CONVENCIONES.md y no hay
 más.
 """
 

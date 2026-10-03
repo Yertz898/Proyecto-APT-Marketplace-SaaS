@@ -13,7 +13,7 @@ class MixinTiendaDelUsuario:
     Acota el queryset a la tienda del usuario autenticado.
 
     La tienda sale del usuario, que sale del token. Un `tienda_id` que llegue en
-    el cuerpo o en la query string no se confía nunca (CLAUDE.md > Cómo se
+    el cuerpo o en la query string no se confía nunca (CONVENCIONES.md > Cómo se
     resuelve la tienda en cada petición).
 
     Al no encontrar el recurso, DRF responde 404 y no 403: un 403 confirmaría

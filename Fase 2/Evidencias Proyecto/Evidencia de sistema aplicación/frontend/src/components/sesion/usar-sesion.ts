@@ -36,7 +36,7 @@ export function useSesion(): EstadoDeSesion {
   return { sesion, hidratado };
 }
 
-/** Roles que trabajan dentro de una tienda (CLAUDE.md > Roles). */
+/** Roles que trabajan dentro de una tienda (CONVENCIONES.md > Roles). */
 const ROLES_DE_TIENDA: Rol[] = ["dueno_tienda", "vendedor"];
 
 export function trabajaEnTienda(sesion: Sesion | null): boolean {

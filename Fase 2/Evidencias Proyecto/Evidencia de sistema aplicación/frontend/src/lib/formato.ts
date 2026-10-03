@@ -17,7 +17,7 @@ const fechaChilena = new Intl.DateTimeFormat("es-CL", {
   year: "numeric",
 });
 
-/** Fecha ISO del backend a dd-mm-aaaa, en hora local (CLAUDE.md > Zona horaria). */
+/** Fecha ISO del backend a dd-mm-aaaa, en hora local (CONVENCIONES.md > Zona horaria). */
 export function formatearFecha(iso: string): string {
   const fecha = new Date(iso);
   if (Number.isNaN(fecha.getTime())) {

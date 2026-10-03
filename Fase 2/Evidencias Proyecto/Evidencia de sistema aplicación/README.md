@@ -1,63 +1,49 @@
 # DealCommerce
 
 Marketplace SaaS multi-tienda con analítica predictiva para PYMES del retail.
-Proyecto de título — Capstone PTY4614, Duoc UC.
+Proyecto de título, Capstone PTY4614, Duoc UC.
 
-Las reglas del proyecto (invariante de aislamiento, alcance, convenciones) están en
-[CLAUDE.md](CLAUDE.md). Este archivo solo explica cómo levantar y trabajar el repositorio.
-
----
+Las reglas del proyecto (aislamiento entre tiendas, alcance, convenciones) están en
+[CONVENCIONES.md](CONVENCIONES.md). Acá solo está cómo levantar y trabajar el repositorio.
 
 ## Puesta en marcha
 
-Requisitos: Docker Desktop, Git. (Node y Python solo hacen falta para trabajar fuera
-de los contenedores.)
+Requisitos: Docker Desktop y Git. Node y Python solo hacen falta para trabajar fuera de
+los contenedores.
 
 ```bash
 git clone <url-del-repositorio>
 cd dealcommerce
 cp .env.example .env      # completar los valores; .env nunca se versiona
-                          # para desarrollo local: DJANGO_DEBUG=True en tu .env
 docker compose up -d
-```
-
-Servicios:
-
-| Servicio | URL | Descripción |
-|---|---|---|
-| `web` | http://localhost:3000 | Frontend Next.js |
-| `api` | http://localhost:8000 | Backend Django REST Framework |
-| `db`  | localhost:5432 | PostgreSQL 17 |
-
-> **No ejecutar `migrate` todavía.** Primero hay que definir el modelo `Usuario` en
-> `apps/usuarios` y activar `AUTH_USER_MODEL` en `config/settings.py`. Si se migra antes,
-> Django crea las tablas con su usuario por defecto y cambiarlo después obliga a borrar la
-> base de datos.
-
-Una vez definido `Usuario`, el primer arranque es:
-
-```bash
-docker compose exec api python manage.py makemigrations
 docker compose exec api python manage.py migrate
 docker compose exec api python manage.py createsuperuser
 ```
 
+Para desarrollo local, poner `DJANGO_DEBUG=True` en el `.env`.
+
+| Servicio | URL | Qué es |
+|---|---|---|
+| `web` | http://localhost:3000 | Frontend Next.js |
+| `api` | http://localhost:8000 | Backend Django REST Framework |
+| `db` | localhost:5432 | PostgreSQL 17 |
+
 ## Comandos
 
 ```bash
-docker compose up -d                                    # levanta todo
-docker compose down                                     # detiene todo
-docker compose logs -f api                              # logs del backend
+docker compose up -d                            # levanta todo
+docker compose down                             # detiene todo
+docker compose logs -f api                      # logs del backend
 
-docker compose exec api pytest                          # pruebas del backend
-docker compose exec api pytest -m aislamiento           # solo pruebas de aislamiento
-docker compose exec api ruff check .                    # lint del backend (PEP 8)
-docker compose exec api ruff format .                   # formato del backend
+docker compose exec api pytest                  # pruebas del backend
+docker compose exec api pytest -m aislamiento   # solo pruebas de aislamiento
+docker compose exec api ruff check .            # lint del backend
+docker compose exec api ruff format .           # formato del backend
 
 docker compose exec api python manage.py makemigrations
 docker compose exec api python manage.py migrate
 
-docker compose exec web npm run lint                    # lint del frontend
+docker compose exec web npm run lint            # lint del frontend
 ```
 
 ## Estructura
@@ -65,30 +51,31 @@ docker compose exec web npm run lint                    # lint del frontend
 ```
 .
 ├── backend/                  Django + Django REST Framework
-│   ├── config/               settings, urls y wsgi del proyecto
-│   ├── apps/                 aplicaciones del dominio
-│   │   ├── core/             capa común: aislamiento por tienda y permisos por rol
+│   ├── config/               settings, urls y wsgi
+│   ├── apps/
+│   │   ├── core/             aislamiento por tienda y permisos por rol
 │   │   ├── usuarios/         cuentas, roles y autenticación JWT
-│   │   ├── tiendas/          Tienda — la raíz del aislamiento
-│   │   ├── catalogo/         productos y variantes (el stock vive en la variante)
-│   │   ├── precios/          listas de precios escalonados por volumen
+│   │   ├── tiendas/          Tienda, la raíz del aislamiento
+│   │   ├── catalogo/         catálogo de la tienda
+│   │   ├── precios/          tramos de precio por volumen
 │   │   ├── pedidos/          pedidos con checkout simulado
-│   │   ├── clientes/         clientes compradores y variables RFM
-│   │   ├── ingesta/          carga del historial de ventas desde planillas
+│   │   ├── clientes/         compradores y variables RFM
+│   │   ├── ingesta/          carga de datos desde planillas
 │   │   ├── analitica/        pronóstico, segmentación y reglas de descuento
+│   │   ├── agenda/           agenda de visitas a la tienda
 │   │   └── asistente/        asistente conversacional del vendedor
-│   ├── requirements/         base.txt · analitica.txt · dev.txt
+│   ├── requirements/         base.txt, analitica.txt, dev.txt
 │   └── tests/                pruebas transversales
 ├── frontend/                 Next.js + Tailwind + shadcn/ui
 ├── docs/                     documentación del proyecto
-├── infra/                    scripts e inicialización de infraestructura
+├── infra/                    scripts de infraestructura
 └── docker-compose.yml
 ```
 
 ## Trabajar fuera de Docker
 
-Hay un entorno local preparado para que el editor tenga autocompletado y para correr
-comandos sueltos sin levantar contenedores.
+Hay un entorno local para que el editor tenga autocompletado y para correr comandos
+sueltos sin levantar contenedores.
 
 ```bash
 # Backend (Windows / PowerShell)
@@ -101,13 +88,13 @@ cd frontend
 npm run dev
 ```
 
-Al correr Django fuera de Docker, `DATABASE_URL` debe apuntar a `localhost:5432` en vez
-de `db:5432`. Es la única diferencia entre los dos modos.
+Corriendo Django fuera de Docker, `DATABASE_URL` apunta a `localhost:5432` en vez de
+`db:5432`. Es la única diferencia entre los dos modos.
 
 ## Flujo de trabajo
 
-Rama por funcionalidad, nunca commits directos a `main`. Pull request revisado por el otro
-integrante antes de integrar. Mensajes de commit en español y en imperativo.
+Rama por funcionalidad, nunca commits directos a `main`. Pull request revisado por el
+otro integrante antes de integrar. Mensajes de commit en español y en imperativo.
 
 ```bash
 git switch -c precios/motor-escalonado
@@ -115,18 +102,15 @@ git commit -m "agrega motor de precios escalonados"
 ```
 
 La plantilla de pull request ([.github/pull_request_template.md](.github/pull_request_template.md))
-incluye la lista del criterio de terminado y la verificación de aislamiento por tienda.
+incluye el criterio de terminado y la verificación de aislamiento por tienda.
 
-## Antes de escribir código que lea datos de tienda
-
-El aislamiento entre tiendas es el invariante del sistema y no se implementa dos veces.
-La capa común vive en `backend/apps/core/`; el resto de las apps la usa, no la reimplementa.
-Toda funcionalidad que lea datos de tienda lleva su prueba de aislamiento marcada con
-`@pytest.mark.aislamiento`.
+El aislamiento entre tiendas no se implementa dos veces: la capa común vive en
+`backend/apps/core/` y el resto de las apps la usa. Toda funcionalidad que lea datos de
+tienda lleva su prueba marcada con `@pytest.mark.aislamiento`.
 
 ## API
 
-Todo cuelga de `/api`. Lo que existe hoy:
+Todo cuelga de `/api`.
 
 | Método | Ruta | Quién |
 |---|---|---|
@@ -139,11 +123,11 @@ Todo cuelga de `/api`. Lo que existe hoy:
 | `POST` | `/api/t/<slug>/agenda/visitas` | comprador |
 | `POST` | `/api/solicitudes-de-acceso` | cualquiera |
 
-Las tres de sesión comparten un límite de intentos por IP
-(`THROTTLE_AUTENTICACION`); las solicitudes de acceso tienen el suyo
+Las tres rutas de sesión comparten un límite de intentos por IP
+(`THROTTLE_AUTENTICACION`). Las solicitudes de acceso tienen el suyo
 (`THROTTLE_SOLICITUDES`).
 
-Un error siempre tiene la misma forma, con el mensaje ya redactado en español:
+Los errores tienen siempre la misma forma, con el mensaje en español:
 
 ```json
 {"error": {"codigo": "validacion", "mensaje": "Revisa los datos marcados.",
@@ -152,17 +136,12 @@ Un error siempre tiene la misma forma, con el mensaje ya redactado en español:
 
 ## Estado
 
-En construcción. Funcionan de punta a punta la portada con su solicitud de acceso,
-la identidad pública de la tienda, la agenda de visitas (ver horas y reservar) y la
-sesión con sus tres pantallas.
+Funcionan de punta a punta la portada con su solicitud de acceso, la identidad pública
+de la tienda, la agenda de visitas y la sesión con sus tres pantallas.
 
-La portada (`/`) es la única parte del sitio con la marca de la plataforma: paleta
-clara, Plus Jakarta Sans e Inter. La vitrina de cada tienda se ve como esa tienda
-quiera, y por eso no comparten ni un componente.
+Pendiente: el catálogo, el carrito y los pedidos, la ingesta de planillas y la analítica.
+Las pantallas de esas partes ya existen y apuntan a clientes de API que todavía no tienen
+endpoint detrás.
 
-Pendiente: el catálogo de lotes y granel, el carrito y los pedidos, la ingesta de
-planillas y la analítica. Las pantallas de esas partes ya están hechas contra
-clientes de API que todavía no tienen endpoint detrás.
-
-Pendientes conocidos de la agenda: la bandeja del dueño para aceptar o rechazar
-visitas, los correos con el archivo `.ics` y el recordatorio de 24 horas.
+De la agenda falta la bandeja del dueño para aceptar o rechazar visitas, los correos con
+archivo `.ics` y el recordatorio de 24 horas.

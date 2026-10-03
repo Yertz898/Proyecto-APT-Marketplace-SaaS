@@ -1,7 +1,7 @@
 # Documentación
 
-Documentación viva del proyecto. Se actualiza en el mismo pull request que cambia el
-código: "documentación actualizada" es parte del criterio de terminado.
+Se actualiza en el mismo pull request que cambia el código: "documentación actualizada"
+es parte del criterio de terminado.
 
 | Archivo | Contenido |
 |---|---|
@@ -11,5 +11,5 @@ código: "documentación actualizada" es parte del criterio de terminado.
 | `analitica.md` | Los dos modelos, sus métricas y el resultado frente a la línea base |
 | `bitacora/` | Una nota por sprint: qué se comprometió, qué se cerró, qué quedó |
 
-Los archivos anteriores todavía no existen; se crean cuando haya algo real que documentar.
-Esta tabla es el índice acordado para que ambos integrantes escriban en el mismo lugar.
+Los tres primeros todavía no existen. Esta tabla es el índice acordado para que ambos
+integrantes escriban en el mismo lugar.

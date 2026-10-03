@@ -2,8 +2,7 @@
  * Tipos del panel de la tienda.
  *
  * Separados de los tipos de la tienda pública a propósito: son dos aplicaciones
- * distintas y no deben compartir componentes ni modelos (prompt de actualización
- * del frontend).
+ * distintas y no deben compartir componentes ni modelos.
  */
 
 /** Cada tipo de carga tiene su plantilla, su validación y su pantalla. */
