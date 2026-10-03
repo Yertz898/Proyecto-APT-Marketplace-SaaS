@@ -23,6 +23,11 @@ coverage.xml
 /backend/staticfiles/
 /backend/media/
 
+# ── Configuración local del editor ──────────────────────────────────────
+# Lo que cada quien use para editar es asunto suyo y no del repositorio.
+.vscode/
+.idea/
+
 # ── Node / Next.js ──────────────────────────────────────────────────────
 node_modules/
 .next/
