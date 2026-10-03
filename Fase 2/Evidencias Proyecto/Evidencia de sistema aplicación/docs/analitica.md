@@ -6,12 +6,17 @@ válido y no lo es.
 
 | Modelo | Tipo de problema | Métricas | Línea base |
 |---|---|---|---|
-| Pronóstico de demanda mensual por producto | Regresión sobre serie de tiempo | MAPE, MAE, RMSE | Promedio móvil |
+| Pronóstico de demanda mensual por categoría de lote | Regresión sobre serie de tiempo | MAPE, MAE, RMSE | Promedio móvil |
 | Segmentación y riesgo de abandono de clientes | Clasificación sobre variables RFM | Precisión, exhaustividad, F1 | Regla por recencia |
+
+El pronóstico es por **categoría de lote** y no por lote: los lotes de cupo único se venden
+una sola vez, así que no forman una serie de tiempo. Los datos de entrenamiento son
+sintéticos, calibrados con los montos reales de venta que entregó el cliente.
 
 Reglas que no se negocian:
 
 - Nunca usar accuracy, F1 ni matriz de confusión para el pronóstico de demanda.
+- El pronóstico usa `predict`, nunca `predict_proba`: eso es de clasificación.
 - Todo modelo se contrasta con su línea base. Si no la supera, no se integra.
 - El motor de recomendación de descuentos **no es un tercer modelo**: son reglas de
   negocio que consumen las salidas de los dos anteriores. Sugiere; el vendedor aprueba.

@@ -56,11 +56,11 @@ docker compose exec web npm run lint            # lint del frontend
 │   │   ├── core/             aislamiento por tienda y permisos por rol
 │   │   ├── usuarios/         cuentas, roles y autenticación JWT
 │   │   ├── tiendas/          Tienda, la raíz del aislamiento
-│   │   ├── catalogo/         catálogo de la tienda
-│   │   ├── precios/          tramos de precio por volumen
+│   │   ├── catalogo/         lotes y líneas de granel
+│   │   ├── precios/          tramos de precio para lotes y granel
 │   │   ├── pedidos/          pedidos con checkout simulado
 │   │   ├── clientes/         compradores y variables RFM
-│   │   ├── ingesta/          carga de datos desde planillas
+│   │   ├── ingesta/          carga masiva del catálogo desde planillas
 │   │   ├── analitica/        pronóstico, segmentación y reglas de descuento
 │   │   ├── agenda/           agenda de visitas a la tienda
 │   │   └── asistente/        asistente conversacional del vendedor
@@ -97,8 +97,8 @@ Rama por funcionalidad, nunca commits directos a `main`. Pull request revisado p
 otro integrante antes de integrar. Mensajes de commit en español y en imperativo.
 
 ```bash
-git switch -c precios/motor-escalonado
-git commit -m "agrega motor de precios escalonados"
+git switch -c precios/motor-por-tramos
+git commit -m "agrega motor de precios por tramos"
 ```
 
 La plantilla de pull request ([.github/pull_request_template.md](.github/pull_request_template.md))
@@ -139,9 +139,9 @@ Los errores tienen siempre la misma forma, con el mensaje en español:
 Funcionan de punta a punta la portada con su solicitud de acceso, la identidad pública
 de la tienda, la agenda de visitas y la sesión con sus tres pantallas.
 
-Pendiente: el catálogo, el carrito y los pedidos, la ingesta de planillas y la analítica.
-Las pantallas de esas partes ya existen y apuntan a clientes de API que todavía no tienen
-endpoint detrás.
+Pendiente: el catálogo de lotes y granel, el carrito y los pedidos, la carga masiva de
+catálogo y la analítica. Las pantallas de esas partes ya existen y apuntan a clientes de
+API que todavía no tienen endpoint detrás.
 
 De la agenda falta la bandeja del dueño para aceptar o rechazar visitas, los correos con
 archivo `.ics` y el recordatorio de 24 horas.

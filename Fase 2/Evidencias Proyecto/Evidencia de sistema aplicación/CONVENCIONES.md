@@ -4,8 +4,8 @@ Marketplace SaaS multi-tienda con analítica predictiva para PYMES del retail.
 Proyecto de título (Capstone PTY4614, Duoc UC). Equipo de dos personas, 18 semanas.
 
 Cliente piloto real: **Joyas_ye**, joyería con tienda física y canal en redes sociales
-que vende al detalle y al por mayor. El dueño es hombre; referirse a él como "el cliente"
-o "el dueño".
+que vende **solo por lotes cerrados y por gramo, a revendedores**. No vende piezas
+sueltas ni lleva stock. El dueño es hombre; referirse a él como "el cliente" o "el dueño".
 
 ## El invariante que no se rompe
 
@@ -40,23 +40,43 @@ no por preferencia.
 ## Modelo de dominio
 
 - **Tienda** — cada comercio suscrito. Es la raíz del aislamiento.
-- **Producto** con **variantes** (material, talla, terminación). El stock vive en la
-  variante, no en el producto.
-- **Lista de precios escalonados** — tramos por volumen de compra. Un mismo producto
-  tiene precio distinto según la cantidad. Esto es lo que resuelve la venta al detalle y
-  al por mayor con un solo catálogo, y es el módulo con más lógica de negocio del sistema.
-- **Pedido** — checkout **simulado**: se genera el pedido y se descuenta stock, pero no
+- **Lote** — unidad de venta cerrada, y la forma principal de vender. Campos: `codigo`
+  (único por tienda), nombre, precio neto, `tipo_cupo` (`MULTIPLE` o `UNICO`),
+  `cupos_totales`, `cupos_disponibles`, cantidad de piezas, material predominante y
+  `activo`. Un lote de cupo único tiene un cupo: se vende una sola vez.
+- **Composición del lote** — cuántas piezas trae de cada categoría (anillos, aros,
+  cadenas…). La suma de la composición debe cuadrar con la cantidad de piezas del lote:
+  es una validación al guardar, no un comentario. Un lote **no** es una lista de piezas
+  concretas, porque los modelos varían según lo que le llega al cliente.
+- **Línea de granel** — venta por gramo, con sus tramos de precio. No tiene stock: el
+  cliente no registra gramos, así que lleva un interruptor de disponibilidad que el dueño
+  enciende y apaga a mano.
+- **Pedido** — checkout **simulado**: se genera el pedido y se descuentan cupos, pero no
   se cobra. El pago se coordina fuera de la plataforma.
 - **Cliente comprador** — se le calculan variables de recencia, frecuencia y monto (RFM)
   para el modelo de segmentación.
+
+No hay productos, ni variantes, ni stock por pieza. Si un modelo nuevo parece necesitar
+"stock", casi siempre está mal planteado: lo que se cuenta son cupos de lote.
 
 ## Decisiones técnicas cerradas
 
 Estas son decisiones ya tomadas. No proponer alternativas ni cambiarlas sin que se pida.
 
 **Moneda y números** — Pesos chilenos, enteros, sin decimales. Guardar como `Integer`, nunca
-`Float`. El redondeo de un precio escalonado es hacia arriba al peso. Los precios se guardan
-y se muestran **con IVA incluido**.
+`Float`. Los precios se guardan **netos**: el pedido muestra neto, IVA y total por separado.
+El IVA es 19%.
+
+**Cómo se redondea** — En este orden y no en otro:
+
+1. `neto = truncar(gramos × precio por gramo)`
+2. `iva = neto × 0,19`, redondeado medio hacia arriba
+3. `total = neto + iva`
+
+El cálculo se hace con `Decimal` y `ROUND_HALF_UP`. El `round()` de Python usa redondeo
+bancario: con 3.828,50 devuelve 3.828 en vez de 3.829 y el total queda un peso corto.
+
+**Gramos** — Se guardan como `Decimal`, nunca `Float`.
 
 **Zona horaria y locale** — `America/Santiago`. `USE_TZ = True`, guardar en UTC, mostrar en
 hora local. Formato de fecha `dd-mm-aaaa`. Toda la interfaz en español de Chile.
@@ -73,32 +93,38 @@ público de una tienda, la tienda va en la ruta (`/t/<slug>/...`) y solo expone 
   ni a la gestión de usuarios.
 - `comprador` — cliente final o mayorista. No pertenece a ninguna tienda.
 
-**Precio mayorista** — Un comprador ve los tramos mayoristas solo si el dueño de la tienda lo
-marcó como mayorista aprobado. Un comprador no aprobado ve únicamente el precio de detalle.
-Esto es una regla de autorización, no un detalle de interfaz: se aplica en el backend al
-calcular el precio, no ocultando el tramo en el frontend.
-
-**Tramos de precio** — Definidos por cantidad mínima, sin solaparse. Se aplica el tramo de
-mayor cantidad mínima que la cantidad pedida alcance. Si no alcanza ninguno, precio de
-detalle. Validar al guardar que los tramos de una lista no se solapen.
+**Tramos de precio del granel** — Los umbrales en gramos (medio kilo, kilo) tienen
+prioridad. Si la cantidad no alcanza ninguno de ellos, se calcula un **monto de referencia**
+con el precio del primer tramo y se aplica el tramo en pesos que ese monto alcance. Bajo
+$20.000 de referencia, el pedido se rechaza. Los precios que entregó el cliente se usan tal
+cual: no se redondean ni se "ordenan". Validar al guardar que los tramos de una misma lista
+no se repitan.
 
 **Los umbrales son inclusivos.** "Sobre 20 mil" incluye los $20.000 exactos: la comparación
 es `>=`. Confirmado con el cliente el 27-09-2026.
+
+**Aviso de conveniencia** — Cuando comprar más sale más barato que lo pedido (entre 893 y
+999 g de línea hombre cuesta más que un kilo entero), el backend lo informa junto a la
+cotización y el frontend lo muestra. No se cambia la cantidad por el comprador: se le avisa.
 
 **Estados del pedido** — `borrador → confirmado → preparacion → entregado`, más `anulado`
 alcanzable desde cualquiera menos `entregado`. Las transiciones válidas se definen en un solo
 lugar del modelo; una transición no permitida es un error de validación, no un `assert`.
 
-**Stock** — Se descuenta al pasar a `confirmado`, no al agregar al carrito. El descuento va
-dentro de una transacción con bloqueo de la fila de la variante
-(`select_for_update`), porque dos compradores pueden confirmar la última unidad a la vez.
-Anular un pedido devuelve el stock.
+**Cupos** — Reemplazan al stock. Se descuentan al pasar el pedido a `confirmado`, no al
+agregar al carrito. El descuento va dentro de una transacción con bloqueo de la fila del
+lote (`select_for_update`), porque dos compradores pueden confirmar el último cupo a la vez.
+Anular un pedido devuelve el cupo.
 
-**Imágenes de producto** — En Cloudflare R2. Son públicas: se sirven por URL directa, sin
+**Imágenes del catálogo** — En Cloudflare R2. Son públicas: se sirven por URL directa, sin
 firmar. La base guarda solo la clave del objeto, nunca la URL completa. Validar tipo y tamaño
 al subir. El nombre del archivo lo genera el sistema, nunca se usa el que envía el usuario.
 
-## Ingesta de planillas
+## Carga masiva del catálogo
+
+Es la carga de lotes, líneas de granel y fotos desde una planilla. **No** carga historial
+de ventas: el cliente no lo tiene con ese detalle. Es una operación habitual del dueño,
+porque el catálogo rota seguido.
 
 Es el módulo que más va a fallar, porque el archivo lo hace una persona a mano.
 
@@ -106,10 +132,12 @@ Es el módulo que más va a fallar, porque el archivo lo hace una persona a mano
   (minúsculas, sin acentos, sin espacios sobrantes).
 - Una fila inválida **no aborta la carga**. Se acumulan los errores por número de fila y se
   devuelve un resumen: cuántas filas se cargaron, cuántas se rechazaron y por qué.
-- La carga es idempotente: subir dos veces la misma planilla no duplica las ventas. La clave
-  natural es (tienda, documento de venta, línea).
+- La carga es idempotente: subir dos veces la misma planilla no duplica nada. La clave
+  natural es (tienda, código del lote o de la línea).
+- Un lote que no viene en el archivo **no se borra**. Solo se desactiva si el dueño lo marca
+  explícitamente: una planilla incompleta no puede vaciar el catálogo.
 - Guardar cada carga con su archivo original, fecha y usuario, para poder auditar de dónde
-  salieron los datos que alimentan los modelos.
+  salió cada dato.
 - No hay historial real suficiente para entrenar. Se trabaja con datos sintéticos generados
   por nosotros, y **todo gráfico o métrica producido con ellos se rotula como tal** en la
   interfaz. Nunca mostrar un número sintético como si fuera del cliente.
@@ -121,11 +149,15 @@ válido y no lo es.
 
 | Modelo | Tipo de problema | Métricas | Línea base |
 |---|---|---|---|
-| Pronóstico de demanda mensual por producto | Regresión sobre serie de tiempo | MAPE, MAE, RMSE | Promedio móvil |
+| Pronóstico de demanda mensual por categoría de lote | Regresión sobre serie de tiempo | MAPE, MAE, RMSE | Promedio móvil |
 | Segmentación y riesgo de abandono de clientes | Clasificación sobre variables RFM | Precisión, exhaustividad, F1 | Regla por recencia |
 
 Nunca usar accuracy, F1 ni matriz de confusión para el pronóstico. Todo modelo se contrasta
 con su línea base: si no la supera, no se integra.
+
+El pronóstico es **por categoría de lote**, no por lote: los de cupo único se venden una
+sola vez y no forman una serie de tiempo. Los datos de entrenamiento son sintéticos,
+calibrados con los montos reales de venta que entregó el cliente.
 
 El **motor de recomendación de descuentos no es un tercer modelo**. Son reglas de negocio
 que consumen las salidas de los dos anteriores. Sugiere; el vendedor aprueba. Nunca ejecuta
@@ -133,10 +165,14 @@ campañas por su cuenta.
 
 ## Alcance
 
-Comprometido: marketplace multi-tienda, motor de precios escalonados, gestión de pedidos con
-checkout simulado, ingesta del historial de ventas desde planillas, panel de analítica,
-pronóstico de demanda, segmentación de clientes, recomendación de descuentos, asistente
-conversacional del vendedor.
+Comprometido: marketplace multi-tienda, motor de precios por tramos para lotes y granel,
+gestión de pedidos con checkout simulado, carga masiva de catálogo desde planillas, panel de
+analítica, pronóstico de demanda, segmentación de clientes, recomendación de descuentos,
+asistente conversacional del vendedor.
+
+La **agenda de visitas** está construida pero el cliente no la confirmó. Queda congelada:
+no se le suman funciones hasta cerrar el núcleo del negocio, y no se borra hasta que el
+cliente responda.
 
 **Fuera de alcance — no proponer ni implementar:**
 
@@ -148,10 +184,27 @@ conversacional del vendedor.
 
 Si el trabajo depende de uno de estos puntos, **preguntar antes de implementar**:
 
+Pendientes con el cliente:
+
+- Si confirma la agenda de visitas.
+- Descuento por cantidad de lotes: desde cuántos y de cuánto. Los tramos 1–2, 3–5 y 6 o
+  más los propusimos nosotros; el cliente nunca los dijo, así que **no se programan como
+  reales**: quedan configurables por tienda.
+- Cuánto tiempo se guarda un pedido que no se paga. Sin plazo, un lote de cupo único pedido
+  y no pagado queda bloqueado para siempre.
+- Si cualquiera puede comprar o el dueño aprueba a los compradores. De esto depende que el
+  modelo `AprobacionMayorista` se mantenga, se adapte o se elimine, y si existe un precio
+  mayorista distinto del normal.
+- Si se pueden sumar líneas de granel para alcanzar un tramo, o cada línea va por su cuenta.
+
+Pendientes del equipo:
+
 - Qué proveedor de modelo de lenguaje usa el asistente conversacional, y con qué presupuesto.
 - Si el asistente responde solo sobre datos de la tienda o también sobre el catálogo público.
 - Cómo se cobra la suscripción del vendedor, si es que se modela en esta fase.
-- Quién es Product Owner y quién Scrum Master en el equipo.
+- Si el vendedor puede ver el pronóstico. En el código es un permiso de una línea.
+- Qué entra a la demostración de noviembre y qué queda como trabajo futuro.
+- Qué versión de PostgreSQL es la única: el diagrama dice 16 y el CI usa 17.
 
 ## Seguridad
 
@@ -181,8 +234,9 @@ Si el trabajo depende de uno de estos puntos, **preguntar antes de implementar**
 - Cada endpoint que lee datos de tienda lleva una prueba que se autentica como tienda A y
   espera `404` al pedir un recurso de la tienda B. **`404`, no `403`**: un `403` confirma que
   el recurso existe.
-- El motor de precios escalonados se prueba en los bordes: cantidad justo bajo el tramo, justo
-  en el tramo, y sobre el último tramo.
+- El motor de precios por tramos se prueba en los bordes: justo bajo el umbral, justo en el
+  umbral y sobre el último tramo. También el rechazo bajo los $20.000 de referencia y el
+  aviso de conveniencia.
 
 ## Convenciones
 
@@ -203,12 +257,14 @@ Si el trabajo depende de uno de estos puntos, **preguntar antes de implementar**
 - **Compartido** — backend en Django REST Framework, motor de precios, contenerización,
   despliegue y pruebas.
 
+**Daniel es Product Owner y Pedro es Scrum Master.**
+
 ## Metodología
 
-Scrum con sprints de dos semanas. CRISP-DM estructura el trabajo analítico, pero **no corre
-en paralelo**: cada fase del ciclo (comprensión del negocio, comprensión de los datos,
-preparación, modelado, evaluación, despliegue) es un conjunto de historias del mismo
-backlog, con la misma cadencia.
+Scrum en cuatro sprints de tres semanas más un cierre. CRISP-DM estructura el trabajo
+analítico, pero **no corre en paralelo**: cada fase del ciclo (comprensión del negocio,
+comprensión de los datos, preparación, modelado, evaluación, despliegue) es un conjunto
+de historias del mismo backlog, con la misma cadencia.
 
 ## Comandos
 
