@@ -32,8 +32,7 @@ export function TiendaDeEjemplo() {
           </h2>
 
           <p className="max-w-[28em] text-[17px] leading-[1.55] text-[#D5DBE5] text-pretty">
-            DealCommerce es claro y ordenado por dentro. Tu tienda, por fuera, se ve como tú quieras: esta es
-            oscura, con morado, y vende cosmética al por mayor.
+            DealCommerce es claro y ordenado por dentro. Tu tienda, por fuera, se ve como tú quieras.
           </p>
 
           <Link

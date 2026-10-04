@@ -24,7 +24,7 @@ export function Hero() {
           </h1>
 
           <p className="max-w-[30em] text-[clamp(18px,1.45cqi,21px)] leading-[1.5] text-pizarra text-pretty">
-            Tu catálogo mayorista en línea, con precios por volumen que se calculan solos.
+            Tu catálogo mayorista en línea, con precios por cantidad que se calculan solos.
           </p>
 
           <div className="mt-2 flex w-full flex-wrap gap-3">
