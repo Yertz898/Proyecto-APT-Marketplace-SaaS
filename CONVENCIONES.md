@@ -3,9 +3,14 @@
 Marketplace SaaS multi-tienda con analítica predictiva para PYMES del retail.
 Proyecto de título (Capstone PTY4614, Duoc UC). Equipo de dos personas, 18 semanas.
 
-Cliente piloto real: **Joyas_ye**, joyería con tienda física y canal en redes sociales
-que vende **solo por lotes cerrados y por gramo, a revendedores**. No vende piezas
-sueltas ni lleva stock. El dueño es hombre; referirse a él como "el cliente" o "el dueño".
+DealCommerce es una plataforma para **cualquier PYME del retail**. Una tienda puede vender
+por unidad y llevar inventario; otra, por lote cerrado o por peso, sin controlar stock. El
+modelo admite las dos cosas y nada en el código se escribe a la medida de un cliente.
+
+Cliente piloto real: **Joyas_ye**, joyería con tienda física y canal en redes sociales. Su
+forma de vender —lotes y gramos, a revendedores— es **una configuración**, no el modelo de
+la plataforma: está en la sección "Configuración del cliente piloto". El dueño es hombre;
+referirse a él como "el cliente" o "el dueño".
 
 ## El invariante que no se rompe
 
@@ -40,24 +45,56 @@ no por preferencia.
 ## Modelo de dominio
 
 - **Tienda** — cada comercio suscrito. Es la raíz del aislamiento.
-- **Lote** — unidad de venta cerrada, y la forma principal de vender. Campos: `codigo`
-  (único por tienda), nombre, precio neto, `tipo_cupo` (`MULTIPLE` o `UNICO`),
-  `cupos_totales`, `cupos_disponibles`, cantidad de piezas, material predominante y
-  `activo`. Un lote de cupo único tiene un cupo: se vende una sola vez.
-- **Composición del lote** — cuántas piezas trae de cada categoría (anillos, aros,
-  cadenas…). La suma de la composición debe cuadrar con la cantidad de piezas del lote:
-  es una validación al guardar, no un comentario. Un lote **no** es una lista de piezas
-  concretas, porque los modelos varían según lo que le llega al cliente.
-- **Línea de granel** — venta por gramo, con sus tramos de precio. No tiene stock: el
-  cliente no registra gramos, así que lleva un interruptor de disponibilidad que el dueño
-  enciende y apaga a mano.
-- **Pedido** — checkout **simulado**: se genera el pedido y se descuentan cupos, pero no
-  se cobra. El pago se coordina fuera de la plataforma.
+- **Producto** — lo que una tienda vende. Campos: `codigo` (único por tienda), nombre,
+  descripción, categoría, precio neto, foto, `activo`, y los cuatro que lo hacen servir a
+  cualquier rubro:
+  - `forma_venta` — `unidad`, `lote` o `peso`.
+  - `controla_stock` — si la tienda lleva inventario de ese producto.
+  - `stock` — cantidad disponible (`Decimal`), solo si lo controla.
+  - `unidad_medida` — `unidad`, `g` o `kg`, según la forma de venta.
+  - `cantidad_minima` — mínimo de compra.
+
+  Un producto vendido por lote lleva además `cantidad_piezas`. **Los "cupos" no son un
+  concepto aparte**: son el stock de un producto vendido por lote, y un lote que se vende
+  una sola vez es un producto con `stock = 1`. Así descontar inventario es una sola lógica
+  para todas las tiendas.
+- **Categoría** — por tienda. La usan el catálogo, la composición de los lotes y el
+  pronóstico.
+- **Composición del lote** — solo para productos con `forma_venta = lote`: cuántas piezas
+  trae de cada categoría. La suma debe cuadrar con `cantidad_piezas`, y eso es una
+  validación al guardar, no un comentario. Un lote **no** es una lista de piezas concretas,
+  porque los modelos varían según lo que llega.
+- **Tramo de precio** — precio por volumen. **Siempre cuelga de un producto** y su valor es
+  un precio unitario neto, nunca un porcentaje. El umbral se mide en `cantidad`, `monto` o
+  `peso`, y es inclusivo.
+- **Pedido** — checkout **simulado**: se genera el pedido y se descuenta el stock de los
+  productos que lo controlan, pero no se cobra. El pago se coordina fuera de la plataforma.
 - **Cliente comprador** — se le calculan variables de recencia, frecuencia y monto (RFM)
   para el modelo de segmentación.
 
-No hay productos, ni variantes, ni stock por pieza. Si un modelo nuevo parece necesitar
-"stock", casi siempre está mal planteado: lo que se cuenta son cupos de lote.
+**En DealCommerce no hay descuentos.** Un tramo es un precio por volumen, no un porcentaje
+sobre otro precio, y no existen descuentos de toda la tienda ni promociones. Si algo parece
+pedir un porcentaje de descuento, está mal planteado: lo que corresponde es otro tramo.
+
+Las variantes (talla, color) quedan fuera de esta fase y se declaran como trabajo futuro. Se
+pueden agregar después sin romper este modelo.
+
+## Configuración del cliente piloto (Joyas_ye)
+
+Nada de esto es de la plataforma: es cómo quedó configurada **una** tienda. Ningún texto de
+Joyas_ye se escribe en el código.
+
+- Vende **por lote** y **por peso**, a revendedores. No vende por unidad.
+- Sus lotes **controlan stock** (el stock es lo que antes eran los cupos; un lote de cupo
+  único queda en 1). Su venta por gramo **no controla stock**: el cliente no registra
+  gramos, así que el producto se activa y se desactiva a mano.
+- Los precios que entregó se usan **tal cual**: no se redondean ni se "ordenan".
+- Los umbrales son inclusivos, confirmado con él el 27-09-2026.
+- En su tienda el dueño es también quien vende, así que el rol `vendedor` no se usa.
+
+Pendientes de él, que **no se programan como reales** hasta que responda: los tramos por
+cantidad de lotes, el plazo para liberar un pedido no pagado, si se suman líneas para
+alcanzar un tramo, y si hay compradores aprobados con precio distinto.
 
 ## Decisiones técnicas cerradas
 
@@ -69,14 +106,15 @@ El IVA es 19%.
 
 **Cómo se redondea** — En este orden y no en otro:
 
-1. `neto = truncar(gramos × precio por gramo)`
+1. `neto = truncar(cantidad × precio unitario)`
 2. `iva = neto × 0,19`, redondeado medio hacia arriba
 3. `total = neto + iva`
 
 El cálculo se hace con `Decimal` y `ROUND_HALF_UP`. El `round()` de Python usa redondeo
 bancario: con 3.828,50 devuelve 3.828 en vez de 3.829 y el total queda un peso corto.
 
-**Gramos** — Se guardan como `Decimal`, nunca `Float`.
+**Cantidades** — Se guardan como `Decimal`, nunca `Float`: una cantidad por peso admite
+decimales y el error de coma flotante no se tolera cuando de ahí sale un precio.
 
 **Zona horaria y locale** — `America/Santiago`. `USE_TZ = True`, guardar en UTC, mostrar en
 hora local. Formato de fecha `dd-mm-aaaa`. Toda la interfaz en español de Chile.
@@ -90,16 +128,22 @@ público de una tienda, la tienda va en la ruta (`/t/<slug>/...`) y solo expone 
 - `admin_plataforma` — nosotros. Ve todas las tiendas. No se crea desde la interfaz.
 - `dueno_tienda` — el vendedor suscrito. Ve y administra solo su tienda.
 - `vendedor` — empleado del dueño. Igual que el dueño pero sin acceso a facturación
-  ni a la gestión de usuarios. En Joyas_ye el dueño es también quien vende, así que
-  este rol existe para una tienda que sí tenga empleados, pero hoy no se usa.
+  ni a la gestión de usuarios.
 - `comprador` — cliente final o mayorista. No pertenece a ninguna tienda.
 
-**Tramos de precio del granel** — Los umbrales en gramos (medio kilo, kilo) tienen
-prioridad. Si la cantidad no alcanza ninguno de ellos, se calcula un **monto de referencia**
-con el precio del primer tramo y se aplica el tramo en pesos que ese monto alcance. Bajo
-$20.000 de referencia, el pedido se rechaza. Los precios que entregó el cliente se usan tal
-cual: no se redondean ni se "ordenan". Validar al guardar que los tramos de una misma lista
-no se repitan.
+**Tramos de precio** — Los umbrales en `peso` o en `cantidad` tienen prioridad. Si la
+cantidad pedida no alcanza ninguno de ellos, se calcula un **monto de referencia** —la
+cantidad por el `precio_neto` del producto— y se aplica el tramo por `monto` que ese monto
+alcance. Si no alcanza ni el primer tramo por monto, se rechaza.
+
+Son dos rechazos distintos y no hay que confundirlos:
+
+- **Bajo el mínimo por monto** — el monto de referencia no llega al umbral del primer tramo
+  por monto. De ahí salen los $20.000 de Joyas_ye.
+- **Bajo la cantidad mínima** — se pidió menos que la `cantidad_minima` del producto.
+
+El valor de un tramo es siempre un **precio unitario neto**, nunca un porcentaje. Validar al
+guardar que dos tramos del mismo producto no repitan umbral y unidad.
 
 **Los umbrales son inclusivos.** "Sobre 20 mil" incluye los $20.000 exactos: la comparación
 es `>=`. Confirmado con el cliente el 27-09-2026.
@@ -112,10 +156,10 @@ cotización y el frontend lo muestra. No se cambia la cantidad por el comprador:
 alcanzable desde cualquiera menos `entregado`. Las transiciones válidas se definen en un solo
 lugar del modelo; una transición no permitida es un error de validación, no un `assert`.
 
-**Cupos** — Reemplazan al stock. Se descuentan al pasar el pedido a `confirmado`, no al
-agregar al carrito. El descuento va dentro de una transacción con bloqueo de la fila del
-lote (`select_for_update`), porque dos compradores pueden confirmar el último cupo a la vez.
-Anular un pedido devuelve el cupo.
+**Stock** — Solo lo llevan los productos con `controla_stock`. Se descuenta al pasar el
+pedido a `confirmado`, no al agregar al carrito. El descuento va dentro de una transacción
+con bloqueo de la fila del producto (`select_for_update`), porque dos compradores pueden
+confirmar la última unidad a la vez. Anular un pedido devuelve el stock.
 
 **Imágenes del catálogo** — En Cloudflare R2. Son públicas: se sirven por URL directa, sin
 firmar. La base guarda solo la clave del objeto, nunca la URL completa. Validar tipo y tamaño
@@ -123,9 +167,9 @@ al subir. El nombre del archivo lo genera el sistema, nunca se usa el que envía
 
 ## Carga masiva del catálogo
 
-Es la carga de lotes, líneas de granel y fotos desde una planilla. **No** carga historial
-de ventas: el cliente no lo tiene con ese detalle. Es una operación habitual del dueño,
-porque el catálogo rota seguido.
+Es la carga de productos, sus tramos de precio y sus fotos desde una planilla, cualquiera
+sea la forma de venta. **No** carga historial de ventas: el cliente no lo tiene con ese
+detalle. Es una operación habitual del dueño, porque el catálogo rota seguido.
 
 Es el módulo que más va a fallar, porque el archivo lo hace una persona a mano.
 
@@ -134,9 +178,9 @@ Es el módulo que más va a fallar, porque el archivo lo hace una persona a mano
 - Una fila inválida **no aborta la carga**. Se acumulan los errores por número de fila y se
   devuelve un resumen: cuántas filas se cargaron, cuántas se rechazaron y por qué.
 - La carga es idempotente: subir dos veces la misma planilla no duplica nada. La clave
-  natural es (tienda, código del lote o de la línea).
-- Un lote que no viene en el archivo **no se borra**. Solo se desactiva si el dueño lo marca
-  explícitamente: una planilla incompleta no puede vaciar el catálogo.
+  natural es **(tienda, código del producto)**.
+- Un producto que no viene en el archivo **no se borra**. Solo se desactiva si el dueño lo
+  marca explícitamente: una planilla incompleta no puede vaciar el catálogo.
 - Guardar cada carga con su archivo original, fecha y usuario, para poder auditar de dónde
   salió cada dato.
 - No hay historial real suficiente para entrenar. Se trabaja con datos sintéticos generados
@@ -150,26 +194,26 @@ válido y no lo es.
 
 | Modelo | Tipo de problema | Métricas | Línea base |
 |---|---|---|---|
-| Pronóstico de demanda mensual por categoría de lote | Regresión sobre serie de tiempo | MAPE, MAE, RMSE | Promedio móvil |
+| Pronóstico de demanda mensual por producto o categoría | Regresión sobre serie de tiempo | MAPE, MAE, RMSE | Promedio móvil |
 | Segmentación y riesgo de abandono de clientes | Clasificación sobre variables RFM | Precisión, exhaustividad, F1 | Regla por recencia |
 
 Nunca usar accuracy, F1 ni matriz de confusión para el pronóstico. Todo modelo se contrasta
 con su línea base: si no la supera, no se integra.
 
-El pronóstico es **por categoría de lote**, no por lote: los de cupo único se venden una
-sola vez y no forman una serie de tiempo. Los datos de entrenamiento son sintéticos,
-calibrados con los montos reales de venta que entregó el cliente.
+El pronóstico es **por producto cuando hay historial suficiente y por categoría cuando no**.
+En Joyas_ye es por categoría: sus lotes que se venden una sola vez no forman una serie de
+tiempo. Los datos de entrenamiento son sintéticos, calibrados con los montos reales de venta
+que entregó el cliente.
 
-El **motor de recomendación de descuentos no es un tercer modelo**. Son reglas de negocio
-que consumen las salidas de los dos anteriores. Sugiere; el vendedor aprueba. Nunca ejecuta
-campañas por su cuenta.
+La **alerta de quiebre de stock** compara la demanda proyectada con el stock, y solo aplica a
+los productos que controlan stock.
 
 ## Alcance
 
-Comprometido: marketplace multi-tienda, motor de precios por tramos para lotes y granel,
-gestión de pedidos con checkout simulado, carga masiva de catálogo desde planillas, panel de
-analítica, pronóstico de demanda, segmentación de clientes, recomendación de descuentos,
-asistente conversacional del vendedor.
+Comprometido: marketplace multi-tienda, motor de precios por tramos, inventario y alerta de
+quiebre de stock, gestión de pedidos con checkout simulado, carga masiva de catálogo desde
+planillas, panel de analítica, pronóstico de demanda, segmentación de clientes y asistente
+conversacional del vendedor.
 
 La **agenda de visitas** está construida pero el cliente no la confirmó. Queda congelada:
 no se le suman funciones hasta cerrar el núcleo del negocio, y no se borra hasta que el
@@ -178,6 +222,9 @@ cliente responda.
 **Fuera de alcance — no proponer ni implementar:**
 
 - Pasarela de pagos real (Transbank, MercadoPago). El checkout queda simulado.
+- **Descuentos, promociones y sugerencias de descuento.** El precio por volumen se expresa
+  con tramos, que son precios, no porcentajes.
+- Variantes de producto (talla, color). Trabajo futuro; el modelo las admite después.
 - Búsqueda visual de productos por imagen.
 - Ejecución automática de campañas o envío de correos sin aprobación humana.
 
@@ -188,15 +235,16 @@ Si el trabajo depende de uno de estos puntos, **preguntar antes de implementar**
 Pendientes con el cliente:
 
 - Si confirma la agenda de visitas.
-- Descuento por cantidad de lotes: desde cuántos y de cuánto. Los tramos 1–2, 3–5 y 6 o
-  más los propusimos nosotros; el cliente nunca los dijo, así que **no se programan como
-  reales**: quedan configurables por tienda.
-- Cuánto tiempo se guarda un pedido que no se paga. Sin plazo, un lote de cupo único pedido
-  y no pagado queda bloqueado para siempre.
+- Tramos por cantidad de lotes en Joyas_ye: desde cuántos y a qué precio. Los cortes 1–2,
+  3–5 y 6 o más los propusimos nosotros; el cliente nunca los dijo, así que **no se programan
+  como reales**: quedan configurables por tienda.
+- Cuánto tiempo se guarda un pedido que no se paga. Sin plazo, un producto con una sola
+  unidad de stock, pedido y no pagado, queda bloqueado para siempre.
 - Si cualquiera puede comprar o el dueño aprueba a los compradores. De esto depende que el
   modelo `AprobacionMayorista` se mantenga, se adapte o se elimine, y si existe un precio
   mayorista distinto del normal.
-- Si se pueden sumar líneas de granel para alcanzar un tramo, o cada línea va por su cuenta.
+- Si en Joyas_ye se pueden sumar varios productos por peso para alcanzar un tramo, o cada
+  uno va por su cuenta.
 
 Pendientes del equipo:
 
