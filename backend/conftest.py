@@ -5,6 +5,8 @@ Las fixtures base de datos (siempre dos tiendas, ver CONVENCIONES.md > Pruebas) 
 agregan acá cuando existan los modelos.
 """
 
+from decimal import Decimal
+
 import pytest
 
 
@@ -190,11 +192,46 @@ def crear_categoria(db):
 
 
 @pytest.fixture
+def crear_producto(db):
+    """
+    Un producto cualquiera, por unidad y con inventario.
+
+    Es el caso corriente de una tienda de retail. Las otras dos formas de venta
+    tienen su propia fixture porque arrastran cosas distintas: el lote, su
+    composición; el peso, sus tramos.
+    """
+
+    def _crear(tienda, codigo="PROD-01", **extra):
+        from apps.catalogo.models import FormaVenta, Producto, UnidadMedida
+
+        datos = {
+            "tienda": tienda,
+            "codigo": codigo,
+            "nombre": f"Producto {codigo} (ejemplo)",
+            "precio_neto": 4990,
+            "forma_venta": FormaVenta.UNIDAD,
+            "unidad_medida": UnidadMedida.UNIDAD,
+            "controla_stock": True,
+            "stock": Decimal("25"),
+        }
+        datos.update(extra)
+        return Producto.objects.create(**datos)
+
+    return _crear
+
+
+@pytest.fixture
 def crear_lote(db):
-    """Un lote con su composición ya cuadrada."""
+    """Un producto vendido por lote, con su composición ya cuadrada."""
 
     def _crear(tienda, codigo="DEMO-01", categoria=None, piezas=10, **extra):
-        from apps.catalogo.models import Categoria, ComposicionLote, Lote
+        from apps.catalogo.models import (
+            Categoria,
+            ComposicionLote,
+            FormaVenta,
+            Producto,
+            UnidadMedida,
+        )
 
         categoria = categoria or Categoria.objects.create(
             tienda=tienda, nombre=f"categoria-{codigo}"
@@ -203,48 +240,70 @@ def crear_lote(db):
             "tienda": tienda,
             "codigo": codigo,
             "nombre": f"Lote {codigo} (ejemplo)",
-            "material": "Enchape de plata",
-            "cantidad_piezas": piezas,
+            "descripcion": "Enchape de plata.",
             "precio_neto": 45990,
-            "cupos_totales": 3,
-            "cupos_disponibles": 3,
+            "forma_venta": FormaVenta.LOTE,
+            "unidad_medida": UnidadMedida.UNIDAD,
+            "controla_stock": True,
+            "stock": Decimal("3"),
+            "cantidad_piezas": piezas,
         }
         datos.update(extra)
-        lote = Lote.objects.create(**datos)
+        producto = Producto.objects.create(**datos)
         ComposicionLote.objects.create(
-            tienda=tienda, lote=lote, categoria=categoria, cantidad=piezas
+            tienda=tienda, producto=producto, categoria=categoria, cantidad=piezas
         )
-        return lote
+        return producto
 
     return _crear
 
 
 @pytest.fixture
 def crear_granel(db):
-    """Una línea de granel con un tramo mínimo en pesos."""
+    """
+    Un producto vendido por peso, sin inventario y con un tramo mínimo.
+
+    El tramo por monto es el que fija la compra mínima: bajo ese monto de
+    referencia, cotizar se rechaza.
+    """
 
     def _crear(tienda, codigo="granel-hombre", **extra):
-        from apps.catalogo.models import LineaGranel
+        from apps.catalogo.models import FormaVenta, Producto, UnidadMedida
         from apps.precios.models import TramoPrecio, UnidadUmbral
 
         datos = {
             "tienda": tienda,
             "codigo": codigo,
             "nombre": f"Gramo de {codigo}",
-            "material": "Enchape de plata",
+            "descripcion": "Enchape de plata.",
+            "precio_neto": 650,
+            "forma_venta": FormaVenta.PESO,
+            "unidad_medida": UnidadMedida.GRAMO,
+            "controla_stock": False,
+            "stock": None,
         }
         datos.update(extra)
-        linea = LineaGranel.objects.create(**datos)
+        producto = Producto.objects.create(**datos)
         TramoPrecio.objects.create(
             tienda=tienda,
-            linea_granel=linea,
-            unidad_umbral=UnidadUmbral.PESOS,
+            producto=producto,
+            unidad_umbral=UnidadUmbral.MONTO,
             umbral=20000,
-            valor=650,
+            valor=producto.precio_neto,
         )
-        return linea
+        return producto
 
     return _crear
+
+
+@pytest.fixture
+def producto_a(tienda_a, crear_producto):
+    return crear_producto(tienda_a, codigo="A-100")
+
+
+@pytest.fixture
+def producto_b(tienda_b, crear_producto):
+    return crear_producto(tienda_b, codigo="B-100")
 
 
 @pytest.fixture
