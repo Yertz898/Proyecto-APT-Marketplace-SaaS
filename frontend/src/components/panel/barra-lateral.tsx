@@ -14,6 +14,7 @@ import {
   planAlcanza,
   porGrupo,
   rolAlcanza,
+  seccionDe,
   type Seccion,
 } from "./secciones";
 
@@ -83,6 +84,10 @@ function Menu({ onNavegar }: { onNavegar: () => void }) {
   const rol = sesion?.usuario.rol;
   const plan = sesion?.usuario.tienda?.plan;
 
+  // Una sola sección activa, la más específica. Comparar ruta por ruta dejaría
+  // «Inicio» encendido en todas, porque /panel es prefijo de todo el panel.
+  const actual = seccionDe(ruta);
+
   return (
     <nav aria-label="Secciones del panel" className="flex-1 overflow-y-auto px-3 py-4">
       {porGrupo().map(([grupo, secciones]) => {
@@ -102,7 +107,7 @@ function Menu({ onNavegar }: { onNavegar: () => void }) {
                 <li key={seccion.href}>
                   <Enlace
                     seccion={seccion}
-                    activa={ruta === seccion.href || ruta.startsWith(`${seccion.href}/`)}
+                    activa={actual?.href === seccion.href}
                     bloqueada={!planAlcanza(plan, seccion.plan)}
                     onNavegar={onNavegar}
                   />

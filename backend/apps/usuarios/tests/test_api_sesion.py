@@ -34,9 +34,12 @@ def test_entrega_los_dos_tokens_y_quien_inicio_sesion(client, dueno_a, tienda_a)
     assert cuerpo["access"] and cuerpo["refresh"]
     assert cuerpo["usuario"]["email"] == dueno_a.email
     assert cuerpo["usuario"]["rol"] == Rol.DUENO_TIENDA
+    # El plan viaja en la sesión porque el panel decide con él qué secciones
+    # ofrece. Quien decide de verdad sigue siendo el backend en cada endpoint.
     assert cuerpo["usuario"]["tienda"] == {
         "slug": tienda_a.slug,
         "nombre": tienda_a.nombre,
+        "plan": tienda_a.plan,
     }
 
 

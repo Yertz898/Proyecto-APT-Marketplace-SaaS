@@ -1,35 +1,12 @@
-"use client";
+import { PantallaCuenta } from "@/components/panel/pantalla-cuenta";
 
-import { useSesion } from "@/components/sesion/usar-sesion";
-import { cerrarSesion } from "@/lib/api/sesion";
-import { Cabecera, Cargando, SinConectar, Tarjeta } from "@/components/panel/piezas";
+/*
+ * La pantalla es de cliente porque se dibuja con la sesión del navegador, y un
+ * componente de cliente no puede exportar metadata. Por eso la ruta se queda
+ * acá, en servidor, y solo delega: así la pestaña tiene nombre.
+ */
+export const metadata = { title: "Cuenta" };
 
 export default function PaginaCuenta() {
-  const { sesion, hidratado } = useSesion();
-
-  if (!hidratado || !sesion) return <Cargando />;
-
-  return (
-    <>
-      <Cabecera titulo="Tu cuenta" descripcion="Tus datos y tu sesión." />
-
-      <Tarjeta>
-        <p className="text-[13px] font-semibold text-marino">{sesion.usuario.nombre}</p>
-        <p className="mt-1 text-[14px] text-pizarra">
-          {sesion.usuario.email} · {sesion.usuario.rolNombre}
-        </p>
-        <button
-          type="button"
-          onClick={cerrarSesion}
-          className="mt-4 h-11 cursor-pointer rounded-[12px] border border-niebla px-5 text-[14px] font-semibold text-acero transition-colors hover:bg-cielo"
-        >
-          Cerrar sesión
-        </button>
-      </Tarjeta>
-
-      <div className="mt-4">
-        <SinConectar seccion="El cambio de contraseña" />
-      </div>
-    </>
-  );
+  return <PantallaCuenta />;
 }

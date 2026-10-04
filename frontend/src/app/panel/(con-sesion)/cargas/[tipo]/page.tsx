@@ -23,12 +23,12 @@ export default async function PaginaCarga({ params }: PageProps<"/panel/cargas/[
 
   return (
     <>
-      <nav aria-label="Ubicación" className="text-xs text-texto-suave">
-        <Link href="/panel/cargas" className="transition-colors hover:text-texto">
+      <nav aria-label="Ubicación" className="text-xs text-pizarra">
+        <Link href="/panel/cargas" className="text-pizarra transition-colors hover:text-acero">
           Carga masiva
         </Link>
         {" · "}
-        <span className="text-texto">{TIPOS_DE_CARGA[tipo].titulo}</span>
+        <span className="text-marino">{TIPOS_DE_CARGA[tipo].titulo}</span>
       </nav>
 
       <CargaMasiva tipo={tipo} limites={limites} />
