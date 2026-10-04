@@ -48,9 +48,13 @@ export type IdentidadTienda = {
 /** Los cuatro roles del sistema, y no hay más (CONVENCIONES.md > Roles). */
 export type Rol = "admin_plataforma" | "dueno_tienda" | "vendedor" | "comprador";
 
+/** Niveles de suscripción. Deciden qué secciones del panel se habilitan. */
+export type Plan = "basico" | "premium" | "ultimate";
+
 export type TiendaDeLaSesion = {
   slug: string;
   nombre: string;
+  plan: Plan;
 };
 
 /**

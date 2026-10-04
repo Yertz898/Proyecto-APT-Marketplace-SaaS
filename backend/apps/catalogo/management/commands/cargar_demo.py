@@ -22,7 +22,7 @@ from django.db import transaction
 
 from apps.catalogo.models import Categoria, ComposicionLote, LineaGranel, Lote, TipoCupo
 from apps.precios.models import TramoPrecio, UnidadUmbral
-from apps.tiendas.models import Tienda
+from apps.tiendas.models import Plan, Tienda
 
 SLUG = "joyas-ye"
 NOMBRE_TIENDA = "Joyas Ye"
@@ -161,8 +161,12 @@ class Command(BaseCommand):
 
         with transaction.atomic():
             tienda, nueva = Tienda.objects.get_or_create(
-                slug=SLUG, defaults={"nombre": NOMBRE_TIENDA}
+                slug=SLUG, defaults={"nombre": NOMBRE_TIENDA, "plan": Plan.ULTIMATE}
             )
+            # Joyas_ye queda en Ultimate para poder mostrar el panel entero.
+            if tienda.plan != Plan.ULTIMATE:
+                tienda.plan = Plan.ULTIMATE
+                tienda.save(update_fields=["plan"])
             if nueva:
                 self._decir(f"  tienda creada: {tienda}")
 

@@ -7,20 +7,25 @@ import { useEffect, type ReactNode } from "react";
 import { esAdminDePlataforma, trabajaEnTienda, useSesion } from "@/components/sesion/usar-sesion";
 import { cerrarSesion } from "@/lib/api/sesion";
 
+import { BloqueadaPorPlan, Cargando, SinPermiso } from "./piezas";
+import { planAlcanza, rolAlcanza, seccionDe } from "./secciones";
+
 /*
  * Puerta del panel.
  *
- * Esto NO es la protección del panel: es la cortesía de no mostrar una pantalla
- * que no va a funcionar. Quien protege los datos es el backend, que exige el
- * token y el rol en cada endpoint. Un guardia de frontend se salta escribiendo
- * la dirección o borrando un nodo del DOM.
+ * Esto NO protege nada: es la cortesía de no mostrar una pantalla que no va a
+ * funcionar. Quien protege los datos es el backend, que exige el token, el rol
+ * y el plan en cada endpoint. Un guardia de frontend se salta escribiendo la
+ * dirección o borrando un nodo del DOM.
+ *
+ * Por eso lo que hace acá es explicar, no esconder: quien no tiene acceso ve
+ * por qué y qué puede hacer al respecto.
  */
 export function GuardiaDelPanel({ children }: { children: ReactNode }) {
   const { sesion, hidratado } = useSesion();
   const router = useRouter();
   const ruta = usePathname();
 
-  const puedeEntrar = trabajaEnTienda(sesion);
   const hayQueEntrar = hidratado && !sesion;
 
   useEffect(() => {
@@ -32,22 +37,26 @@ export function GuardiaDelPanel({ children }: { children: ReactNode }) {
   // Antes de que el navegador lea el almacenamiento, "sin sesión" no quiere
   // decir que no haya: quiere decir que todavía no se sabe.
   if (!hidratado || hayQueEntrar) {
-    return <Espera />;
+    return <Cargando />;
   }
 
-  if (!puedeEntrar) {
+  if (!trabajaEnTienda(sesion)) {
     return <CuentaSinPanel esDePlataforma={esAdminDePlataforma(sesion)} />;
   }
 
-  return <>{children}</>;
-}
+  const seccion = seccionDe(ruta);
+  if (seccion) {
+    if (!rolAlcanza(sesion?.usuario.rol, seccion)) {
+      return (
+        <SinPermiso detalle={`«${seccion.etiqueta}» es solo para el dueño de la tienda.`} />
+      );
+    }
+    if (!planAlcanza(sesion?.usuario.tienda?.plan, seccion.plan)) {
+      return <BloqueadaPorPlan plan={seccion.plan} etiqueta={seccion.etiqueta} />;
+    }
+  }
 
-function Espera() {
-  return (
-    <p className="py-16 text-center text-sm text-texto-suave" role="status">
-      Cargando…
-    </p>
-  );
+  return <>{children}</>;
 }
 
 /**
@@ -60,8 +69,10 @@ function Espera() {
 function CuentaSinPanel({ esDePlataforma }: { esDePlataforma: boolean }) {
   return (
     <div className="mx-auto max-w-[460px] py-16 text-center">
-      <h1 className="font-serif text-[28px] text-texto">Esta cuenta no tiene panel</h1>
-      <p className="mt-3 text-sm text-texto-suave">
+      <h1 className="font-jakarta text-[26px] font-extrabold text-marino">
+        Esta cuenta no tiene panel
+      </h1>
+      <p className="mt-3 text-sm text-pizarra">
         {esDePlataforma
           ? "Tu cuenta administra la plataforma, no una tienda en particular."
           : "El panel es para el dueño y los vendedores de una tienda. Tu cuenta es de comprador."}
@@ -71,13 +82,13 @@ function CuentaSinPanel({ esDePlataforma }: { esDePlataforma: boolean }) {
         <button
           type="button"
           onClick={cerrarSesion}
-          className="h-11 cursor-pointer rounded-full border border-lila/40 px-5 text-[13px] text-texto transition-colors hover:bg-violeta/18"
+          className="h-11 cursor-pointer rounded-[12px] border border-niebla px-5 text-[13px] font-semibold text-acero transition-colors hover:bg-cielo"
         >
           Cerrar sesión
         </button>
         <Link
           href={esDePlataforma ? "/plataforma" : "/"}
-          className="flex h-11 items-center rounded-full bg-violeta px-5 text-[13px] font-semibold text-white"
+          className="flex h-11 items-center rounded-[12px] bg-acero px-5 text-[13px] font-semibold text-white no-underline hover:no-underline"
         >
           {esDePlataforma ? "Ir a la administración" : "Ir al inicio"}
         </Link>

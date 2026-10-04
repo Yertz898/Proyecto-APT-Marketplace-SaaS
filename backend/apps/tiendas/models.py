@@ -13,6 +13,34 @@ from django.db import models
 from apps.tiendas.validadores import validar_color_hexadecimal
 
 
+class Plan(models.TextChoices):
+    """
+    Qué secciones del panel habilita la suscripción.
+
+    Quien decide es el backend, igual que con los roles: la interfaz dibuja el
+    candado, pero esconder una sección no protege nada.
+    """
+
+    BASICO = "basico", "Básico"
+    PREMIUM = "premium", "Premium"
+    ULTIMATE = "ultimate", "Ultimate"
+
+
+class Tipografia(models.TextChoices):
+    """
+    Lista cerrada de tipografías.
+
+    Cerrada a propósito: todas las tiendas comparten origen, así que una fuente
+    o un CSS escritos por un vendedor correrían en la página de otro. La tienda
+    elige de esta lista y nada más.
+    """
+
+    INTER = "inter", "Inter"
+    JAKARTA = "jakarta", "Plus Jakarta Sans"
+    MANROPE = "manrope", "Manrope"
+    CORMORANT = "cormorant", "Cormorant Garamond"
+
+
 class Tienda(models.Model):
     # El slug es la identidad pública: la tienda va en la ruta /t/<slug>/.
     slug = models.SlugField("identificador público", max_length=60, unique=True)
@@ -59,6 +87,19 @@ class Tienda(models.Model):
         max_length=7,
         blank=True,
         validators=[validar_color_hexadecimal],
+    )
+
+    tipografia = models.CharField(
+        "tipografía",
+        max_length=30,
+        choices=Tipografia.choices,
+        default=Tipografia.INTER,
+    )
+
+    # ── Suscripción ─────────────────────────────────────────────────────────
+
+    plan = models.CharField(
+        "plan", max_length=10, choices=Plan.choices, default=Plan.BASICO
     )
 
     whatsapp = models.URLField("enlace de WhatsApp", blank=True)

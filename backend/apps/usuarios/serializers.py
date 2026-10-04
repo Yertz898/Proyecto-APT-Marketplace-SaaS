@@ -15,10 +15,17 @@ from apps.usuarios.validadores import normalizar_rut, validar_rut
 
 
 class TiendaDeLaSesionSerializer(serializers.Serializer):
-    """Lo mínimo para que el panel sepa en qué tienda está parado."""
+    """
+    Lo mínimo para que el panel sepa en qué tienda está parado y qué habilita.
+
+    El plan viaja para que la interfaz dibuje el candado donde corresponde.
+    Quien decide de verdad sigue siendo el backend en cada endpoint: un plan
+    cambiado en el navegador no abre ninguna sección.
+    """
 
     slug = serializers.SlugField(read_only=True)
     nombre = serializers.CharField(read_only=True)
+    plan = serializers.CharField(read_only=True)
 
 
 class UsuarioSerializer(serializers.ModelSerializer):
