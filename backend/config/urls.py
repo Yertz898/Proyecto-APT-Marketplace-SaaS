@@ -18,7 +18,7 @@ urlpatterns = [
     # Módulos del dominio
     path("api/", include("apps.tiendas.urls")),
     path("api/", include("apps.agenda.urls")),
-    # path("api/catalogo/", include("apps.catalogo.urls")),
+    path("api/", include("apps.catalogo.urls")),
     # path("api/precios/", include("apps.precios.urls")),
     # path("api/pedidos/", include("apps.pedidos.urls")),
     # path("api/clientes/", include("apps.clientes.urls")),

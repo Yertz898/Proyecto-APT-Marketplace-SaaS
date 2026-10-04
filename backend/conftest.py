@@ -136,6 +136,125 @@ def configuracion_a(tienda_a):
 
 
 @pytest.fixture
+def codigos_de_error():
+    """
+    Los `code` de un ValidationError, no sus mensajes.
+
+    El texto de un mensaje se puede reescribir sin romper nada; el código es el
+    contrato. Afirmar sobre el código deja las pruebas atadas a la regla y no a
+    su redacción.
+    """
+
+    def _codigos(excinfo):
+        error = excinfo.value
+        if hasattr(error, "error_dict"):
+            return {
+                e.code
+                for errores in error.error_dict.values()
+                for e in errores
+                if e.code
+            }
+        return {e.code for e in error.error_list if e.code}
+
+    return _codigos
+
+
+# ── Catálogo, en las dos tiendas ────────────────────────────────────────────
+#
+# Cada fixture tiene su gemela en la otra tienda. Esa simetría es la que
+# permite probar el aislamiento en los dos sentidos: que A no ve lo de B y que
+# B no ve lo de A.
+
+
+@pytest.fixture
+def crear_categoria(db):
+    def _crear(tienda, nombre="anillos"):
+        from apps.catalogo.models import Categoria
+
+        return Categoria.objects.create(tienda=tienda, nombre=nombre)
+
+    return _crear
+
+
+@pytest.fixture
+def crear_lote(db):
+    """Un lote con su composición ya cuadrada."""
+
+    def _crear(tienda, codigo="DEMO-01", categoria=None, piezas=10, **extra):
+        from apps.catalogo.models import Categoria, ComposicionLote, Lote
+
+        categoria = categoria or Categoria.objects.create(
+            tienda=tienda, nombre=f"categoria-{codigo}"
+        )
+        datos = {
+            "tienda": tienda,
+            "codigo": codigo,
+            "nombre": f"Lote {codigo} (ejemplo)",
+            "material": "Enchape de plata",
+            "cantidad_piezas": piezas,
+            "precio_neto": 45990,
+            "cupos_totales": 3,
+            "cupos_disponibles": 3,
+        }
+        datos.update(extra)
+        lote = Lote.objects.create(**datos)
+        ComposicionLote.objects.create(
+            tienda=tienda, lote=lote, categoria=categoria, cantidad=piezas
+        )
+        return lote
+
+    return _crear
+
+
+@pytest.fixture
+def crear_granel(db):
+    """Una línea de granel con un tramo mínimo en pesos."""
+
+    def _crear(tienda, codigo="granel-hombre", **extra):
+        from apps.catalogo.models import LineaGranel
+        from apps.precios.models import TramoPrecio, UnidadUmbral
+
+        datos = {
+            "tienda": tienda,
+            "codigo": codigo,
+            "nombre": f"Gramo de {codigo}",
+            "material": "Enchape de plata",
+        }
+        datos.update(extra)
+        linea = LineaGranel.objects.create(**datos)
+        TramoPrecio.objects.create(
+            tienda=tienda,
+            linea_granel=linea,
+            unidad_umbral=UnidadUmbral.PESOS,
+            umbral=20000,
+            precio_unitario_neto=650,
+        )
+        return linea
+
+    return _crear
+
+
+@pytest.fixture
+def lote_a(tienda_a, crear_lote):
+    return crear_lote(tienda_a, codigo="A-001")
+
+
+@pytest.fixture
+def lote_b(tienda_b, crear_lote):
+    return crear_lote(tienda_b, codigo="B-001")
+
+
+@pytest.fixture
+def granel_a(tienda_a, crear_granel):
+    return crear_granel(tienda_a, codigo="granel-a")
+
+
+@pytest.fixture
+def granel_b(tienda_b, crear_granel):
+    return crear_granel(tienda_b, codigo="granel-b")
+
+
+@pytest.fixture
 def aprobacion_a(tienda_a, comprador):
     from apps.clientes.models import AprobacionMayorista, EstadoMayorista
 

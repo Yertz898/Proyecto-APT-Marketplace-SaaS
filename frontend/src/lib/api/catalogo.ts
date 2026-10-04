@@ -1,25 +1,28 @@
 import type { CotizacionGranel, LineaGranel, Lote, PaginaDeLotes } from "@/lib/tipos";
 
+import { API_SERVIDOR as API } from "./base";
+
 /*
  * Catálogo público de una tienda: lotes y líneas de granel.
  *
- * El backend todavía no existe. Los listados devuelven vacío y las fichas null,
- * para que las pantallas se construyan contra la forma final de los datos.
+ * El backend entrega el precio neto, el IVA y el total ya calculados, y
+ * redacta el mínimo de compra. El navegador no hace aritmética de dinero: los
+ * tramos dependen del pedido completo y un cupo puede agotarse mientras el
+ * comprador decide.
  *
- * Endpoints a implementar:
- *   GET  /t/{slug}/lotes?pagina=
- *   GET  /t/{slug}/lotes/{codigo}
- *   GET  /t/{slug}/granel
- *   GET  /t/{slug}/granel/{codigo}
- *   POST /t/{slug}/granel/{codigo}/cotizar
+ * Una tienda o un código que no existen responden 404, igual que un lote
+ * inactivo, agotado o de otra tienda. Acá eso se traduce a `null` o a una
+ * página vacía, nunca a una excepción: la vitrina muestra "no encontrado" en
+ * vez de caerse.
  *
- * Recordatorios al implementarlos (ver CONVENCIONES.md):
- * - Solo se exponen datos publicados de esa tienda.
- * - El precio del granel lo calcula el backend, incluido el aviso de
- *   conveniencia y el rechazo por bajo el mínimo.
- * - Las URLs de las fotos vienen de Cloudflare R2; hay que declarar ese dominio
- *   en images.remotePatterns de next.config.ts antes de que lleguen imágenes.
+ * Pendiente del Sprint 3: `cotizarGranel`.
  */
+
+const VACIA = (pagina: number): PaginaDeLotes => ({
+  lotes: [],
+  paginaActual: pagina,
+  totalPaginas: 0,
+});
 
 export class ApiPendiente extends Error {
   constructor(endpoint: string) {
@@ -28,26 +31,40 @@ export class ApiPendiente extends Error {
   }
 }
 
+async function pedir<T>(ruta: string): Promise<T | null> {
+  try {
+    const respuesta = await fetch(`${API}${ruta}`, {
+      // El catálogo cambia cuando el dueño lo edita o se agota un cupo.
+      next: { revalidate: 30 },
+    });
+
+    return respuesta.ok ? ((await respuesta.json()) as T) : null;
+  } catch {
+    // Con el backend apagado la vitrina responde vacío en vez de caerse.
+    return null;
+  }
+}
+
 export async function obtenerLotes(slug: string, pagina: number): Promise<PaginaDeLotes> {
-  void slug;
-  return { lotes: [], paginaActual: pagina, totalPaginas: 0 };
+  const tienda = encodeURIComponent(slug);
+  const datos = await pedir<PaginaDeLotes>(`/t/${tienda}/lotes?pagina=${pagina}`);
+
+  return datos ?? VACIA(pagina);
 }
 
 export async function obtenerLote(slug: string, codigo: string): Promise<Lote | null> {
-  void slug;
-  void codigo;
-  return null;
+  const tienda = encodeURIComponent(slug);
+  return pedir<Lote>(`/t/${tienda}/lotes/${encodeURIComponent(codigo)}`);
 }
 
 export async function obtenerLineasGranel(slug: string): Promise<LineaGranel[]> {
-  void slug;
-  return [];
+  const datos = await pedir<LineaGranel[]>(`/t/${encodeURIComponent(slug)}/granel`);
+  return datos ?? [];
 }
 
 export async function obtenerLineaGranel(slug: string, codigo: string): Promise<LineaGranel | null> {
-  void slug;
-  void codigo;
-  return null;
+  const tienda = encodeURIComponent(slug);
+  return pedir<LineaGranel>(`/t/${tienda}/granel/${encodeURIComponent(codigo)}`);
 }
 
 /** El precio lo calcula el backend; el navegador solo muestra lo que devuelve. */
