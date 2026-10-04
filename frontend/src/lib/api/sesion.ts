@@ -96,11 +96,16 @@ export async function pedirConSesion(ruta: string, opciones: RequestInit = {}): 
   const llamar = async () => {
     const acceso = instantanea()?.acceso;
 
+    // Un cuerpo multipart escribe su propio Content-Type, con la frontera que
+    // separa las partes. Ponerlo a mano la deja fuera y el servidor no puede
+    // leer el archivo.
+    const esFormulario = opciones.body instanceof FormData;
+
     try {
       return await fetch(`${API}${ruta}`, {
         ...opciones,
         headers: {
-          "Content-Type": "application/json",
+          ...(esFormulario ? {} : { "Content-Type": "application/json" }),
           ...(acceso ? { Authorization: `Bearer ${acceso}` } : {}),
           ...opciones.headers,
         },

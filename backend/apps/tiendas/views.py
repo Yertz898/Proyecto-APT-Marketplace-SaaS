@@ -4,8 +4,10 @@ from rest_framework import generics
 from rest_framework.permissions import AllowAny
 from rest_framework.throttling import ScopedRateThrottle
 
+from apps.core.permissions import EsDuenoDeTienda, TrabajaEnLaTienda
 from apps.tiendas.models import Tienda
 from apps.tiendas.serializers import (
+    PerfilDeTiendaSerializer,
     SolicitudDeAccesoSerializer,
     TiendaPublicaSerializer,
 )
@@ -49,3 +51,29 @@ class PedirAcceso(generics.CreateAPIView):
     authentication_classes = []
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = "solicitudes"
+
+
+class PerfilDeTienda(generics.RetrieveUpdateAPIView):
+    """
+    El perfil de la tienda propia, desde el panel.
+
+    No hay identificador en la ruta, y no es un descuido: la tienda sale del
+    token y de ninguna otra parte (CONVENCIONES.md > Cómo se resuelve la tienda
+    en cada petición). Sin un `id` que forzar, no existe la petición que pida el
+    perfil de otra tienda.
+
+    Leer lo puede el dueño o un vendedor; escribir, solo el dueño. Al vendedor
+    se le responde 403 y no 404: no se le está escondiendo nada, es su propia
+    tienda y la ve igual.
+    """
+
+    serializer_class = PerfilDeTiendaSerializer
+    http_method_names = ["get", "patch", "head", "options"]
+
+    def get_permissions(self):
+        if self.request.method in ("GET", "HEAD", "OPTIONS"):
+            return [TrabajaEnLaTienda()]
+        return [EsDuenoDeTienda()]
+
+    def get_object(self):
+        return self.request.user.tienda

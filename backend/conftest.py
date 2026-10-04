@@ -88,6 +88,19 @@ def dueno_a(tienda_a):
 
 
 @pytest.fixture
+def dueno_b(tienda_b):
+    from apps.usuarios.models import Rol, Usuario
+
+    return Usuario.objects.create_user(
+        email="dueno.b@ejemplo.cl",
+        password="clave-de-prueba",
+        nombre="Dueño B",
+        rol=Rol.DUENO_TIENDA,
+        tienda=tienda_b,
+    )
+
+
+@pytest.fixture
 def vendedor_b(tienda_b):
     from apps.usuarios.models import Rol, Usuario
 

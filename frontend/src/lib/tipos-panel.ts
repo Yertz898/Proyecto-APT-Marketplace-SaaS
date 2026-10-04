@@ -5,6 +5,8 @@
  * distintas y no deben compartir componentes ni modelos.
  */
 
+import type { Imagen, Plan } from "@/lib/tipos";
+
 /** Cada tipo de carga tiene su plantilla, su validación y su pantalla. */
 export type TipoCarga = "lotes" | "granel" | "fotos";
 
@@ -54,3 +56,50 @@ export type CargaHistorial = {
   /** Texto de resultado redactado por el backend. */
   resultado: string;
 };
+
+// ── Perfil de la tienda ─────────────────────────────────────────────────────
+
+/**
+ * Una tipografía de la lista cerrada que mantiene el backend.
+ *
+ * La lista viaja con el perfil en vez de estar escrita acá: todas las tiendas
+ * comparten origen, así que la fuente no la elige el vendedor escribiéndola,
+ * sino eligiéndola de lo que el backend permite.
+ */
+export type TipografiaDisponible = {
+  valor: string;
+  nombre: string;
+};
+
+/** El perfil tal como lo entrega GET /panel/tienda. */
+export type PerfilDeTienda = {
+  slug: string;
+  nombre: string;
+  plan: Plan;
+  logoActual: Imagen | null;
+  bannerActual: Imagen | null;
+  colorPrimario: string;
+  colorPrimarioHover: string;
+  colorAcento: string;
+  colorDestacado: string;
+  tipografia: string;
+  whatsapp: string;
+  instagram: string;
+  tipografiasDisponibles: TipografiaDisponible[];
+  /** Lo decide el plan, y lo decide el backend. El candado de la interfaz solo lo refleja. */
+  puedeEditarLaMarca: boolean;
+};
+
+/** Lo que se manda en un PATCH. Todo opcional: se envía solo lo que cambió. */
+export type CambiosDelPerfil = Partial<{
+  nombre: string;
+  colorPrimario: string;
+  colorPrimarioHover: string;
+  colorAcento: string;
+  colorDestacado: string;
+  tipografia: string;
+  whatsapp: string;
+  instagram: string;
+  logo: File;
+  banner: File;
+}>;

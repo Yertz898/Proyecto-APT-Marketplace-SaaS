@@ -153,6 +153,15 @@ LOTES = [
 ]
 
 
+#: La paleta de Joyas_ye, la misma que ya usa su vitrina.
+PALETA = {
+    "color_primario": "#7C3AED",
+    "color_primario_hover": "#6D28D9",
+    "color_acento": "#C8A96A",
+    "color_destacado": "#E0A526",
+}
+
+
 class Command(BaseCommand):
     help = "Carga el catálogo de demostración de Joyas_ye. Idempotente."
 
@@ -163,10 +172,10 @@ class Command(BaseCommand):
             tienda, nueva = Tienda.objects.get_or_create(
                 slug=SLUG, defaults={"nombre": NOMBRE_TIENDA, "plan": Plan.ULTIMATE}
             )
-            # Joyas_ye queda en Ultimate para poder mostrar el panel entero.
-            if tienda.plan != Plan.ULTIMATE:
-                tienda.plan = Plan.ULTIMATE
-                tienda.save(update_fields=["plan"])
+            # Joyas_ye queda en Ultimate para poder mostrar el panel entero, y
+            # con su paleta puesta para que la vitrina no caiga en los colores
+            # de la plataforma. Se escribe siempre: es lo que define la demo.
+            self._marca(tienda)
             if nueva:
                 self._decir(f"  tienda creada: {tienda}")
 
@@ -175,6 +184,13 @@ class Command(BaseCommand):
             self._lotes(tienda, categorias)
 
         self._resumen(tienda)
+
+    def _marca(self, tienda):
+        """Plan y paleta de la tienda de demostración."""
+        tienda.plan = Plan.ULTIMATE
+        for campo, valor in PALETA.items():
+            setattr(tienda, campo, valor)
+        tienda.save(update_fields=["plan", *PALETA])
 
     def _decir(self, texto):
         if not self.silencioso:

@@ -52,3 +52,14 @@ export function trabajaEnTienda(sesion: Sesion | null): boolean {
 export function esAdminDePlataforma(sesion: Sesion | null): boolean {
   return sesion?.usuario.rol === "admin_plataforma";
 }
+
+/**
+ * El dueño, no el vendedor.
+ *
+ * Marca la diferencia en lo que el vendedor ve pero no cambia: el perfil de la
+ * tienda, el equipo y el plan. Igual que todo lo demás, esconder el botón es
+ * cortesía; el backend rechaza la petición venga de donde venga.
+ */
+export function esDuenoDeTienda(sesion: Sesion | null): boolean {
+  return sesion?.usuario.rol === "dueno_tienda";
+}
