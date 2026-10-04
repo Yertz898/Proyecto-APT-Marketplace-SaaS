@@ -227,7 +227,7 @@ def crear_granel(db):
             linea_granel=linea,
             unidad_umbral=UnidadUmbral.PESOS,
             umbral=20000,
-            precio_unitario_neto=650,
+            valor=650,
         )
         return linea
 

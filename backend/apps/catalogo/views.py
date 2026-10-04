@@ -75,7 +75,7 @@ class ListaDeGranel(VitrinaMixin, generics.ListAPIView):
     queryset = LineaGranel.objects.all()
 
     def get_queryset(self):
-        return super().get_queryset().prefetch_related("categorias", "tramos")
+        return super().get_queryset().prefetch_related("tramos")
 
 
 class DetalleDeGranel(VitrinaMixin, generics.RetrieveAPIView):
@@ -84,4 +84,4 @@ class DetalleDeGranel(VitrinaMixin, generics.RetrieveAPIView):
     queryset = LineaGranel.objects.all()
 
     def get_queryset(self):
-        return super().get_queryset().prefetch_related("categorias", "tramos")
+        return super().get_queryset().prefetch_related("tramos")

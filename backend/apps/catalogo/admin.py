@@ -30,7 +30,6 @@ class AdminLineaGranel(admin.ModelAdmin):
     list_display = ["codigo", "nombre", "tienda", "disponible"]
     list_filter = ["tienda", "disponible"]
     search_fields = ["codigo", "nombre"]
-    filter_horizontal = ["categorias"]
 
 
 @admin.register(Categoria)

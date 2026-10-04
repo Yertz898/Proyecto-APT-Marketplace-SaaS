@@ -70,7 +70,7 @@ class Lote(ModeloDeTienda):
 
     codigo = models.CharField("código", max_length=40)
     nombre = models.CharField("nombre", max_length=150)
-    material = models.CharField("material predominante", max_length=80, blank=True)
+    material = models.CharField("material predominante", max_length=60)
 
     cantidad_piezas = models.PositiveIntegerField("cantidad de piezas")
 
@@ -86,7 +86,12 @@ class Lote(ModeloDeTienda):
     cupos_totales = models.PositiveIntegerField("cupos totales", default=1)
     cupos_disponibles = models.PositiveIntegerField("cupos disponibles", default=1)
 
-    foto = models.ImageField("foto", upload_to="lotes/", blank=True, null=True)
+    # varchar(255) en el diccionario: la base guarda la clave del objeto, nunca
+    # la URL completa. ImageField almacena exactamente eso y además valida que
+    # el archivo sea una imagen.
+    foto = models.ImageField(
+        "foto", upload_to="lotes/", max_length=255, blank=True, null=True
+    )
     activo = models.BooleanField("activo", default=True)
 
     objects = ManagerDeTienda.from_queryset(QuerySetDeLotes)()
@@ -250,16 +255,23 @@ class LineaGranel(ModeloDeTienda):
 
     codigo = models.CharField("código", max_length=40)
     nombre = models.CharField("nombre", max_length=150)
-    material = models.CharField("material", max_length=80, blank=True)
+    material = models.CharField("material", max_length=60)
 
-    categorias = models.ManyToManyField(
-        Categoria,
-        verbose_name="categorías que abarca",
-        related_name="lineas_granel",
+    # Texto y no relación, como lo fija el diccionario: acá las categorías son
+    # descriptivas ("cadenas, pulseras"), no estructurales como en la
+    # composición de un lote.
+    categorias = models.CharField(
+        "categorías que abarca",
+        max_length=200,
         blank=True,
+        help_text="Separadas por coma. Ej.: cadenas, pulseras.",
     )
 
     disponible = models.BooleanField("disponible", default=True)
+
+    foto = models.ImageField(
+        "foto de referencia", upload_to="granel/", max_length=255, blank=True, null=True
+    )
 
     objects = ManagerDeTienda.from_queryset(QuerySetDeGranel)()
 

@@ -142,6 +142,7 @@ def test_un_lote_recien_creado_sin_composicion_se_puede_guardar(tienda_a):
         tienda=tienda_a,
         codigo="NUEVO",
         nombre="Nuevo",
+        material="Enchape de plata",
         cantidad_piezas=5,
         precio_neto=1000,
     )

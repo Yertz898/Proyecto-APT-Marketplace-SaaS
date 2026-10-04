@@ -71,10 +71,7 @@ def test_los_tramos_del_granel_de_hombre_son_los_del_cliente(cargar):
     tienda = cargar()
     linea = LineaGranel.objects.de_tienda(tienda).get(codigo="granel-hombre")
 
-    tramos = {
-        (t.unidad_umbral, int(t.umbral)): t.precio_unitario_neto
-        for t in linea.tramos.all()
-    }
+    tramos = {(t.unidad_umbral, int(t.umbral)): t.valor for t in linea.tramos.all()}
 
     assert tramos == {
         (UnidadUmbral.PESOS, 20000): 650,
@@ -89,7 +86,7 @@ def test_la_plata_colombiana_tiene_un_solo_tramo(cargar):
     linea = LineaGranel.objects.de_tienda(tienda).get(codigo="granel-plata-colombiana")
 
     assert linea.tramos.count() == 1
-    assert linea.tramos.get().precio_unitario_neto == 1800
+    assert linea.tramos.get().valor == 1800
 
 
 def test_los_umbrales_en_gramos_van_como_gramos(cargar):

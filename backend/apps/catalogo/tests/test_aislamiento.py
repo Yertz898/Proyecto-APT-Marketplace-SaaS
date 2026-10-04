@@ -167,7 +167,7 @@ def test_un_tramo_no_puede_colgar_de_una_linea_de_otra_tienda(
         linea_granel=granel_b,
         unidad_umbral=UnidadUmbral.PESOS,
         umbral=20000,
-        precio_unitario_neto=650,
+        valor=650,
     )
 
     with pytest.raises(ValidationError) as fallo:

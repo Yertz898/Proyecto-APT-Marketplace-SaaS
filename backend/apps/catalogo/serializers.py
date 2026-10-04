@@ -88,9 +88,7 @@ class LoteSerializer(serializers.ModelSerializer):
 class TramoSerializer(serializers.Serializer):
     umbral = serializers.SerializerMethodField()
     unidadUmbral = serializers.CharField(source="unidad_umbral", read_only=True)
-    precioGramoNeto = serializers.IntegerField(
-        source="precio_unitario_neto", read_only=True
-    )
+    precioGramoNeto = serializers.IntegerField(source="valor", read_only=True)
 
     def get_umbral(self, tramo) -> float | int:
         """Entero cuando no tiene decimales, para que la vitrina no muestre «500,00»."""
@@ -117,7 +115,8 @@ class LineaGranelSerializer(serializers.ModelSerializer):
         ]
 
     def get_categorias(self, linea) -> list[str]:
-        return [c.nombre for c in linea.categorias.all()]
+        """El diccionario las guarda como texto separado por coma."""
+        return [c.strip() for c in linea.categorias.split(",") if c.strip()]
 
     def get_tramos(self, linea) -> list[dict]:
         """

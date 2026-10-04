@@ -61,7 +61,10 @@ class TramoPrecio(ModeloDeTienda):
     # tolera el error de coma flotante.
     umbral = models.DecimalField("umbral", max_digits=12, decimal_places=2)
 
-    precio_unitario_neto = models.PositiveIntegerField("precio unitario neto")
+    # El diccionario lo llama `valor` porque significa dos cosas según el
+    # destino: en el granel es el precio por gramo neto, y en los tramos por
+    # cantidad de lotes es un porcentaje de descuento.
+    valor = models.PositiveIntegerField("precio por gramo neto o % de descuento")
 
     class Meta(ModeloDeTienda.Meta):
         verbose_name = "tramo de precio"
@@ -85,7 +88,7 @@ class TramoPrecio(ModeloDeTienda):
                 name="precios_umbral_no_negativo",
             ),
             models.CheckConstraint(
-                condition=models.Q(precio_unitario_neto__gt=0),
+                condition=models.Q(valor__gt=0),
                 name="precios_precio_positivo",
             ),
             # Un tramo de una línea se mide en pesos o gramos; uno por cantidad

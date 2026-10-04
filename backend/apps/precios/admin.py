@@ -12,6 +12,6 @@ class AdminTramoPrecio(admin.ModelAdmin):
         "linea_granel",
         "unidad_umbral",
         "umbral",
-        "precio_unitario_neto",
+        "valor",
     ]
     list_filter = ["tienda", "unidad_umbral"]

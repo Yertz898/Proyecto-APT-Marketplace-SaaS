@@ -167,7 +167,7 @@ class Command(BaseCommand):
                 self._decir(f"  tienda creada: {tienda}")
 
             categorias = self._categorias(tienda)
-            self._granel(tienda, categorias)
+            self._granel(tienda)
             self._lotes(tienda, categorias)
 
         self._resumen(tienda)
@@ -185,7 +185,7 @@ class Command(BaseCommand):
         self._decir(f"  categorías: {len(categorias)}")
         return categorias
 
-    def _granel(self, tienda, categorias):
+    def _granel(self, tienda):
         for datos in LINEAS_DE_GRANEL:
             linea, _ = LineaGranel.objects.update_or_create(
                 tienda=tienda,
@@ -193,20 +193,17 @@ class Command(BaseCommand):
                 defaults={
                     "nombre": datos["nombre"],
                     "material": datos["material"],
+                    "categorias": ", ".join(datos["categorias"]),
                     "disponible": True,
                 },
             )
-            linea.categorias.set(
-                [categorias[c] for c in datos["categorias"] if c in categorias]
-            )
-
             for unidad, umbral, precio in datos["tramos"]:
                 TramoPrecio.objects.update_or_create(
                     tienda=tienda,
                     linea_granel=linea,
                     unidad_umbral=unidad,
                     umbral=Decimal(umbral),
-                    defaults={"precio_unitario_neto": precio},
+                    defaults={"valor": precio},
                 )
 
         self._decir(f"  líneas de granel: {len(LINEAS_DE_GRANEL)}")
