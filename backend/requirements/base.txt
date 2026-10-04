@@ -11,6 +11,10 @@ django-filter~=25.1
 # Base de datos
 psycopg[binary]~=3.2.0            # driver PostgreSQL
 
+# Carga masiva de catálogo
+openpyxl~=3.1.5                   # lee y escribe .xlsx
+filetype~=1.2.0                   # reconoce el formato por los primeros bytes
+
 # Archivos en Cloudflare R2 (API compatible con S3)
 django-storages~=1.14.6
 boto3~=1.40.0

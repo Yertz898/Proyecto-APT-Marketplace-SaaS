@@ -35,9 +35,9 @@ export const TIPOS_DE_CARGA = {
   fotos: {
     titulo: "Fotos de productos",
     descripcion:
-      "Un .zip o .rar con las imágenes. Se emparejan con los lotes por el nombre de archivo de la columna foto.",
+      "Un .zip con las imágenes. Se emparejan con los lotes por el nombre de archivo de la columna foto.",
     columnas: [],
-    extensiones: [".zip", ".rar"],
+    extensiones: [".zip"],
   },
 } as const satisfies Record<
   TipoCarga,
@@ -55,6 +55,10 @@ export function esTipoDeCarga(valor: string): valor is TipoCarga {
 const FORMATOS_RECHAZADOS: Record<string, string> = {
   ".xls": "El formato .xls es antiguo. Abre el archivo en Excel y usa Archivo → Guardar como → Libro de Excel (.xlsx).",
   ".xlsm": "El formato .xlsm contiene macros y no se acepta. Guárdalo como Libro de Excel (.xlsx), sin macros.",
+  // El .rar necesita un programa aparte para crearse, así que explicamos el
+  // camino al .zip en vez de rechazarlo a secas: Windows lo abre y lo comprime
+  // sin instalar nada.
+  ".rar": "El formato .rar no se acepta. Abre el archivo, selecciona las fotos y usa clic derecho → Comprimir en archivo ZIP.",
 };
 
 export type RevisionArchivo = { ok: true } | { ok: false; mensaje: string };
