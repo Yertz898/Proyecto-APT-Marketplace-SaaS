@@ -142,9 +142,19 @@ Todo cuelga de `/api`.
 | `POST` | `/api/auth/registro` | cualquiera (crea compradores) |
 | `GET` | `/api/auth/yo` | con sesión |
 | `GET` | `/api/t/<slug>/tienda` | público |
+| `GET` | `/api/t/<slug>/lotes` | público |
+| `GET` | `/api/t/<slug>/lotes/<codigo>` | público |
+| `GET` | `/api/t/<slug>/granel` | público |
+| `GET` | `/api/t/<slug>/granel/<codigo>` | público |
 | `GET` | `/api/t/<slug>/agenda/horas` | público |
 | `POST` | `/api/t/<slug>/agenda/visitas` | comprador |
+| `GET` | `/api/panel/tienda` | dueño o vendedor |
+| `PATCH` | `/api/panel/tienda` | solo el dueño |
 | `POST` | `/api/solicitudes-de-acceso` | cualquiera |
+
+Las rutas `/t/<slug>/` sacan la tienda del slug y son públicas. Las de `/panel/` la sacan
+del **token**, y por eso no la nombran: no existe la petición que pida los datos de otra
+tienda. El detalle de cada una está en [docs/api.md](docs/api.md).
 
 Las tres rutas de sesión comparten un límite de intentos por IP
 (`THROTTLE_AUTENTICACION`). Las solicitudes de acceso tienen el suyo
@@ -157,14 +167,25 @@ Los errores tienen siempre la misma forma, con el mensaje en español:
            "detalles": {"email": ["Ya hay una cuenta con este correo."]}}}
 ```
 
+## Datos para probar
+
+```bash
+docker compose exec api python manage.py cargar_demo
+```
+
+Deja el catálogo de Joyas_ye: 7 categorías, 5 líneas de granel con los precios reales que
+entregó el cliente y 6 lotes de ejemplo que lo dicen en el nombre. Es idempotente y no
+repone los cupos ya vendidos.
+
 ## Estado
 
-Funcionan de punta a punta la portada con su solicitud de acceso, la identidad pública
-de la tienda, la agenda de visitas y la sesión con sus tres pantallas.
+Funcionan de punta a punta la portada con su solicitud de acceso, la identidad pública de
+la tienda, el catálogo de lotes y granel, la agenda de visitas, la sesión con sus tres
+pantallas y el perfil de la tienda desde el panel.
 
-Pendiente: el catálogo de lotes y granel, el carrito y los pedidos, la carga masiva de
-catálogo y la analítica. Las pantallas de esas partes ya existen y apuntan a clientes de
-API que todavía no tienen endpoint detrás.
+Pendiente: el carrito y los pedidos, la carga masiva de catálogo, el catálogo y los precios
+editables desde el panel, el equipo y toda la analítica. Las pantallas de esas partes ya
+existen y dicen que no están conectadas en vez de mostrar números inventados.
 
 De la agenda falta la bandeja del dueño para aceptar o rechazar visitas, los correos con
 archivo `.ics` y el recordatorio de 24 horas.

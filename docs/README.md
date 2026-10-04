@@ -11,5 +11,4 @@ es parte del criterio de terminado.
 | `analitica.md` | Los dos modelos, sus métricas y el resultado frente a la línea base |
 | `bitacora/` | Una nota por sprint: qué se comprometió, qué se cerró, qué quedó |
 
-Los tres primeros todavía no existen. Esta tabla es el índice acordado para que ambos
-integrantes escriban en el mismo lugar.
+Falta `arquitectura.md`. El resto ya está escrito.
