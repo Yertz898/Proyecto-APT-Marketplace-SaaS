@@ -2,7 +2,7 @@
 
 from django.contrib import admin
 
-from apps.catalogo.models import Categoria, ComposicionLote, LineaGranel, Lote
+from apps.catalogo.models import Categoria, ComposicionLote, Producto
 
 
 class ComposicionEnLinea(admin.TabularInline):
@@ -10,26 +10,20 @@ class ComposicionEnLinea(admin.TabularInline):
     extra = 0
 
 
-@admin.register(Lote)
-class AdminLote(admin.ModelAdmin):
+@admin.register(Producto)
+class AdminProducto(admin.ModelAdmin):
     list_display = [
         "codigo",
         "nombre",
         "tienda",
+        "forma_venta",
         "precio_neto",
-        "cupos_disponibles",
+        "stock",
         "activo",
     ]
-    list_filter = ["tienda", "activo", "tipo_cupo"]
+    list_filter = ["tienda", "activo", "forma_venta", "controla_stock"]
     search_fields = ["codigo", "nombre"]
     inlines = [ComposicionEnLinea]
-
-
-@admin.register(LineaGranel)
-class AdminLineaGranel(admin.ModelAdmin):
-    list_display = ["codigo", "nombre", "tienda", "disponible"]
-    list_filter = ["tienda", "disponible"]
-    search_fields = ["codigo", "nombre"]
 
 
 @admin.register(Categoria)

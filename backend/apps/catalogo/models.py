@@ -1,22 +1,25 @@
 """
-Catálogo: lotes y líneas de granel.
+Catálogo: un solo producto que sirve a cualquier rubro.
 
-Son las dos formas de vender, y no se parecen entre sí:
+DealCommerce es una plataforma, no la tienda de un cliente. Una tienda de ropa
+vende por unidad y lleva inventario; una joyería vende lotes cerrados y vende
+por gramo sin registrar lo que le queda. Las dos caben en el mismo modelo:
 
-- Un **lote** es una unidad cerrada que se compra entera. Lo que se cuenta no
-  es stock de piezas sino cupos: cuántas veces más se puede vender ese lote.
-  Un lote de cupo único se vende una sola vez.
-- Una **línea de granel** se vende por gramo. No tiene stock, porque el cliente
-  no registra gramos: lleva un interruptor de disponibilidad que el dueño
-  maneja a mano.
+- `forma_venta` dice cómo se vende —por unidad, por lote o por peso—.
+- `controla_stock` dice si la tienda lleva inventario de ese producto.
 
-Un lote no es una lista de piezas concretas: es una composición, cuántas piezas
-de cada categoría, porque los modelos varían según lo que le llega al cliente.
-La suma de esa composición tiene que cuadrar con la cantidad de piezas del
-lote, y eso se valida al guardar.
+Los **cupos no son un concepto aparte**: son el stock de un producto vendido
+por lote, y un lote que se vende una sola vez es un producto con `stock = 1`.
+Así descontar inventario es una sola lógica para todas las tiendas, en vez de
+dos que hay que recordar mantener iguales.
 
-Acá no hay productos ni variantes.
+Un producto vendido por lote no es una lista de piezas concretas: es una
+composición —cuántas piezas de cada categoría—, porque los modelos varían según
+lo que le llega a la tienda. La suma tiene que cuadrar con `cantidad_piezas`, y
+eso se valida al guardar.
 """
+
+from decimal import Decimal
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -27,10 +30,10 @@ from apps.core.models import ModeloDeTienda
 
 class Categoria(ModeloDeTienda):
     """
-    Anillos, aros, cadenas… Las define cada tienda, no la plataforma.
+    Las define cada tienda, no la plataforma.
 
-    Un lote declara cuántas piezas trae de cada una, y una línea de granel dice
-    cuáles abarca.
+    Las usan el catálogo, la composición de los productos vendidos por lote y
+    el pronóstico de demanda.
     """
 
     nombre = models.CharField("nombre", max_length=60)
@@ -49,123 +52,222 @@ class Categoria(ModeloDeTienda):
         return self.nombre
 
 
-class TipoCupo(models.TextChoices):
-    UNICO = "UNICO", "Cupo único"
-    MULTIPLE = "MULTIPLE", "Cupos múltiples"
+class FormaVenta(models.TextChoices):
+    UNIDAD = "unidad", "Por unidad"
+    LOTE = "lote", "Por lote"
+    PESO = "peso", "Por peso"
 
 
-class QuerySetDeLotes(QuerySetDeTienda):
+class UnidadMedida(models.TextChoices):
+    UNIDAD = "unidad", "Unidad"
+    GRAMO = "g", "Gramo"
+    KILO = "kg", "Kilo"
+
+
+#: Unidades válidas para cada forma de venta.
+#:
+#: Vendido por peso se mide en gramos o kilos; por unidad y por lote, la unidad
+#: es la pieza o el lote entero. La misma regla está como restricción en la base.
+UNIDADES_POR_FORMA = {
+    FormaVenta.UNIDAD: [UnidadMedida.UNIDAD],
+    FormaVenta.LOTE: [UnidadMedida.UNIDAD],
+    FormaVenta.PESO: [UnidadMedida.GRAMO, UnidadMedida.KILO],
+}
+
+
+class QuerySetDeProductos(QuerySetDeTienda):
     def publicadas_de(self, tienda):
         """
-        Lo que ve la vitrina: activo y con cupos.
+        Lo que ve la vitrina: activo y, si lleva inventario, con existencias.
 
-        Un lote agotado o desactivado no se muestra ni se puede pedir por su
-        código: para el comprador no existe.
+        Un producto agotado o desactivado no se muestra ni se puede pedir por
+        su código: para el comprador no existe. El que no controla stock se
+        muestra mientras esté activo, porque la tienda no sabe cuánto le queda.
         """
-        return self.filter(tienda=tienda, activo=True, cupos_disponibles__gt=0)
+        return self.filter(tienda=tienda, activo=True).exclude(
+            controla_stock=True, stock__lte=0
+        )
+
+    def de_forma(self, forma):
+        return self.filter(forma_venta=forma)
 
 
-class Lote(ModeloDeTienda):
-    """Unidad de venta cerrada. Se compra entera, sin elegir piezas."""
+class Producto(ModeloDeTienda):
+    """Lo que una tienda vende, sea cual sea su forma de venderlo."""
 
     codigo = models.CharField("código", max_length=40)
     nombre = models.CharField("nombre", max_length=150)
-    material = models.CharField("material predominante", max_length=60)
+    descripcion = models.TextField("descripción", blank=True)
 
-    cantidad_piezas = models.PositiveIntegerField("cantidad de piezas")
-
-    # Pesos chilenos enteros y netos. El IVA se calcula aparte al mostrarlo.
-    precio_neto = models.PositiveIntegerField("precio neto")
-
-    tipo_cupo = models.CharField(
-        "tipo de cupo",
-        max_length=10,
-        choices=TipoCupo.choices,
-        default=TipoCupo.MULTIPLE,
+    # PROTECT y no CASCADE: borrar una categoría no puede llevarse productos
+    # por delante. Opcional porque una tienda puede partir sin categorías.
+    categoria = models.ForeignKey(
+        Categoria,
+        verbose_name="categoría",
+        on_delete=models.PROTECT,
+        related_name="productos",
+        blank=True,
+        null=True,
     )
-    cupos_totales = models.PositiveIntegerField("cupos totales", default=1)
-    cupos_disponibles = models.PositiveIntegerField("cupos disponibles", default=1)
+
+    # Pesos chilenos enteros y netos, por unidad de medida. El IVA se calcula
+    # aparte al mostrarlo. Es también el precio con que se arma el monto de
+    # referencia de los tramos.
+    precio_neto = models.PositiveIntegerField("precio neto")
 
     # varchar(255) en el diccionario: la base guarda la clave del objeto, nunca
     # la URL completa. ImageField almacena exactamente eso y además valida que
     # el archivo sea una imagen.
     foto = models.ImageField(
-        "foto", upload_to="lotes/", max_length=255, blank=True, null=True
+        "foto", upload_to="productos/", max_length=255, blank=True, null=True
     )
     activo = models.BooleanField("activo", default=True)
 
-    objects = ManagerDeTienda.from_queryset(QuerySetDeLotes)()
+    forma_venta = models.CharField(
+        "forma de venta",
+        max_length=10,
+        choices=FormaVenta.choices,
+        default=FormaVenta.UNIDAD,
+    )
+    unidad_medida = models.CharField(
+        "unidad de medida",
+        max_length=10,
+        choices=UnidadMedida.choices,
+        default=UnidadMedida.UNIDAD,
+    )
+
+    controla_stock = models.BooleanField(
+        "controla stock",
+        default=True,
+        help_text="Desactívalo si la tienda no lleva inventario de este producto.",
+    )
+    # Decimal y no Integer: un producto por peso se cuenta en gramos con
+    # decimales. Nulo cuando no se controla, para que «no sé cuánto queda» no
+    # se confunda con «no queda nada».
+    stock = models.DecimalField(
+        "stock", max_digits=12, decimal_places=3, blank=True, null=True
+    )
+
+    cantidad_minima = models.DecimalField(
+        "cantidad mínima de compra",
+        max_digits=12,
+        decimal_places=3,
+        default=Decimal("1"),
+    )
+
+    # Solo para la forma de venta por lote: contra esto cuadra la composición.
+    cantidad_piezas = models.PositiveIntegerField(
+        "cantidad de piezas", blank=True, null=True
+    )
+
+    objects = ManagerDeTienda.from_queryset(QuerySetDeProductos)()
 
     class Meta(ModeloDeTienda.Meta):
-        verbose_name = "lote"
-        verbose_name_plural = "lotes"
+        verbose_name = "producto"
+        verbose_name_plural = "productos"
         ordering = ["codigo"]
         constraints = [
             models.UniqueConstraint(
                 fields=["tienda", "codigo"],
-                name="catalogo_lote_codigo_unico_por_tienda",
+                name="catalogo_producto_codigo_unico_por_tienda",
             ),
-            # La base de datos sostiene el invariante de los cupos: una vista
-            # mal escrita no puede dejar un lote con más vendidos que totales.
-            models.CheckConstraint(
-                condition=models.Q(cupos_disponibles__lte=models.F("cupos_totales")),
-                name="catalogo_lote_cupos_dentro_del_total",
-            ),
-            models.CheckConstraint(
-                condition=models.Q(cupos_totales__gt=0),
-                name="catalogo_lote_cupos_totales_positivos",
-            ),
-            # Un lote de cupo único es, por definición, uno solo.
+            # El invariante del inventario lo sostiene la base: una vista mal
+            # escrita no puede dejar un stock negativo ni un producto que dice
+            # controlar inventario sin saber cuánto tiene.
             models.CheckConstraint(
                 condition=(
-                    ~models.Q(tipo_cupo=TipoCupo.UNICO) | models.Q(cupos_totales=1)
+                    models.Q(controla_stock=True, stock__isnull=False, stock__gte=0)
+                    | models.Q(controla_stock=False, stock__isnull=True)
                 ),
-                name="catalogo_lote_cupo_unico_es_uno",
+                name="catalogo_producto_stock_segun_control",
             ),
             models.CheckConstraint(
-                condition=models.Q(cantidad_piezas__gt=0),
-                name="catalogo_lote_piezas_positivas",
+                condition=(
+                    models.Q(forma_venta=FormaVenta.LOTE)
+                    | models.Q(cantidad_piezas__isnull=True)
+                ),
+                name="catalogo_producto_piezas_solo_en_lote",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(
+                        forma_venta=FormaVenta.PESO,
+                        unidad_medida__in=[UnidadMedida.GRAMO, UnidadMedida.KILO],
+                    )
+                    | models.Q(
+                        forma_venta__in=[FormaVenta.UNIDAD, FormaVenta.LOTE],
+                        unidad_medida=UnidadMedida.UNIDAD,
+                    )
+                ),
+                name="catalogo_producto_unidad_segun_forma",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(precio_neto__gt=0),
+                name="catalogo_producto_precio_positivo",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(cantidad_minima__gt=0),
+                name="catalogo_producto_cantidad_minima_positiva",
             ),
         ]
-        indexes = [models.Index(fields=["tienda", "activo"])]
+        indexes = [
+            models.Index(fields=["tienda", "activo"]),
+            models.Index(fields=["tienda", "forma_venta"]),
+        ]
 
     def __str__(self):
         return f"{self.codigo} · {self.nombre}"
 
     @property
     def agotado(self) -> bool:
-        return self.cupos_disponibles == 0
+        """Sin existencias. El que no controla stock nunca está agotado."""
+        return bool(self.controla_stock and (self.stock or 0) <= 0)
 
     def clean(self):
         super().clean()
-        if self.tipo_cupo == TipoCupo.UNICO and self.cupos_totales != 1:
-            raise ValidationError(
-                {
-                    "cupos_totales": ValidationError(
-                        "Un lote de cupo único tiene un solo cupo.",
-                        code="cupo_unico_es_uno",
-                    )
-                }
+
+        errores = {}
+
+        if self.controla_stock and self.stock is None:
+            errores["stock"] = ValidationError(
+                "Si el producto controla stock, hay que decir cuánto hay.",
+                code="stock_requerido",
             )
-        if self.cupos_disponibles > self.cupos_totales:
-            raise ValidationError(
-                {
-                    "cupos_disponibles": ValidationError(
-                        "No puede haber más cupos libres que totales.",
-                        code="cupos_fuera_de_rango",
-                    )
-                }
+        if not self.controla_stock and self.stock is not None:
+            errores["stock"] = ValidationError(
+                "Este producto no controla stock, así que no lleva cantidad.",
+                code="stock_no_corresponde",
             )
+        if self.stock is not None and self.stock < 0:
+            errores["stock"] = ValidationError(
+                "El stock no puede ser negativo.", code="stock_negativo"
+            )
+
+        if self.unidad_medida not in UNIDADES_POR_FORMA[FormaVenta(self.forma_venta)]:
+            errores["unidad_medida"] = ValidationError(
+                "Esta unidad no corresponde a la forma de venta.",
+                code="unidad_no_corresponde",
+            )
+
+        if self.forma_venta != FormaVenta.LOTE and self.cantidad_piezas is not None:
+            errores["cantidad_piezas"] = ValidationError(
+                "Solo un producto vendido por lote declara piezas.",
+                code="piezas_solo_en_lote",
+            )
+
+        if errores:
+            raise ValidationError(errores)
+
         self.validar_composicion()
 
     def validar_composicion(self):
         """
         La composición tiene que sumar exactamente la cantidad de piezas.
 
-        Se valida solo cuando ya hay composición cargada: un lote recién creado
-        todavía no tiene filas, y exigirlas ahí impediría crearlo.
+        Se valida solo cuando ya hay composición cargada: un producto recién
+        creado todavía no tiene filas, y exigirlas ahí impediría crearlo.
         """
-        if not self.pk:
+        if not self.pk or self.forma_venta != FormaVenta.LOTE:
             return
 
         piezas = self.composicion.aggregate(total=models.Sum("cantidad"))["total"]
@@ -176,7 +278,7 @@ class Lote(ModeloDeTienda):
             raise ValidationError(
                 {
                     "cantidad_piezas": ValidationError(
-                        f"La composición suma {piezas} piezas y el lote declara "
+                        f"La composición suma {piezas} piezas y el producto declara "
                         f"{self.cantidad_piezas}.",
                         code="composicion_no_cuadra",
                     )
@@ -186,14 +288,17 @@ class Lote(ModeloDeTienda):
 
 class ComposicionLote(ModeloDeTienda):
     """
-    Cuántas piezas de cada categoría trae un lote.
+    Cuántas piezas de cada categoría trae un producto vendido por lote.
 
     No es una lista de piezas concretas: los modelos varían según lo que le
-    llega al cliente, así que lo que se promete es la mezcla, no el detalle.
+    llega a la tienda, así que lo que se promete es la mezcla, no el detalle.
     """
 
-    lote = models.ForeignKey(
-        Lote, verbose_name="lote", on_delete=models.CASCADE, related_name="composicion"
+    producto = models.ForeignKey(
+        Producto,
+        verbose_name="producto",
+        on_delete=models.CASCADE,
+        related_name="composicion",
     )
     categoria = models.ForeignKey(
         Categoria,
@@ -209,8 +314,8 @@ class ComposicionLote(ModeloDeTienda):
         ordering = ["categoria__nombre"]
         constraints = [
             models.UniqueConstraint(
-                fields=["lote", "categoria"],
-                name="catalogo_composicion_categoria_unica_por_lote",
+                fields=["producto", "categoria"],
+                name="catalogo_composicion_categoria_unica_por_producto",
             ),
             models.CheckConstraint(
                 condition=models.Q(cantidad__gt=0),
@@ -223,68 +328,29 @@ class ComposicionLote(ModeloDeTienda):
 
     def clean(self):
         super().clean()
-        # Una categoría de otra tienda dentro de un lote sería una fuga de
+
+        if not (self.producto_id and self.categoria_id):
+            return
+
+        # Una categoría de otra tienda dentro de un producto sería una fuga de
         # datos por la puerta de atrás: el nombre de la categoría ajena
         # quedaría visible en la vitrina.
-        if self.lote_id and self.categoria_id:
-            if self.categoria.tienda_id != self.lote.tienda_id:
-                raise ValidationError(
-                    {
-                        "categoria": ValidationError(
-                            "La categoría es de otra tienda.",
-                            code="categoria_de_otra_tienda",
-                        )
-                    }
-                )
+        if self.categoria.tienda_id != self.producto.tienda_id:
+            raise ValidationError(
+                {
+                    "categoria": ValidationError(
+                        "La categoría es de otra tienda.",
+                        code="categoria_de_otra_tienda",
+                    )
+                }
+            )
 
-
-class QuerySetDeGranel(QuerySetDeTienda):
-    def publicadas_de(self, tienda):
-        """La vitrina solo muestra las líneas que el dueño dejó disponibles."""
-        return self.filter(tienda=tienda, disponible=True)
-
-
-class LineaGranel(ModeloDeTienda):
-    """
-    Venta por gramo.
-
-    No tiene stock: el cliente no registra gramos, así que lo único que decide
-    si se puede comprar es el interruptor `disponible`, que el dueño maneja a
-    mano.
-    """
-
-    codigo = models.CharField("código", max_length=40)
-    nombre = models.CharField("nombre", max_length=150)
-    material = models.CharField("material", max_length=60)
-
-    # Texto y no relación, como lo fija el diccionario: acá las categorías son
-    # descriptivas ("cadenas, pulseras"), no estructurales como en la
-    # composición de un lote.
-    categorias = models.CharField(
-        "categorías que abarca",
-        max_length=200,
-        blank=True,
-        help_text="Separadas por coma. Ej.: cadenas, pulseras.",
-    )
-
-    disponible = models.BooleanField("disponible", default=True)
-
-    foto = models.ImageField(
-        "foto de referencia", upload_to="granel/", max_length=255, blank=True, null=True
-    )
-
-    objects = ManagerDeTienda.from_queryset(QuerySetDeGranel)()
-
-    class Meta(ModeloDeTienda.Meta):
-        verbose_name = "línea de granel"
-        verbose_name_plural = "líneas de granel"
-        ordering = ["codigo"]
-        constraints = [
-            models.UniqueConstraint(
-                fields=["tienda", "codigo"],
-                name="catalogo_granel_codigo_unico_por_tienda",
-            ),
-        ]
-
-    def __str__(self):
-        return f"{self.codigo} · {self.nombre}"
+        if self.producto.forma_venta != FormaVenta.LOTE:
+            raise ValidationError(
+                {
+                    "producto": ValidationError(
+                        "Solo un producto vendido por lote tiene composición.",
+                        code="composicion_solo_en_lote",
+                    )
+                }
+            )

@@ -9,9 +9,10 @@ from apps.precios.models import TramoPrecio
 class AdminTramoPrecio(admin.ModelAdmin):
     list_display = [
         "tienda",
-        "linea_granel",
+        "producto",
         "unidad_umbral",
         "umbral",
         "valor",
     ]
     list_filter = ["tienda", "unidad_umbral"]
+    search_fields = ["producto__codigo", "producto__nombre"]

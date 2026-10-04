@@ -3,23 +3,31 @@
 from django.urls import path
 
 from apps.catalogo.views import (
-    DetalleDeGranel,
-    DetalleDeLote,
-    ListaDeGranel,
-    ListaDeLotes,
+    CotizarProducto,
+    DetalleDeProducto,
+    FormasDeVenta,
+    ListaDeProductos,
 )
 
 urlpatterns = [
-    path("t/<slug:slug>/lotes", ListaDeLotes.as_view(), name="catalogo-lotes"),
     path(
-        "t/<slug:slug>/lotes/<str:codigo>",
-        DetalleDeLote.as_view(),
-        name="catalogo-lote",
+        "t/<slug:slug>/formas-de-venta",
+        FormasDeVenta.as_view(),
+        name="catalogo-formas-de-venta",
     ),
-    path("t/<slug:slug>/granel", ListaDeGranel.as_view(), name="catalogo-granel"),
     path(
-        "t/<slug:slug>/granel/<str:codigo>",
-        DetalleDeGranel.as_view(),
-        name="catalogo-linea-granel",
+        "t/<slug:slug>/productos",
+        ListaDeProductos.as_view(),
+        name="catalogo-productos",
+    ),
+    path(
+        "t/<slug:slug>/productos/<str:codigo>",
+        DetalleDeProducto.as_view(),
+        name="catalogo-producto",
+    ),
+    path(
+        "t/<slug:slug>/productos/<str:codigo>/cotizar",
+        CotizarProducto.as_view(),
+        name="catalogo-cotizar",
     ),
 ]
