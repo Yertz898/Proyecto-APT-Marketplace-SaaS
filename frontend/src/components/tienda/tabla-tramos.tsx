@@ -1,17 +1,25 @@
-import { formatearGramos, formatearPesos } from "@/lib/formato";
-import type { TramoGranel } from "@/lib/tipos";
+import { formatearCantidad, formatearPesos } from "@/lib/formato";
+import type { TramoPrecio, UnidadMedida } from "@/lib/tipos";
 import { cn } from "@/lib/utils";
 
 /*
- * Tramos de una línea de granel.
+ * Los tramos de precio de un producto.
  *
- * Los umbrales se muestran en la unidad en que los definió la tienda: unos en
- * pesos y otros en gramos. No se convierten entre sí para no mostrar números
- * que la tienda nunca escribió.
+ * Los umbrales se muestran en la unidad en que los definió la tienda —cantidad,
+ * monto o peso— y no se convierten entre sí: nadie quiere ver un número que su
+ * tienda nunca escribió.
  *
  * El tramo activo lo indica el backend en la cotización; acá solo se resalta.
  */
-export function TablaDeTramos({ tramos, activo }: { tramos: TramoGranel[]; activo: number | null }) {
+export function TablaDeTramos({
+  tramos,
+  unidad,
+  activo,
+}: {
+  tramos: TramoPrecio[];
+  unidad: UnidadMedida;
+  activo: number | null;
+}) {
   if (tramos.length === 0) {
     return null;
   }
@@ -19,12 +27,12 @@ export function TablaDeTramos({ tramos, activo }: { tramos: TramoGranel[]; activ
   return (
     <div className="overflow-hidden rounded-[14px] border border-lila/16">
       <div className="flex items-center justify-between bg-superficie px-[18px] py-3.5">
-        <span className="text-[13px] font-semibold text-texto">Precio por gramo</span>
+        <span className="text-[13px] font-semibold text-texto">{titulo(unidad)}</span>
         <span className="text-[11px] tracking-[.08em] text-texto-suave uppercase">Neto</span>
       </div>
 
-      {tramos.map((tramo, indice) => {
-        const encendido = indice === activo;
+      {tramos.map((tramo) => {
+        const encendido = tramo.umbral === activo;
         return (
           <div
             key={`${tramo.unidadUmbral}-${tramo.umbral}`}
@@ -34,17 +42,26 @@ export function TablaDeTramos({ tramos, activo }: { tramos: TramoGranel[]; activ
             )}
           >
             <span className={cn("text-sm", encendido ? "font-semibold text-texto" : "text-texto-suave")}>
-              Desde{" "}
-              {tramo.unidadUmbral === "pesos"
-                ? formatearPesos(tramo.umbral)
-                : formatearGramos(tramo.umbral)}
+              Desde {desde(tramo, unidad)}
             </span>
             <span className={cn("font-serif text-[21px] font-semibold", encendido ? "text-oro" : "text-texto-suave")}>
-              {formatearPesos(tramo.precioGramoNeto)}
+              {formatearPesos(tramo.precioNeto)}
             </span>
           </div>
         );
       })}
     </div>
   );
+}
+
+/** Cómo se lee el umbral según su unidad. */
+function desde(tramo: TramoPrecio, unidad: UnidadMedida): string {
+  if (tramo.unidadUmbral === "monto") {
+    return formatearPesos(tramo.umbral);
+  }
+  return formatearCantidad(tramo.umbral, unidad);
+}
+
+function titulo(unidad: UnidadMedida): string {
+  return unidad === "unidad" ? "Precio por unidad" : `Precio por ${unidad}`;
 }

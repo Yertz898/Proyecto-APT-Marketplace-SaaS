@@ -2,9 +2,9 @@
  * Tipos de la tienda pública.
  *
  * Todo lo que distingue a una tienda de otra son datos que entrega el backend:
- * su identidad, sus categorías, sus lotes y sus líneas de granel. Nada de eso se
- * escribe en el frontend. Si mañana entra una segunda tienda con otras
- * categorías y otras líneas, este archivo no cambia.
+ * su identidad, sus categorías y sus productos. Nada de eso se escribe en el
+ * frontend. Si mañana entra una tienda que vende de otra manera, este archivo
+ * no cambia.
  */
 
 /** Pesos chilenos enteros, sin decimales. Los precios se manejan NETOS. */
@@ -77,99 +77,116 @@ export type UsuarioSesion = {
 // ── Productos ───────────────────────────────────────────────────────────────
 
 /**
- * Tipos de producto de la plataforma.
+ * Cómo vende la tienda cada producto.
  *
- * Los componentes discriminan por este campo. Sumar un tercer tipo (una tienda
- * que venda piezas sueltas, por ejemplo) debe ser agregar un caso, no reescribir.
+ * Es lo único que distingue a una tienda de ropa de una joyería que vende por
+ * gramo: la forma de venta es un dato del producto, no una rama del código.
  */
-export type TipoProducto = "lote" | "granel";
+export type FormaVenta = "unidad" | "lote" | "peso";
+
+/** En qué se mide. La vitrina la muestra tal cual, sin convertir. */
+export type UnidadMedida = "unidad" | "g" | "kg";
+
+/** Una forma de venta con su nombre, tal como la entrega el backend. */
+export type FormaDeVenta = {
+  valor: FormaVenta;
+  nombre: string;
+};
 
 export type PiezasPorCategoria = {
   categoria: string;
   cantidad: number;
 };
 
-/** UNICO no se repite; MULTIPLE se repite y lleva la cuenta de lo que queda. */
-export type Cupos = { tipo: "UNICO" } | { tipo: "MULTIPLE"; restantes: number };
+/**
+ * Qué se le puede decir al comprador sobre las existencias.
+ *
+ * Son cuatro situaciones distintas y el backend ya decidió cuál es: la tienda
+ * no lleva inventario de esto, queda una sola, quedan varias, o se acabó. La
+ * última unidad va aparte porque empuja a decidir.
+ */
+export type Disponibilidad =
+  | { tipo: "sin_control" }
+  | { tipo: "agotado" }
+  | { tipo: "ultima" }
+  | { tipo: "disponible"; restantes: number };
+
+export type UnidadUmbral = "cantidad" | "monto" | "peso";
 
 /**
- * Lote: unidad de venta cerrada.
+ * Un escalón de precio: desde tal umbral, este precio por unidad de medida.
  *
- * Es una composición (cuántas piezas de cada categoría), no una lista de piezas
- * concretas: los modelos varían según disponibilidad. Se compra entero, sin
- * seleccionar nada.
+ * El umbral puede venir en cantidad, en monto o en peso, y `unidadUmbral` dice
+ * cuál es. No hay descuentos: el valor es siempre un precio.
+ */
+export type TramoPrecio = {
+  umbral: number;
+  unidadUmbral: UnidadUmbral;
+  precioNeto: Pesos;
+};
+
+/**
+ * Lo que una tienda vende.
+ *
+ * Un solo tipo para las tres formas de venta. Lo que no aplica a una forma
+ * viene en `null` o vacío, nunca en otra forma: así la vitrina tiene un tipo y
+ * no tres, y una tienda que mañana venda de otra manera no obliga a tocar esto.
  *
  * El backend entrega neto, IVA y total ya calculados: el navegador no hace
  * aritmética de dinero.
  */
-export type Lote = {
-  tipo: "lote";
+export type Producto = {
   codigo: string;
   nombre: string;
-  material: string;
-  piezasTotales: number;
-  composicion: PiezasPorCategoria[];
+  descripcion: string;
+  categoria: string | null;
+  formaVenta: FormaVenta;
+  unidadMedida: UnidadMedida;
   precioNeto: Pesos;
   iva: Pesos;
   precioTotal: Pesos;
-  cupos: Cupos;
+  disponibilidad: Disponibilidad;
   agotado: boolean;
+  cantidadMinima: number;
+  /** Solo en la venta por lote: contra esto cuadra la composición. */
+  piezasTotales: number | null;
+  composicion: PiezasPorCategoria[];
+  tramos: TramoPrecio[];
+  /** Mínimo de compra por monto, redactado por el backend. Null si no tiene. */
+  minimo: string | null;
   /** Null mientras el dueño no haya subido la foto: no se dibuja nada en su lugar. */
   foto: Imagen | null;
 };
 
-export type UnidadUmbral = "pesos" | "gramos";
-
 /**
- * Tramo de una línea de granel.
- *
- * El umbral puede venir en pesos o en gramos, y `unidadUmbral` dice cuál es. Se
- * muestran tal como los definió la tienda, sin convertir entre unidades.
- */
-export type TramoGranel = {
-  umbral: number;
-  unidadUmbral: UnidadUmbral;
-  precioGramoNeto: Pesos;
-};
-
-/** Granel: venta por gramo, organizada en líneas con sus tramos. */
-export type LineaGranel = {
-  tipo: "granel";
-  codigo: string;
-  nombre: string;
-  material: string;
-  categorias: string[];
-  tramos: TramoGranel[];
-  /** Mínimo de compra, redactado por el backend. Null si la línea no tiene. */
-  minimo: string | null;
-};
-
-export type ItemCatalogo = Lote | LineaGranel;
-
-/**
- * Cotización de una compra por gramos.
+ * Cotización de una cantidad.
  *
  * La calcula siempre el backend. El frontend puede resaltar el tramo para
  * orientar, pero el total que se cobra no se calcula en el navegador.
+ *
+ * `rechazo` y el precio son excluyentes. `motivo` distingue los dos rechazos
+ * que se confunden: no llegar al mínimo por monto no es lo mismo que pedir
+ * menos que la cantidad mínima del producto.
  */
-export type CotizacionGranel = {
-  gramos: number;
-  precioGramoNeto: Pesos;
+export type Cotizacion = {
+  cantidad: number;
+  precioUnitario: Pesos;
   neto: Pesos;
   iva: Pesos;
   total: Pesos;
-  /** Índice del tramo aplicado dentro de `LineaGranel.tramos`; null si no aplica ninguno. */
+  /** Umbral del tramo aplicado; null si se cobró el precio base. */
   tramoAplicado: number | null;
+  unidadTramo: UnidadUmbral | null;
   /** Aviso de conveniencia cuando comprar más cuesta menos. Lo decide el backend. */
   aviso: string | null;
-  /** Motivo por el que no se puede comprar (bajo el mínimo). Si viene, no se agrega al carrito. */
   rechazo: string | null;
+  motivo: string | null;
 };
 
 // ── Listados ────────────────────────────────────────────────────────────────
 
-export type PaginaDeLotes = {
-  lotes: Lote[];
+export type PaginaDeProductos = {
+  productos: Producto[];
   paginaActual: number;
   totalPaginas: number;
 };
@@ -179,22 +196,24 @@ export type PaginaDeLotes = {
 /**
  * Lo que el comprador eligió: solo referencias y cantidades.
  *
- * Ningún precio se guarda acá. Los tramos de lotes dependen de cuántos lotes
- * lleva el pedido completo, así que cotizar es siempre trabajo del backend.
+ * Una sola forma, en la unidad de medida del producto. Ningún precio se guarda
+ * acá: el precio depende del tramo que alcance el pedido completo, así que
+ * cotizar es siempre trabajo del backend.
  */
-export type LineaCarrito =
-  | { tipo: "lote"; codigo: string; cantidad: number }
-  | { tipo: "granel"; codigo: string; gramos: number };
+export type LineaCarrito = {
+  codigo: string;
+  cantidad: number;
+};
 
 export type LineaCotizada = {
   linea: LineaCarrito;
   nombre: string;
-  /** Cantidad con su unidad, ya redactada por el backend: "3 lotes", "166,5 g". */
+  /** Cantidad con su unidad, ya redactada por el backend: "3", "166,5 g". */
   detalle: string;
   neto: Pesos;
   iva: Pesos;
   total: Pesos;
-  /** Motivo por el que esta línea no se puede comprar (cupo agotado, bajo el mínimo). */
+  /** Motivo por el que esta línea no se puede comprar (sin stock, bajo el mínimo). */
   rechazo: string | null;
 };
 
@@ -203,7 +222,7 @@ export type CarritoCotizado = {
   neto: Pesos;
   iva: Pesos;
   total: Pesos;
-  /** Cuánto falta para el siguiente tramo por cantidad de lotes. Lo redacta el backend. */
+  /** Cuánto falta para el siguiente tramo. Lo redacta el backend. */
   avisoTramo: string | null;
   /** Si viene, el pedido no se puede confirmar todavía. */
   rechazo: string | null;

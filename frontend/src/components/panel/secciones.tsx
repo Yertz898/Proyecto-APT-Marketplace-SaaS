@@ -95,7 +95,7 @@ export const SECCIONES: Seccion[] = [
   {
     href: "/panel/catalogo",
     etiqueta: "Catálogo",
-    descripcion: "Tus lotes y tus líneas de granel.",
+    descripcion: "Tus productos, su precio y su inventario.",
     grupo: "Catálogo",
     estado: "real",
     plan: "basico",
@@ -110,7 +110,7 @@ export const SECCIONES: Seccion[] = [
   {
     href: "/panel/precios",
     etiqueta: "Precios",
-    descripcion: "Los tramos por cantidad de cada línea.",
+    descripcion: "Los tramos de precio por volumen de cada producto.",
     grupo: "Catálogo",
     estado: "real",
     plan: "basico",
@@ -173,7 +173,7 @@ export const SECCIONES: Seccion[] = [
   {
     href: "/panel/pronostico",
     etiqueta: "Pronóstico",
-    descripcion: "Qué categorías van a pedirte el próximo mes.",
+    descripcion: "Qué va a pedirte el próximo mes, y qué se te puede acabar.",
     grupo: "Inteligencia",
     estado: "demostracion",
     plan: "ultimate",
@@ -198,22 +198,6 @@ export const SECCIONES: Seccion[] = [
         <circle cx="9" cy="8" r="3.2" />
         <path d="M3 20c0-3.3 2.7-5 6-5s6 1.7 6 5" />
         <path d="M16 6.2a3.2 3.2 0 010 6M18 20c0-2.6-1-4.2-2.5-5" />
-      </Icono>
-    ),
-  },
-  {
-    href: "/panel/sugerencias",
-    etiqueta: "Sugerencias",
-    descripcion: "Qué conviene rebajar. Tú apruebas.",
-    grupo: "Inteligencia",
-    estado: "demostracion",
-    plan: "ultimate",
-    vendedor: "completo",
-    icono: (
-      <Icono>
-        <path d="M18 6L6 18" />
-        <circle cx="7.5" cy="7.5" r="2.5" />
-        <circle cx="16.5" cy="16.5" r="2.5" />
       </Icono>
     ),
   },

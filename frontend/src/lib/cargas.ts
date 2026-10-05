@@ -10,32 +10,36 @@ import type { LimitesCarga, TipoCarga } from "@/lib/tipos-panel";
  * que el dueño sepa qué esperar antes de descargarla.
  */
 export const TIPOS_DE_CARGA = {
-  lotes: {
-    titulo: "Catálogo de lotes",
-    descripcion: "Un lote por fila. Si el código ya existe, la fila lo actualiza; si no, lo crea.",
+  productos: {
+    titulo: "Catálogo de productos",
+    descripcion:
+      "Un producto por fila. La columna forma_venta dice cómo se vende: por unidad, por lote o por peso. Si el código ya existe, la fila lo actualiza; si no, lo crea.",
     columnas: [
       "codigo",
       "nombre",
+      "descripcion",
+      "categoria",
+      "forma_venta",
+      "unidad_medida",
       "precio_neto",
-      "cupos",
-      "tipo_cupo",
-      "material",
-      "piezas_por_categoria",
+      "controla_stock",
+      "stock",
+      "cantidad_minima",
       "foto",
     ],
     extensiones: [".xlsx", ".csv"],
   },
-  granel: {
-    titulo: "Líneas de granel",
+  tramos: {
+    titulo: "Precios por volumen",
     descripcion:
-      "Una fila por tramo. El umbral puede ir en pesos o en gramos, y la columna unidad_umbral dice cuál es.",
-    columnas: ["codigo_linea", "nombre", "material", "umbral", "unidad_umbral", "precio_gramo_neto"],
+      "Una fila por tramo. El umbral puede ir en cantidad, en monto o en peso, y la columna unidad_umbral dice cuál es.",
+    columnas: ["codigo_producto", "umbral", "unidad_umbral", "precio_neto"],
     extensiones: [".xlsx", ".csv"],
   },
   fotos: {
     titulo: "Fotos de productos",
     descripcion:
-      "Un .zip con las imágenes. Se emparejan con los lotes por el nombre de archivo de la columna foto.",
+      "Un .zip con las imágenes. Se emparejan con los productos por el nombre de archivo de la columna foto.",
     columnas: [],
     extensiones: [".zip"],
   },

@@ -1,25 +1,33 @@
-import type { CotizacionGranel, LineaGranel, Lote, PaginaDeLotes } from "@/lib/tipos";
+import type {
+  Cotizacion,
+  FormaDeVenta,
+  PaginaDeProductos,
+  Producto,
+} from "@/lib/tipos";
 
-import { API_SERVIDOR as API } from "./base";
+import { API_NAVEGADOR, API_SERVIDOR as API } from "./base";
 
 /*
- * Catálogo público de una tienda: lotes y líneas de granel.
+ * Catálogo público de una tienda.
  *
- * El backend entrega el precio neto, el IVA y el total ya calculados, y
- * redacta el mínimo de compra. El navegador no hace aritmética de dinero: los
- * tramos dependen del pedido completo y un cupo puede agotarse mientras el
- * comprador decide.
+ * Un solo endpoint para las tres formas de venta. La vitrina agrupa por forma
+ * de venta, y qué formas mostrar sale de `obtenerFormasDeVenta`: no hay una
+ * lista escrita acá, porque entonces una tienda nueva obligaría a tocar el
+ * frontend.
  *
- * Una tienda o un código que no existen responden 404, igual que un lote
+ * El backend entrega el precio neto, el IVA y el total ya calculados, y redacta
+ * el mínimo de compra. El navegador no hace aritmética de dinero: los tramos
+ * dependen del pedido completo y el stock puede agotarse mientras el comprador
+ * decide.
+ *
+ * Una tienda o un código que no existen responden 404, igual que un producto
  * inactivo, agotado o de otra tienda. Acá eso se traduce a `null` o a una
  * página vacía, nunca a una excepción: la vitrina muestra "no encontrado" en
  * vez de caerse.
- *
- * Pendiente del Sprint 3: `cotizarGranel`.
  */
 
-const VACIA = (pagina: number): PaginaDeLotes => ({
-  lotes: [],
+const VACIA = (pagina: number): PaginaDeProductos => ({
+  productos: [],
   paginaActual: pagina,
   totalPaginas: 0,
 });
@@ -34,7 +42,7 @@ export class ApiPendiente extends Error {
 async function pedir<T>(ruta: string): Promise<T | null> {
   try {
     const respuesta = await fetch(`${API}${ruta}`, {
-      // El catálogo cambia cuando el dueño lo edita o se agota un cupo.
+      // El catálogo cambia cuando el dueño lo edita o se agota el stock.
       next: { revalidate: 30 },
     });
 
@@ -45,35 +53,59 @@ async function pedir<T>(ruta: string): Promise<T | null> {
   }
 }
 
-export async function obtenerLotes(slug: string, pagina: number): Promise<PaginaDeLotes> {
-  const tienda = encodeURIComponent(slug);
-  const datos = await pedir<PaginaDeLotes>(`/t/${tienda}/lotes?pagina=${pagina}`);
-
-  return datos ?? VACIA(pagina);
+/** Qué formas de venta usa esta tienda. Con esto la vitrina arma sus pestañas. */
+export async function obtenerFormasDeVenta(slug: string): Promise<FormaDeVenta[]> {
+  return (await pedir<FormaDeVenta[]>(`/t/${slug}/formas-de-venta`)) ?? [];
 }
 
-export async function obtenerLote(slug: string, codigo: string): Promise<Lote | null> {
-  const tienda = encodeURIComponent(slug);
-  return pedir<Lote>(`/t/${tienda}/lotes/${encodeURIComponent(codigo)}`);
+export async function obtenerProductos(
+  slug: string,
+  { pagina = 1, forma }: { pagina?: number; forma?: string } = {},
+): Promise<PaginaDeProductos> {
+  const consulta = new URLSearchParams({ pagina: String(pagina) });
+  if (forma) {
+    consulta.set("forma", forma);
+  }
+
+  return (
+    (await pedir<PaginaDeProductos>(`/t/${slug}/productos?${consulta}`)) ?? VACIA(pagina)
+  );
 }
 
-export async function obtenerLineasGranel(slug: string): Promise<LineaGranel[]> {
-  const datos = await pedir<LineaGranel[]>(`/t/${encodeURIComponent(slug)}/granel`);
-  return datos ?? [];
-}
-
-export async function obtenerLineaGranel(slug: string, codigo: string): Promise<LineaGranel | null> {
-  const tienda = encodeURIComponent(slug);
-  return pedir<LineaGranel>(`/t/${tienda}/granel/${encodeURIComponent(codigo)}`);
-}
-
-/** El precio lo calcula el backend; el navegador solo muestra lo que devuelve. */
-export async function cotizarGranel(
+export async function obtenerProducto(
   slug: string,
   codigo: string,
-  gramos: number,
-): Promise<CotizacionGranel> {
-  void slug;
-  void gramos;
-  throw new ApiPendiente(`POST /t/{slug}/granel/${codigo}/cotizar`);
+): Promise<Producto | null> {
+  return pedir<Producto>(`/t/${slug}/productos/${encodeURIComponent(codigo)}`);
+}
+
+/**
+ * Qué cuesta llevar esta cantidad.
+ *
+ * Sale del navegador y no del servidor de Next —la pide el comprador mientras
+ * escribe—, así que usa la dirección pública de la API.
+ *
+ * Un rechazo no es un error: viene con 200 y el motivo adentro, para mostrarlo
+ * donde corresponde en vez de romper la pantalla.
+ */
+export async function cotizar(
+  slug: string,
+  codigo: string,
+  cantidad: number,
+): Promise<Cotizacion> {
+  const respuesta = await fetch(
+    `${API_NAVEGADOR}/t/${slug}/productos/${encodeURIComponent(codigo)}/cotizar`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ cantidad }),
+    },
+  );
+
+  if (!respuesta.ok) {
+    const { leerError } = await import("@/lib/api/errores");
+    throw await leerError(respuesta);
+  }
+
+  return (await respuesta.json()) as Cotizacion;
 }

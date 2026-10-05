@@ -15,9 +15,9 @@ import { Marca } from "./marca";
 /*
  * Encabezado de la tienda pública.
  *
- * Las secciones son las dos formas de comprar de la plataforma: lotes y granel.
- * No hay categorías en el menú: son datos de cada tienda y cambian entre una y
- * otra.
+ * El menú es el mismo para toda tienda: inicio, catálogo y agenda. Cómo vende
+ * cada una —por unidad, por lote o por peso— se agrupa dentro del catálogo, con
+ * los datos del backend. Las categorías tampoco van acá: cambian entre tiendas.
  *
  * Los elementos con `data-pendiente` llevan a pantallas que todavía no existen.
  */
@@ -27,8 +27,11 @@ export function Encabezado({ tienda }: { tienda: IdentidadTienda }) {
 
   const secciones = [
     { href: base, etiqueta: "Inicio", activa: ruta === base },
-    { href: `${base}/lotes`, etiqueta: "Lotes", activa: ruta.startsWith(`${base}/lotes`) },
-    { href: `${base}/granel`, etiqueta: "Granel", activa: ruta.startsWith(`${base}/granel`) },
+    {
+      href: `${base}/productos`,
+      etiqueta: "Catálogo",
+      activa: ruta.startsWith(`${base}/productos`),
+    },
     {
       href: `${base}/agenda`,
       etiqueta: "Agendar visita",

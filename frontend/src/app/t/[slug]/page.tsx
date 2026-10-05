@@ -7,8 +7,9 @@ import { obtenerIdentidadTienda } from "@/lib/api/tienda";
 /**
  * Inicio de la tienda pública.
  *
- * Las dos formas de comprar de la plataforma son lotes y granel. El banner se
- * muestra solo si la tienda lo cargó: sin imagen no se dibuja nada en su lugar.
+ * Lleva al catálogo y nada más: cómo vende esa tienda lo dicen sus productos,
+ * no esta pantalla. El banner se muestra solo si la tienda lo cargó: sin imagen
+ * no se dibuja nada en su lugar.
  */
 export default async function InicioTienda({ params }: PageProps<"/t/[slug]">) {
   const { slug } = await params;
@@ -38,25 +39,12 @@ export default async function InicioTienda({ params }: PageProps<"/t/[slug]">) {
       <div className="mx-auto w-full max-w-[1280px] px-5 py-12 lg:px-6 lg:py-16">
         <h1 className="font-serif text-[38px] font-medium text-texto lg:text-[52px]">{tienda.nombre}</h1>
 
-        <div className="mt-8 grid gap-4 md:grid-cols-2">
+        <div className="mt-8">
           <Link
-            href={`${base}/lotes`}
-            className="rounded-2xl border border-lila/12 bg-superficie p-6 transition-colors hover:border-lila/45"
+            href={`${base}/productos`}
+            className="inline-flex h-12 items-center rounded-full bg-violeta px-7 text-sm font-semibold text-white transition-colors hover:bg-violeta-hover hover:no-underline"
           >
-            <span className="font-serif text-[26px] text-texto">Lotes</span>
-            <p className="mt-2 text-[13px] leading-[1.55] text-texto-suave">
-              Conjuntos cerrados de piezas, con su composición y su precio.
-            </p>
-          </Link>
-
-          <Link
-            href={`${base}/granel`}
-            className="rounded-2xl border border-lila/12 bg-superficie p-6 transition-colors hover:border-lila/45"
-          >
-            <span className="font-serif text-[26px] text-texto">Granel</span>
-            <p className="mt-2 text-[13px] leading-[1.55] text-texto-suave">
-              Compra por gramo, con precio según la cantidad.
-            </p>
+            Ver el catálogo
           </Link>
         </div>
       </div>

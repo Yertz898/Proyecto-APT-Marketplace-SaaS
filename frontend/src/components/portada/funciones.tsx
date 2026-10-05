@@ -74,13 +74,12 @@ const FUNCIONES = [
     ),
   },
   {
-    titulo: "Sugerencias de descuento",
-    detalle: "Te avisa qué productos conviene rebajar para que roten.",
+    titulo: "Alerta de quiebre",
+    detalle: "Te avisa qué se te va a acabar antes de que pase.",
     icono: (
       <>
-        <path d="M18 6L6 18" />
-        <circle cx="7.5" cy="7.5" r="2.5" />
-        <circle cx="16.5" cy="16.5" r="2.5" />
+        <path d="M12 4l9 16H3l9-16z" />
+        <path d="M12 10v4M12 17h.01" />
       </>
     ),
   },

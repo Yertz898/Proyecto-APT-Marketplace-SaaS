@@ -1,4 +1,4 @@
-import type { Pesos } from "@/lib/tipos";
+import type { Pesos, UnidadMedida } from "@/lib/tipos";
 
 const pesosChilenos = new Intl.NumberFormat("es-CL", {
   style: "currency",
@@ -26,13 +26,19 @@ export function formatearFecha(iso: string): string {
   return fechaChilena.format(fecha).replaceAll("/", "-");
 }
 
-const gramosChilenos = new Intl.NumberFormat("es-CL", {
+const cantidadChilena = new Intl.NumberFormat("es-CL", {
   maximumFractionDigits: 2,
 });
 
-/** 166.5 → "166,5 g" (gramos con coma decimal). */
-export function formatearGramos(gramos: number): string {
-  return `${gramosChilenos.format(gramos)} g`;
+/**
+ * Una cantidad con la unidad del producto: "166,5 g", "3 kg", "12".
+ *
+ * La unidad viene del producto y no de acá: la plataforma no sabe si lo que se
+ * cuenta son gramos, piezas o lotes, y no debe saberlo.
+ */
+export function formatearCantidad(cantidad: number, unidad: UnidadMedida): string {
+  const numero = cantidadChilena.format(cantidad);
+  return unidad === "unidad" ? numero : `${numero} ${unidad}`;
 }
 
 const ZONA_TIENDA = "America/Santiago";

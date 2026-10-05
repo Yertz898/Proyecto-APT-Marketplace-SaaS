@@ -18,14 +18,18 @@ export const SOLICITAR_ACCESO = "/solicitar-acceso";
 export const ENTRAR = "/panel/entrar";
 
 /**
- * Tienda que se muestra como ejemplo.
+ * Tienda que la portada muestra como ejemplo.
  *
- * Es el único lugar del frontend donde el nombre de una tienda está escrito en
- * el código, por decisión del equipo. En el resto del sistema la tienda sale
- * siempre de la ruta o de la sesión; cambiar de tienda de ejemplo es cambiar
- * esta línea.
+ * Sale de una variable de entorno y no del código: ninguna tienda en
+ * particular puede quedar escrita acá, y cambiar cuál se muestra no debería
+ * ser un despliegue. Sin la variable, el botón lleva al formulario de
+ * solicitud, que es la acción que la portada quiere de todos modos.
  */
-export const TIENDA_DE_EJEMPLO = "/t/joyas-ye";
+const SLUG_DE_EJEMPLO = process.env.NEXT_PUBLIC_TIENDA_DE_EJEMPLO;
+
+export const TIENDA_DE_EJEMPLO = SLUG_DE_EJEMPLO
+  ? `/t/${SLUG_DE_EJEMPLO}`
+  : "#solicitar";
 
 /** Las tres secciones que enlaza el menú. */
 export const SECCIONES = [

@@ -5,7 +5,7 @@ export const metadata = { title: "Catálogo" };
 export default function PaginaCatalogo() {
   return (
     <>
-      <Cabecera titulo="Catálogo" descripcion="Tus lotes y tus líneas de granel." />
+      <Cabecera titulo="Catálogo" descripcion="Tus productos, su precio y su inventario." />
       <SinConectar seccion="El catálogo del panel" />
     </>
   );

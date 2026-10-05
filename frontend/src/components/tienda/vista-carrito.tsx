@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { confirmarPedido, cotizarCarrito } from "@/lib/api/carrito";
-import { formatearGramos, formatearPesos } from "@/lib/formato";
+import { formatearPesos } from "@/lib/formato";
 import type { CarritoCotizado, LineaCarrito, PedidoConfirmado } from "@/lib/tipos";
 
 import { useCarrito } from "./carrito";
@@ -87,12 +87,9 @@ export function VistaCarrito({ slugTienda }: { slugTienda: string }) {
     return (
       <div className="rounded-2xl border border-lila/12 bg-superficie p-6">
         <p className="text-sm text-texto-suave">Tu carrito está vacío.</p>
-        <div className="mt-4 flex gap-3">
-          <Link href={`/t/${slugTienda}/lotes`} className="text-[13px] text-lila">
-            Ver lotes
-          </Link>
-          <Link href={`/t/${slugTienda}/granel`} className="text-[13px] text-lila">
-            Ver granel
+        <div className="mt-4">
+          <Link href={`/t/${slugTienda}/productos`} className="text-[13px] text-lila">
+            Ver el catálogo
           </Link>
         </div>
       </div>
@@ -104,7 +101,7 @@ export function VistaCarrito({ slugTienda }: { slugTienda: string }) {
       <ul className="flex flex-col gap-3">
         {lineas.map((linea, indice) => (
           <li
-            key={`${linea.tipo}-${linea.codigo}`}
+            key={linea.codigo}
             className="flex items-start justify-between gap-4 rounded-xl border border-lila/12 bg-superficie p-4"
           >
             <div>
@@ -183,14 +180,12 @@ function nombreDeLinea(cotizacion: CarritoCotizado | null, indice: number, linea
 }
 
 function detalleDeLinea(cotizacion: CarritoCotizado | null, indice: number, linea: LineaCarrito): string {
-  const delBackend = cotizacion?.lineas[indice]?.detalle;
-  if (delBackend) {
-    return delBackend;
-  }
-  if (linea.tipo === "lote") {
-    return `${linea.cantidad} ${linea.cantidad === 1 ? "lote" : "lotes"}`;
-  }
-  return formatearGramos(linea.gramos);
+  /*
+   * El detalle con su unidad lo redacta el backend, que es el único que sabe
+   * si esa línea se cuenta en unidades, en lotes o en gramos. Mientras no
+   * llegue la cotización se muestra el número pelado.
+   */
+  return cotizacion?.lineas[indice]?.detalle ?? String(linea.cantidad);
 }
 
 function Fila({ termino, valor, destacado = false }: { termino: string; valor: string; destacado?: boolean }) {

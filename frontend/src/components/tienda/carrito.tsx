@@ -75,8 +75,8 @@ function suscribir(escucha: () => void): () => void {
 type Carrito = {
   slugTienda: string;
   lineas: LineaCarrito[];
-  agregarLote: (codigo: string, cantidad?: number) => void;
-  agregarGranel: (codigo: string, gramos: number) => void;
+  /** La cantidad va en la unidad de medida del producto: unidades, lotes o gramos. */
+  agregar: (codigo: string, cantidad?: number) => void;
   quitar: (indice: number) => void;
   vaciar: () => void;
 };
@@ -90,40 +90,23 @@ export function ProveedorCarrito({ slugTienda, children }: { slugTienda: string;
     () => VACIO,
   );
 
-  const agregarLote = useCallback(
+  // Una sola forma de agregar. Antes eran dos funciones casi idénticas, una
+  // por tipo de producto; ahora la unidad la lleva el producto y el carrito no
+  // necesita saber si lo que suma son lotes o gramos.
+  const agregar = useCallback(
     (codigo: string, cantidad = 1) => {
       const actuales = instantanea(slugTienda);
-      const posicion = actuales.findIndex((linea) => linea.tipo === "lote" && linea.codigo === codigo);
+      const posicion = actuales.findIndex((linea) => linea.codigo === codigo);
 
       if (posicion === -1) {
-        guardar(slugTienda, [...actuales, { tipo: "lote", codigo, cantidad }]);
+        guardar(slugTienda, [...actuales, { codigo, cantidad }]);
         return;
       }
 
       guardar(
         slugTienda,
         actuales.map((linea, indice) =>
-          indice === posicion && linea.tipo === "lote" ? { ...linea, cantidad: linea.cantidad + cantidad } : linea,
-        ),
-      );
-    },
-    [slugTienda],
-  );
-
-  const agregarGranel = useCallback(
-    (codigo: string, gramos: number) => {
-      const actuales = instantanea(slugTienda);
-      const posicion = actuales.findIndex((linea) => linea.tipo === "granel" && linea.codigo === codigo);
-
-      if (posicion === -1) {
-        guardar(slugTienda, [...actuales, { tipo: "granel", codigo, gramos }]);
-        return;
-      }
-
-      guardar(
-        slugTienda,
-        actuales.map((linea, indice) =>
-          indice === posicion && linea.tipo === "granel" ? { ...linea, gramos: linea.gramos + gramos } : linea,
+          indice === posicion ? { ...linea, cantidad: linea.cantidad + cantidad } : linea,
         ),
       );
     },
@@ -143,7 +126,7 @@ export function ProveedorCarrito({ slugTienda, children }: { slugTienda: string;
   const vaciar = useCallback(() => guardar(slugTienda, []), [slugTienda]);
 
   return (
-    <ContextoCarrito value={{ slugTienda, lineas, agregarLote, agregarGranel, quitar, vaciar }}>
+    <ContextoCarrito value={{ slugTienda, lineas, agregar, quitar, vaciar }}>
       {children}
     </ContextoCarrito>
   );

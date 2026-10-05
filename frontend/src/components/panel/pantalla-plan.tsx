@@ -6,9 +6,9 @@ import { NOMBRE_DEL_PLAN } from "./secciones";
 import type { Plan } from "@/lib/tipos";
 
 const PLANES: { plan: Plan; precio: string; incluye: string }[] = [
-  { plan: "basico", precio: "$10.990", incluye: "Catálogo, precios por cantidad, carga masiva y pedidos." },
+  { plan: "basico", precio: "$10.990", incluye: "Catálogo, inventario, precios por volumen, carga masiva y pedidos." },
   { plan: "premium", precio: "$20.990", incluye: "Suma tu marca, el panel de ventas, el equipo y la agenda." },
-  { plan: "ultimate", precio: "$35.990", incluye: "Suma pronóstico, segmentos, sugerencias y asistente." },
+  { plan: "ultimate", precio: "$35.990", incluye: "Suma pronóstico de demanda, segmentos de clientes y asistente." },
 ];
 
 export function PantallaPlan() {

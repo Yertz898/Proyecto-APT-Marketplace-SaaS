@@ -61,7 +61,7 @@ const PLANES: Plan[] = [
     incluye: [
       "Todo lo del plan Premium",
       "Pronóstico de demanda",
-      "Sugerencias de descuento",
+      "Segmentos de clientes",
       "Asistente que responde sobre tus ventas",
     ],
   },

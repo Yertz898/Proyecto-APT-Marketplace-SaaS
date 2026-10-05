@@ -102,12 +102,15 @@ export function ResumenDeFotos({
 
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
         <Contador titulo="Fotos emparejadas" valor={resumen.emparejadas} />
-        <Contador titulo="Lotes sin foto" valor={resumen.lotesSinFoto.length} />
-        <Contador titulo="Fotos sin lote" valor={resumen.fotosSinLote.length} />
+        <Contador titulo="Productos sin foto" valor={resumen.productosSinFoto.length} />
+        <Contador titulo="Fotos sin producto" valor={resumen.fotosSinProducto.length} />
       </div>
 
-      <ListaDeCodigos titulo="Lotes que quedarían sin foto" codigos={resumen.lotesSinFoto} />
-      <ListaDeCodigos titulo="Fotos que no corresponden a ningún lote" codigos={resumen.fotosSinLote} />
+      <ListaDeCodigos titulo="Productos que quedarían sin foto" codigos={resumen.productosSinFoto} />
+      <ListaDeCodigos
+        titulo="Fotos que no corresponden a ningún producto"
+        codigos={resumen.fotosSinProducto}
+      />
 
       <div className="mt-6 flex flex-wrap gap-3">
         <button type="button" onClick={onConfirmar} className={CLASES_BOTON_PRINCIPAL}>

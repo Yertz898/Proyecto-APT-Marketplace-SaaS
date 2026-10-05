@@ -8,7 +8,7 @@
 import type { Imagen, Plan } from "@/lib/tipos";
 
 /** Cada tipo de carga tiene su plantilla, su validación y su pantalla. */
-export type TipoCarga = "lotes" | "granel" | "fotos";
+export type TipoCarga = "productos" | "tramos" | "fotos";
 
 export type LimitesCarga = {
   /** Extensiones que acepta el backend, p. ej. [".xlsx", ".csv"]. */
@@ -38,12 +38,12 @@ export type ResumenCarga = {
   ausentes: string[];
 };
 
-/** Resultado de emparejar el .zip de fotos con los lotes ya cargados. */
+/** Resultado de emparejar el .zip de fotos con los productos ya cargados. */
 export type ResumenFotos = {
   cargaId: string;
   emparejadas: number;
-  lotesSinFoto: string[];
-  fotosSinLote: string[];
+  productosSinFoto: string[];
+  fotosSinProducto: string[];
 };
 
 export type CargaHistorial = {

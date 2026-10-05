@@ -6,8 +6,8 @@ import type { CarritoCotizado, LineaCarrito, PedidoConfirmado } from "@/lib/tipo
  *
  * El carrito del navegador guarda solo referencias y cantidades. Los precios,
  * los totales y el aviso del próximo tramo los calcula el backend cada vez, por
- * dos razones: los tramos de lotes dependen de cuántos lotes lleva el pedido
- * completo, y un cupo puede agotarse mientras el comprador decide.
+ * dos razones: el tramo que se aplica depende del pedido completo, y el stock
+ * puede agotarse mientras el comprador decide.
  *
  * Endpoints a implementar:
  *   POST /t/{slug}/carrito/cotizar
@@ -16,10 +16,10 @@ import type { CarritoCotizado, LineaCarrito, PedidoConfirmado } from "@/lib/tipo
  * Al implementarlos (CONVENCIONES.md):
  * - El checkout es simulado: se genera el pedido y se descuenta stock, pero no
  *   se cobra. El pago se coordina fuera de la plataforma.
- * - El stock se descuenta al pasar a `confirmado`, dentro de una transacción
- *   con bloqueo de la fila, porque dos compradores pueden confirmar el último
- *   cupo a la vez.
- * - Una línea rechazada (cupo agotado, bajo el mínimo) no bota el resto del
+ * - El stock se descuenta al pasar a `confirmado`, solo en los productos que lo
+ *   controlan, dentro de una transacción con bloqueo de la fila: dos
+ *   compradores pueden confirmar la última unidad a la vez.
+ * - Una línea rechazada (sin stock, bajo el mínimo) no bota el resto del
  *   carrito: viene marcada y el comprador decide.
  */
 
