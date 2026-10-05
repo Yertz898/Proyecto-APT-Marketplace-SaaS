@@ -5,7 +5,7 @@
  * distintas y no deben compartir componentes ni modelos.
  */
 
-import type { Imagen, Plan } from "@/lib/tipos";
+import type { FormaVenta, Imagen, Plan, UnidadMedida } from "@/lib/tipos";
 
 /** Cada tipo de carga tiene su plantilla, su validación y su pantalla. */
 export type TipoCarga = "productos" | "tramos" | "fotos";
@@ -103,3 +103,43 @@ export type CambiosDelPerfil = Partial<{
   logo: File;
   banner: File;
 }>;
+
+// ── Catálogo desde el panel ─────────────────────────────────────────────────
+
+/**
+ * En una palabra, qué le pasa a un producto.
+ *
+ * Son hechos, no predicciones. La alerta por demanda proyectada necesita el
+ * pronóstico y todavía no existe.
+ */
+export type EstadoDeProducto = "publicado" | "ultima" | "agotado" | "desactivado";
+
+/** Un producto como lo lista el panel: con lo que la vitrina esconde. */
+export type ProductoDelPanel = {
+  codigo: string;
+  nombre: string;
+  categoria: string | null;
+  formaVenta: FormaVenta;
+  unidadMedida: UnidadMedida;
+  precioNeto: number;
+  controlaStock: boolean;
+  /** Null cuando la tienda no lleva inventario de este producto. */
+  stock: number | null;
+  /** Cuántos tramos de precio tiene. */
+  tramos: number;
+  activo: boolean;
+  estado: EstadoDeProducto;
+};
+
+export type PaginaDelPanel = {
+  productos: ProductoDelPanel[];
+  paginaActual: number;
+  totalPaginas: number;
+};
+
+export type ResumenDeInventario = {
+  publicados: number;
+  desactivados: number;
+  agotados: number;
+  ultimaUnidad: number;
+};
