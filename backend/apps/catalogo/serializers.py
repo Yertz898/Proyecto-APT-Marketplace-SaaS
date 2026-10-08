@@ -13,6 +13,7 @@ aritmética de dinero.
 from rest_framework import serializers
 
 from apps.catalogo.models import FormaVenta, Producto
+from apps.core.medios import imagen
 from apps.precios.dinero import desglose
 from apps.precios.models import UnidadUmbral
 
@@ -150,15 +151,7 @@ class ProductoSerializer(serializers.ModelSerializer):
 
         Un marcador gris se confunde con una foto que no cargó.
         """
-        if not producto.foto:
-            return None
-
-        peticion = self.context.get("request")
-        url = producto.foto.url
-        return {
-            "url": peticion.build_absolute_uri(url) if peticion else url,
-            "alt": producto.nombre,
-        }
+        return imagen(producto.foto, producto.nombre)
 
 
 class CotizacionSerializer(serializers.Serializer):

@@ -204,6 +204,14 @@ else:
     MEDIA_URL = "media/"
     MEDIA_ROOT = BASE_DIR / "media"
 
+# Desde dónde alcanza el navegador a las imágenes guardadas en disco.
+#
+# No se deduce de la petición: el navegador y el servidor de Next llegan a
+# Django por direcciones distintas, y la foto no puede cambiar de dirección
+# según quién la pida. Con R2 no se usa, porque el almacenamiento ya entrega la
+# dirección pública.
+MEDIA_BASE_URL = env("MEDIA_BASE_URL", default="")
+
 
 # ── Seguridad ───────────────────────────────────────────────────────────────
 # Se endurece sola cuando DEBUG está apagado, para que el ambiente de pruebas y

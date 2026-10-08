@@ -3,6 +3,7 @@
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
+from apps.core.medios import imagen
 from apps.core.validadores import validar_imagen
 from apps.tiendas.models import Plan, SolicitudDeAcceso, Tienda, Tipografia
 from apps.tiendas.validadores import validar_color_hexadecimal
@@ -28,22 +29,11 @@ class TiendaPublicaSerializer(serializers.ModelSerializer):
         model = Tienda
         fields = ["slug", "nombre", "logo", "banner", "colores", "redes"]
 
-    def _imagen(self, archivo, alt):
-        if not archivo:
-            return None
-
-        url = archivo.url
-        peticion = self.context.get("request")
-        if peticion is not None:
-            url = peticion.build_absolute_uri(url)
-
-        return {"url": url, "alt": alt}
-
     def get_logo(self, tienda):
-        return self._imagen(tienda.logo, tienda.nombre)
+        return imagen(tienda.logo, tienda.nombre)
 
     def get_banner(self, tienda):
-        return self._imagen(tienda.banner, tienda.nombre)
+        return imagen(tienda.banner, tienda.nombre)
 
     def get_colores(self, tienda):
         # Todo o nada: si la tienda no definió su paleta completa, el frontend
@@ -172,22 +162,11 @@ class PerfilDeTiendaSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["slug", "plan"]
 
-    def _imagen(self, archivo, alt):
-        if not archivo:
-            return None
-
-        url = archivo.url
-        peticion = self.context.get("request")
-        if peticion is not None:
-            url = peticion.build_absolute_uri(url)
-
-        return {"url": url, "alt": alt}
-
     def get_logoActual(self, tienda):
-        return self._imagen(tienda.logo, tienda.nombre)
+        return imagen(tienda.logo, tienda.nombre)
 
     def get_bannerActual(self, tienda):
-        return self._imagen(tienda.banner, tienda.nombre)
+        return imagen(tienda.banner, tienda.nombre)
 
     def get_tipografiasDisponibles(self, tienda):
         # La lista viaja con el perfil para que el panel no la repita: si mañana

@@ -114,10 +114,16 @@ export type CambiosDelPerfil = Partial<{
  */
 export type EstadoDeProducto = "publicado" | "ultima" | "agotado" | "desactivado";
 
-/** Un producto como lo lista el panel: con lo que la vitrina esconde. */
+/**
+ * Un producto como lo lista y lo edita el panel.
+ *
+ * Trae todo lo editable y no un resumen: si faltara la descripción o las
+ * piezas, el formulario las abriría vacías y guardarlas las borraría.
+ */
 export type ProductoDelPanel = {
   codigo: string;
   nombre: string;
+  descripcion: string;
   categoria: string | null;
   formaVenta: FormaVenta;
   unidadMedida: UnidadMedida;
@@ -125,10 +131,15 @@ export type ProductoDelPanel = {
   controlaStock: boolean;
   /** Null cuando la tienda no lleva inventario de este producto. */
   stock: number | null;
+  cantidadMinima: number;
+  /** Solo en la venta por lote. */
+  cantidadPiezas: number | null;
   /** Cuántos tramos de precio tiene. */
   tramos: number;
   activo: boolean;
   estado: EstadoDeProducto;
+  /** Null cuando no hay: la pantalla no dibuja un marcador en su lugar. */
+  foto: Imagen | null;
 };
 
 export type PaginaDelPanel = {
@@ -142,4 +153,11 @@ export type ResumenDeInventario = {
   desactivados: number;
   agotados: number;
   ultimaUnidad: number;
+};
+
+/** Una categoría de la tienda, con cuántos productos la usan. */
+export type CategoriaDelPanel = {
+  id: number;
+  nombre: string;
+  productos: number;
 };

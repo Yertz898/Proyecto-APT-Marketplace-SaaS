@@ -234,7 +234,8 @@ class CatalogoDelPanel(MixinTiendaDelUsuario, generics.ListCreateAPIView):
         # Se responde con la forma del listado, que es la que la pantalla ya
         # sabe dibujar.
         return Response(
-            ProductoDelPanelSerializer(producto).data, status=status.HTTP_201_CREATED
+            ProductoDelPanelSerializer(producto, context={"request": request}).data,
+            status=status.HTTP_201_CREATED,
         )
 
 
@@ -271,7 +272,9 @@ class ProductoDelPanel(MixinTiendaDelUsuario, generics.RetrieveUpdateAPIView):
         serializador.save()
 
         producto.refresh_from_db()
-        return Response(ProductoDelPanelSerializer(producto).data)
+        return Response(
+            ProductoDelPanelSerializer(producto, context={"request": request}).data
+        )
 
 
 class CategoriasDelPanel(MixinTiendaDelUsuario, generics.ListCreateAPIView):

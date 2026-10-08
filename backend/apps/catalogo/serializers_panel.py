@@ -11,11 +11,20 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
 
 from apps.catalogo.models import Categoria, FormaVenta, Producto, UnidadMedida
+from apps.core.medios import imagen
 from apps.core.validadores import validar_imagen
 from apps.precios.models import TramoPrecio, UnidadUmbral
 
 
 class ProductoDelPanelSerializer(serializers.ModelSerializer):
+    """
+    Un producto como lo lista y lo edita el panel.
+
+    Trae **todo lo editable**, no un resumen. Tentaba dejar fuera la
+    descripción y las piezas porque la tabla no las muestra, pero entonces el
+    formulario se abriría con esos campos vacíos y guardarlos los borraría.
+    """
+
     formaVenta = serializers.CharField(source="forma_venta", read_only=True)
     unidadMedida = serializers.CharField(source="unidad_medida", read_only=True)
     categoria = serializers.CharField(
@@ -24,30 +33,48 @@ class ProductoDelPanelSerializer(serializers.ModelSerializer):
     precioNeto = serializers.IntegerField(source="precio_neto", read_only=True)
     controlaStock = serializers.BooleanField(source="controla_stock", read_only=True)
     stock = serializers.SerializerMethodField()
+    cantidadMinima = serializers.SerializerMethodField()
+    cantidadPiezas = serializers.IntegerField(
+        source="cantidad_piezas", read_only=True, default=None
+    )
     tramos = serializers.IntegerField(source="tramos.count", read_only=True)
     estado = serializers.SerializerMethodField()
+    foto = serializers.SerializerMethodField()
 
     class Meta:
         model = Producto
         fields = [
             "codigo",
             "nombre",
+            "descripcion",
             "categoria",
             "formaVenta",
             "unidadMedida",
             "precioNeto",
             "controlaStock",
             "stock",
+            "cantidadMinima",
+            "cantidadPiezas",
             "tramos",
             "activo",
             "estado",
+            "foto",
         ]
 
     def get_stock(self, producto) -> float | int | None:
-        if producto.stock is None:
-            return None
-        entero = producto.stock == producto.stock.to_integral_value()
-        return int(producto.stock) if entero else float(producto.stock)
+        return _numero(producto.stock)
+
+    def get_cantidadMinima(self, producto) -> float | int | None:  # noqa: N802
+        return _numero(producto.cantidad_minima)
+
+    def get_foto(self, producto) -> dict | None:
+        """
+        La foto, para que el panel muestre cuál hay antes de reemplazarla.
+
+        Null cuando no hay: la pantalla no dibuja un marcador gris, que se
+        confunde con una foto que no cargó.
+        """
+        return imagen(producto.foto, producto.nombre)
 
     def get_estado(self, producto) -> str:
         """
@@ -292,3 +319,10 @@ class TramoSerializer(serializers.ModelSerializer):
             )
 
         return datos
+
+
+def _numero(valor) -> float | int | None:
+    """Entero cuando no tiene decimales. Evita los «10,000» en pantalla."""
+    if valor is None:
+        return None
+    return int(valor) if valor == valor.to_integral_value() else float(valor)
