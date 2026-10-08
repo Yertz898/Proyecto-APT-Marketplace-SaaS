@@ -3,11 +3,9 @@
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
+from apps.core.validadores import validar_imagen
 from apps.tiendas.models import Plan, SolicitudDeAcceso, Tienda, Tipografia
-from apps.tiendas.validadores import (
-    validar_color_hexadecimal,
-    validar_imagen_de_marca,
-)
+from apps.tiendas.validadores import validar_color_hexadecimal
 
 
 class TiendaPublicaSerializer(serializers.ModelSerializer):
@@ -134,13 +132,13 @@ class PerfilDeTiendaSerializer(serializers.ModelSerializer):
         write_only=True,
         required=False,
         allow_null=True,
-        validators=[validar_imagen_de_marca],
+        validators=[validar_imagen],
     )
     banner = serializers.ImageField(
         write_only=True,
         required=False,
         allow_null=True,
-        validators=[validar_imagen_de_marca],
+        validators=[validar_imagen],
     )
 
     # Declarados a mano para que el contrato vaya en camelCase, así que los
