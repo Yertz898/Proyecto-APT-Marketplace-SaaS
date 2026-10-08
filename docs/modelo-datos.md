@@ -5,6 +5,27 @@ y el diccionario completo, campo por campo, en
 [`DealCommerce_Diccionario_de_Datos.xlsx`](DealCommerce_Diccionario_de_Datos.xlsx). Este
 documento no los repite: explica por qué las tablas quedaron así.
 
+## El punto de partida
+
+DealCommerce es un centro comercial en línea. Cada tienda arrienda su local, sube sus
+productos y los vende **a su manera**: una de ropa vende prendas una por una y lleva
+inventario; una verdulería vende por kilo; una joyería arma conjuntos cerrados y además
+vende por gramo. El sistema no sabe de ninguno de esos rubros, y no debe saberlo.
+
+Lo que la plataforma sí provee es un lugar donde esa forma de vender se **declara como
+dato**:
+
+- `forma_venta` dice si el producto se vende por unidad, por lote o por peso.
+- `controla_stock` dice si esa tienda lleva inventario de ese producto.
+
+Nada de eso está escrito en el código. Una tienda que mañana venda de otra manera se
+configura, no se programa.
+
+> **Joyas_ye** es el cliente piloto y es **una tienda del centro comercial**, no el modelo
+> del sistema. Vende por lote y por gramo; otra tienda vende por unidad. Cuando este
+> documento nombra lotes o gramos es para explicar cómo quedó configurada ella, nunca
+> porque la plataforma trate de eso.
+
 ## La regla que ordena todo
 
 **Todo dato del sistema cuelga de una tienda.** Un modelo que no puede responder a qué
@@ -33,73 +54,97 @@ Dos decisiones que se ven en el esquema:
 
 - **La tipografía es una lista cerrada** (`inter`, `jakarta`, `manrope`, `cormorant`), no un
   texto libre. Todas las tiendas comparten origen: una fuente o un CSS escritos por un
-  vendedor correrían en la página de otra. Por la misma razón los colores se validan con
-  una expresión regular de seis dígitos hexadecimales.
+  arrendatario correrían en la página de otro. Por la misma razón los colores se validan
+  con una expresión regular de seis dígitos hexadecimales.
 - **El `plan`** (`basico`, `premium`, `ultimate`) decide qué secciones del panel se
-  habilitan. Vive en la tienda y no en el usuario porque se suscribe la tienda, no la
+  habilitan. Vive en la tienda y no en el usuario porque se suscribe el local, no la
   persona.
 
-Ambos campos se agregaron en el Sprint 2 y **faltan en el diccionario y en el diagrama**.
+## Producto
 
-## Catálogo
+Una sola tabla para todo lo que se vende en el centro comercial.
 
-Dos formas de vender, y por eso dos tablas y no una con un campo `tipo`:
-
-| Tabla | Qué es |
+| Campo | Para qué |
 |---|---|
-| `Lote` | Un conjunto cerrado de piezas, con un precio por el conjunto |
-| `ComposicionLote` | Cuántas piezas de cada categoría trae ese lote |
-| `LineaGranel` | Una familia de piezas que se vende por gramo |
-| `Categoria` | Anillos, aros, colgantes… Únicas **por tienda** |
+| `codigo` | Como lo llama la tienda. Único **por tienda**, y es la clave de la carga masiva |
+| `forma_venta` | `unidad`, `lote` o `peso` |
+| `unidad_medida` | `unidad`, `g` o `kg`, según la forma de venta |
+| `controla_stock` | Si esa tienda lleva inventario de este producto |
+| `stock` | Cuánto queda (`Decimal`), **nulo** si no se controla |
+| `cantidad_minima` | Lo menos que se puede pedir |
+| `cantidad_piezas` | Solo en la venta por lote: contra esto cuadra la composición |
 
-Un lote se vende por **cupos**, no por stock de piezas. `tipo_cupo` distingue la pieza que
-existe una sola vez (`UNICO`, y una restricción obliga a que sus cupos sean exactamente 1)
-del lote que se arma varias veces (`MULTIPLE`). Las restricciones de base garantizan que
-los cupos disponibles nunca superen los totales y que las piezas sean positivas: eso no
-depende de que el código lo recuerde.
+El código es único por tienda y no en toda la plataforma: dos locales pueden tener su
+`A-01` sin saber uno del otro.
 
-`LineaGranel.categorias` es **texto**, no una relación. Es lo que dice el diccionario y
-tiene sentido: ahí la categoría es descriptiva —"colgantes, aros y anillos"— y no una
-entidad que haya que contar ni filtrar.
+**El stock nulo no es cero.** Nulo significa «esta tienda no cuenta lo que le queda de este
+producto»; cero significa «se acabó». Confundirlos haría desaparecer de la vitrina lo que
+en realidad está disponible, y una restricción de la base impide la combinación imposible:
+con control, el stock existe y no es negativo; sin control, es nulo.
 
-El código de un lote es único por tienda, no global: dos tiendas pueden tener su `A-01` sin
-saber una de la otra.
+Las otras restricciones están en la base y no en el código, para que no dependan de que
+alguien las recuerde: la unidad tiene que corresponder a la forma de venta, las piezas solo
+existen en la venta por lote, y el precio y la cantidad mínima son positivos.
 
-## Precios
+### Lo que se vende por lote
 
-`TramoPrecio` sirve a los dos casos, y por eso `linea_granel` puede ir vacío:
+Un lote es un conjunto cerrado que se compra entero. `ComposicionLote` dice cuántas piezas
+de cada categoría trae, y la suma tiene que cuadrar con `cantidad_piezas`: es una validación
+al guardar, no un comentario. No es una lista de piezas concretas —los modelos varían según
+lo que le llega a la tienda—, así que lo que se promete es la mezcla.
 
-- **Con línea** es un tramo del granel de esa línea, y `valor` es el precio por gramo.
-- **Sin línea** es un tramo por cantidad de lotes de toda la tienda.
+**Los «cupos» no son un concepto aparte**: son el stock de un producto vendido por lote, y
+uno que se vende una sola vez es un producto con `stock = 1`. Así descontar inventario es
+una sola lógica para todo el centro comercial, en vez de dos que hay que recordar mantener
+iguales.
 
-Los tramos por cantidad de lotes **el cliente no los ha definido**, así que la tienda parte
-sin ninguno. Quedan configurables por tienda y nunca escritos en el código.
+### Categorías
 
-Tres reglas del dinero que están en el esquema o en `apps/precios/dinero.py`:
+Las define cada tienda, no la plataforma. Las usan el catálogo, la composición de los lotes
+y el pronóstico de demanda. Son únicas por tienda, así que dos locales pueden tener una
+«cocina» cada uno sin pisarse.
+
+## Precios por volumen
+
+`TramoPrecio` dice «desde tal cantidad, este precio por unidad de medida». **Siempre cuelga
+de un producto y su valor es siempre un precio neto**: en DealCommerce no hay descuentos ni
+porcentajes. Si hace falta otro precio, es otro tramo.
+
+El umbral se mide en `cantidad`, `monto` o `peso`, y es **inclusivo**: «sobre 20 mil»
+incluye los $20.000 exactos. Lo confirmó el cliente el 27-09-2026.
+
+Cómo se elige el tramo, en `apps/precios/servicios.py`:
+
+1. Los umbrales en `peso` o en `cantidad` tienen prioridad: se toma el mayor que la
+   cantidad pedida alcance.
+2. Si no alcanza ninguno, se arma un **monto de referencia** —la cantidad por el
+   `precio_neto` del producto— y se aplica el tramo por `monto` que ese monto alcance.
+3. Si no llega ni al primero, se rechaza.
+4. Sin tramos, se cobra el precio del producto.
+
+**Hay dos rechazos y no son lo mismo.** No alcanzar el primer tramo por monto es una cosa;
+pedir menos que la `cantidad_minima` del producto es otra. Tienen mensajes distintos porque
+se corrigen de maneras distintas.
+
+Tres reglas del dinero, en `apps/precios/dinero.py`:
 
 - Los precios se guardan **netos**, como enteros. El IVA (19%) se calcula aparte y se
   muestra separado del neto y del total. Nunca va sumado por dentro.
-- El cálculo usa `Decimal`: el neto trunca hacia abajo y el IVA redondea con `ROUND_HALF_UP`.
-  El `round()` de Python redondea al par más cercano y deja el total un peso corto en casos
+- El neto trunca hacia abajo y el IVA redondea con `ROUND_HALF_UP`, con `Decimal`. El
+  `round()` de Python redondea al par más cercano y deja el total un peso corto en casos
   como 3.828,50.
-- Los umbrales son **inclusivos** (`>=`): "sobre 20 mil" incluye los $20.000 exactos. Lo
-  confirmó el cliente el 27-09-2026.
-
-En el granel los umbrales en gramos tienen prioridad. Si la cantidad no alcanza ninguno, se
-arma un monto de referencia con el precio del primer tramo y se aplica el tramo en pesos
-que ese monto alcance. Bajo $20.000 de referencia la compra se rechaza.
-
-Los gramos se guardan como `Decimal`, nunca como `Float`.
+- Las cantidades se guardan como `Decimal`, nunca como `Float`: una venta por peso admite
+  decimales y de ahí sale un precio.
 
 ## Agenda
 
 `ConfiguracionAgenda` por tienda y `BloqueHorario` por franja de atención. Cada bloque
-hereda de la configuración lo que no define, para que el vendedor pueda personalizar uno
-sin repetir todo. Las horas se calculan, no se guardan: la disponibilidad sale del bloque
-menos las visitas ya tomadas.
+hereda de la configuración lo que no define, para que una tienda pueda personalizar uno sin
+repetir todo. Las horas se calculan, no se guardan: la disponibilidad sale del bloque menos
+las visitas ya tomadas.
 
-Todo se muestra en la hora de Santiago, sin importar dónde esté el navegador. Quien viaja
-ve la hora de la tienda, no la de su teléfono.
+Todo se muestra en la hora de Santiago, sin importar dónde esté el navegador. Quien viaja ve
+la hora de la tienda, no la de su teléfono.
 
 El módulo está **congelado**: funciona el lado público, falta la bandeja del dueño.
 
@@ -109,7 +154,16 @@ El módulo está **congelado**: funciona el lado público, falta la bandeja del 
 docker compose exec api python manage.py cargar_demo
 ```
 
-Es idempotente: se puede correr las veces que haga falta. Deja a Joyas_ye en plan Ultimate
-con su paleta, 7 categorías y 5 líneas de granel con **los precios reales que entregó el
-cliente**, más 6 lotes `DEMO-01` a `DEMO-06` que son **inventados** y lo dicen en el
-nombre. No repone los cupos ya vendidos al volver a correrlo.
+Carga **dos tiendas**, y son dos a propósito: con una sola, el aislamiento no se ve a mano.
+
+| Tienda | Cómo vende | Inventario |
+|---|---|---|
+| Joyas Ye | Por lote y por gramo | Los lotes sí; el gramo no |
+| Bazar Austral | Por unidad | Sí, con tramos por cantidad |
+
+Los tramos y los precios de Joyas_ye son **los que entregó el cliente, tal cual**: no se
+corrigen ni se redondean. Sus seis lotes, en cambio, son inventados y lo dicen en el
+nombre. Bazar Austral es inventada entera.
+
+El comando es idempotente y **no repone el stock ya vendido** al volver a correrlo: hacerlo
+borraría las ventas y la demostración mentiría.

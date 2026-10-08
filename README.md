@@ -56,12 +56,12 @@ docker compose exec web npm run lint            # lint del frontend
 │   │   ├── core/             aislamiento por tienda y permisos por rol
 │   │   ├── usuarios/         cuentas, roles y autenticación JWT
 │   │   ├── tiendas/          Tienda, la raíz del aislamiento
-│   │   ├── catalogo/         lotes y líneas de granel
-│   │   ├── precios/          tramos de precio para lotes y granel
+│   │   ├── catalogo/         productos, categorías y composición
+│   │   ├── precios/          tramos de precio y el motor que los aplica
 │   │   ├── pedidos/          pedidos con checkout simulado
 │   │   ├── clientes/         compradores y variables RFM
 │   │   ├── ingesta/          carga masiva del catálogo desde planillas
-│   │   ├── analitica/        pronóstico, segmentación y reglas de descuento
+│   │   ├── analitica/        pronóstico de demanda y segmentación de clientes
 │   │   ├── agenda/           agenda de visitas a la tienda
 │   │   └── asistente/        asistente conversacional del vendedor
 │   ├── requirements/         base.txt, analitica.txt, dev.txt
@@ -142,14 +142,20 @@ Todo cuelga de `/api`.
 | `POST` | `/api/auth/registro` | cualquiera (crea compradores) |
 | `GET` | `/api/auth/yo` | con sesión |
 | `GET` | `/api/t/<slug>/tienda` | público |
-| `GET` | `/api/t/<slug>/lotes` | público |
-| `GET` | `/api/t/<slug>/lotes/<codigo>` | público |
-| `GET` | `/api/t/<slug>/granel` | público |
-| `GET` | `/api/t/<slug>/granel/<codigo>` | público |
+| `GET` | `/api/t/<slug>/formas-de-venta` | público |
+| `GET` | `/api/t/<slug>/productos` | público |
+| `GET` | `/api/t/<slug>/productos/<codigo>` | público |
+| `POST` | `/api/t/<slug>/productos/<codigo>/cotizar` | público |
 | `GET` | `/api/t/<slug>/agenda/horas` | público |
 | `POST` | `/api/t/<slug>/agenda/visitas` | comprador |
-| `GET` | `/api/panel/tienda` | dueño o vendedor |
-| `PATCH` | `/api/panel/tienda` | solo el dueño |
+| `GET` `PATCH` | `/api/panel/tienda` | leer, la tienda; escribir, solo el dueño |
+| `GET` `POST` | `/api/panel/productos` | la tienda |
+| `GET` `PATCH` | `/api/panel/productos/<codigo>` | la tienda |
+| `GET` `POST` | `/api/panel/productos/<codigo>/tramos` | la tienda |
+| `GET` `PATCH` `DELETE` | `/api/panel/tramos/<id>` | la tienda |
+| `GET` `POST` | `/api/panel/categorias` | la tienda |
+| `GET` `PATCH` `DELETE` | `/api/panel/categorias/<id>` | la tienda |
+| `GET` | `/api/panel/inventario` | la tienda |
 | `POST` | `/api/solicitudes-de-acceso` | cualquiera |
 
 Las rutas `/t/<slug>/` sacan la tienda del slug y son públicas. Las de `/panel/` la sacan
@@ -173,19 +179,23 @@ Los errores tienen siempre la misma forma, con el mensaje en español:
 docker compose exec api python manage.py cargar_demo
 ```
 
-Deja el catálogo de Joyas_ye: 7 categorías, 5 líneas de granel con los precios reales que
-entregó el cliente y 6 lotes de ejemplo que lo dicen en el nombre. Es idempotente y no
-repone los cupos ya vendidos.
+Carga dos tiendas de demostración: **Joyas Ye**, que vende por lote y por gramo, con los
+precios reales que entregó el cliente y seis lotes de ejemplo que lo dicen en el nombre, y
+**Bazar Austral**, inventada entera, que vende por unidad y lleva inventario. Son dos a
+propósito: con una sola, el aislamiento entre tiendas no se ve a mano.
+
+Es idempotente y no repone el stock ya vendido.
 
 ## Estado
 
 Funcionan de punta a punta la portada con su solicitud de acceso, la identidad pública de
-la tienda, el catálogo de lotes y granel, la agenda de visitas, la sesión con sus tres
-pantallas y el perfil de la tienda desde el panel.
+la tienda, el catálogo con su cotización por volumen, la agenda de visitas, la sesión con
+sus tres pantallas, el perfil de la tienda y la administración del catálogo desde el panel,
+con sus fotos.
 
-Pendiente: el carrito y los pedidos, la carga masiva de catálogo, el catálogo y los precios
-editables desde el panel, el equipo y toda la analítica. Las pantallas de esas partes ya
-existen y dicen que no están conectadas en vez de mostrar números inventados.
+Pendiente: el carrito y los pedidos, la carga masiva, el equipo y toda la analítica. Las
+pantallas de esas partes ya existen y dicen que no están conectadas en vez de mostrar
+números inventados.
 
 De la agenda falta la bandeja del dueño para aceptar o rechazar visitas, los correos con
 archivo `.ics` y el recordatorio de 24 horas.
