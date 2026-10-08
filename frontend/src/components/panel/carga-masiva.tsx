@@ -1,8 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-import { cancelarCarga, confirmarCarga, urlDePlantilla, validarCarga, validarFotos } from "@/lib/api/panel";
+import {
+  cancelarCarga,
+  confirmarCarga,
+  descargarPlantilla,
+  obtenerLimitesDeCarga,
+  validarCarga,
+  validarFotos,
+} from "@/lib/api/panel";
 import { formatearTamano, revisarArchivo, TIPOS_DE_CARGA } from "@/lib/cargas";
 import type { LimitesCarga, ResumenCarga, ResumenFotos, TipoCarga } from "@/lib/tipos-panel";
 
@@ -27,13 +34,22 @@ type Estado =
   | { paso: "aplicada" }
   | { paso: "error"; mensaje: string };
 
-export function CargaMasiva({ tipo, limites }: { tipo: TipoCarga; limites: LimitesCarga | null }) {
+export function CargaMasiva({ tipo }: { tipo: TipoCarga }) {
   const configuracion = TIPOS_DE_CARGA[tipo];
-  const extensiones = limites?.extensiones ?? configuracion.extensiones;
+
+  // Los límites los dice el backend, y se piden acá y no en servidor porque
+  // van con la sesión. Mientras no lleguen, la pantalla usa lo que sabe y
+  // omite el aviso de tamaño en vez de inventar un número.
+  const [limites, setLimites] = useState<LimitesCarga | null>(null);
+  const extensiones = configuracion.extensiones;
 
   const [archivo, setArchivo] = useState<File | null>(null);
   const [rechazo, setRechazo] = useState<string | null>(null);
   const [estado, setEstado] = useState<Estado>({ paso: "elegir" });
+
+  useEffect(() => {
+    obtenerLimitesDeCarga().then(setLimites);
+  }, []);
 
   function elegirArchivo(elegido: File | null) {
     setEstado({ paso: "elegir" });
@@ -111,12 +127,17 @@ export function CargaMasiva({ tipo, limites }: { tipo: TipoCarga; limites: Limit
               </code>
             ))}
           </p>
-          <a
-            href={urlDePlantilla(tipo)}
-            className="mt-4 inline-flex h-11 items-center rounded-[12px] border border-niebla px-5 text-[13px] font-semibold text-acero no-underline transition-colors hover:bg-cielo hover:no-underline"
+          {/*
+            * Un enlace no sirve: la plantilla se pide con la sesión puesta, y
+            * un <a> no lleva el token. Se descarga desde el cliente.
+            */}
+          <button
+            type="button"
+            onClick={() => void descargarPlantilla(tipo)}
+            className="mt-4 inline-flex h-11 cursor-pointer items-center rounded-[12px] border border-niebla px-5 text-[13px] font-semibold text-acero transition-colors hover:bg-cielo"
           >
             Descargar plantilla
-          </a>
+          </button>
         </section>
       )}
 

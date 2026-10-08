@@ -212,6 +212,13 @@ else:
 # dirección pública.
 MEDIA_BASE_URL = env("MEDIA_BASE_URL", default="")
 
+# Cuánto puede pesar un archivo de carga masiva.
+#
+# Configurable porque depende del catálogo de cada tienda, y con un tope por
+# omisión porque un endpoint que acepta archivos sin límite es una forma barata
+# de llenarle el disco a la plataforma.
+TAMANO_MAXIMO_CARGA = env.int("TAMANO_MAXIMO_CARGA", default=20 * 1024 * 1024)
+
 
 # ── Seguridad ───────────────────────────────────────────────────────────────
 # Se endurece sola cuando DEBUG está apagado, para que el ambiente de pruebas y

@@ -3,7 +3,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { CargaMasiva } from "@/components/panel/carga-masiva";
-import { obtenerLimitesDeCarga } from "@/lib/api/panel";
 import { esTipoDeCarga, TIPOS_DE_CARGA } from "@/lib/cargas";
 
 export async function generateMetadata({ params }: PageProps<"/panel/cargas/[tipo]">): Promise<Metadata> {
@@ -19,8 +18,6 @@ export default async function PaginaCarga({ params }: PageProps<"/panel/cargas/[
     notFound();
   }
 
-  const limites = await obtenerLimitesDeCarga();
-
   return (
     <>
       <nav aria-label="Ubicación" className="text-xs text-pizarra">
@@ -31,7 +28,7 @@ export default async function PaginaCarga({ params }: PageProps<"/panel/cargas/[
         <span className="text-marino">{TIPOS_DE_CARGA[tipo].titulo}</span>
       </nav>
 
-      <CargaMasiva tipo={tipo} limites={limites} />
+      <CargaMasiva tipo={tipo} />
     </>
   );
 }
