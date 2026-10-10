@@ -21,7 +21,7 @@ import {
 /*
  * Barra lateral del panel.
  *
- * Son quince secciones: en una barra horizontal no caben, y apiñadas no se
+ * Son catorce secciones: en una barra horizontal no caben, y apiñadas no se
  * encuentran. Agrupadas en una lateral se recorren de un vistazo.
  *
  * Cada ítem dice en qué está sin que haya que entrar: candado si el plan no lo

@@ -33,8 +33,15 @@ pueden tocar.
 lateral que dice en qué está cada una: candado si el plan no la incluye, punto si los datos
 serían de ejemplo, "pronto" lo que no existe.
 
-**Documentación.** `docs/api.md`, `docs/modelo-datos.md`, la tabla de endpoints del README
-y esta bitácora.
+**Carga masiva.** Las seis rutas de `/panel/cargas/…`, con el recorrido validar, mirar y
+confirmar: validar no escribe una fila del catálogo y devuelve qué pasaría. Planillas de
+productos y de tramos en `.xlsx` y `.csv`, fotos en `.zip` emparejadas por el código del
+producto, plantilla descargable con los encabezados exactos, e historial de lo aplicado y
+de lo descartado. El tipo de archivo se determina por su contenido y no por la extensión.
+
+**Documentación.** `docs/api.md` —con el formato de las plantillas—,
+`docs/modelo-datos.md`, `docs/frontend.md`, la tabla de endpoints del README y esta
+bitácora.
 
 ## El cambio de modelo, a mitad del sprint
 
@@ -75,6 +82,13 @@ sido una migración de datos.
   sección «Sugerencias» del panel, que queda en catorce.
 - **Una segunda tienda de demostración**, Bazar Austral, inventada entera, que vende por
   unidad y lleva inventario. Con una sola tienda el aislamiento no se ve a mano.
+- **Con R2 configurado y sin dominio público, Django no arranca.** Un bucket de R2 nace
+  privado y su endpoint S3 responde solo a peticiones firmadas, así que la dirección que
+  entrega el almacenamiento no la puede abrir un navegador. `R2_PUBLIC_BASE_URL` estaba
+  declarada en `.env.example` y no la leía nadie: las fotos habrían salido rotas, y recién
+  en producción. Ahora se pasa como `custom_domain` y su ausencia es un error de arranque.
+  `R2_ACCOUNT_ID` se quitó del ejemplo: ya viaja dentro de `R2_ENDPOINT_URL` y tenerla dos
+  veces solo invita a que se desalineen.
 - **`.rar` fuera de la carga de fotos.** Leerlo en el servidor pedía el binario `unrar`,
   que es propietario y Debian deja en non-free; en un repositorio público no corresponde.
   Windows comprime en `.zip` de fábrica, así que nadie queda afuera.
@@ -103,20 +117,21 @@ Vale la pena dejarlos escritos porque los dos habrían pasado una revisión a oj
 
 ## Qué quedó pendiente, y por qué
 
-**Carga masiva.** Es lo único del compromiso que no se tocó. Leer `.xlsx` necesita
-`openpyxl` y revisar un archivo por contenido necesita `filetype`; ninguna de las dos está
-en `requirements/base.txt` y agregar dependencias no es una decisión que corresponda tomar
-de paso. Además falta resolver el `.rar`: el frontend lo ofrece desde el Sprint 1 y
-descomprimirlo en Python pide una biblioteca más, con binario del sistema. Las seis rutas y
-sus tipos ya están acordados en `lib/api/panel.ts`.
+**Las fotos en R2.** El código ya publica por el dominio público, pero nadie ha creado el
+bucket ni las llaves: no se ha probado contra el servicio real. Hoy las fotos se guardan en
+el disco del contenedor, que se pierde al recrearlo.
 
 **El carrito y los pedidos.** El contrato existe y la cotización ya está hecha; falta
 `Pedido`, `LineaPedido` y el descuento de stock con bloqueo de fila.
 
 **Equipo.** Invitar a un vendedor manda un correo, y `EMAIL_BACKEND` no está configurado.
 
-**Secciones en demostración.** Pedidos, ventas, pronóstico, segmentos, sugerencias y
-asistente siguen sin su proveedor de ejemplo ni `NEXT_PUBLIC_MODO_DEMO`.
+**Secciones en demostración.** Pedidos, ventas, pronóstico, segmentos y asistente siguen
+sin su proveedor de ejemplo ni `NEXT_PUBLIC_MODO_DEMO`, y el campo `estado` de
+`secciones.tsx` las anuncia como si ya lo tuvieran. Está anotado en `docs/frontend.md`.
+
+**Pruebas de frontend.** No hay ninguna: ni Vitest, ni Jest, ni Playwright. Lo que
+respalda esa parte es el tipado, el linter, que el build pase y la revisión a mano.
 
 **Diccionario y diagrama.** Los corrige Pedro, con el modelo nuevo.
 
@@ -133,9 +148,9 @@ faltando desde antes.
 
 ## Verificación
 
-400 pruebas en el backend, **59 marcadas `aislamiento`**, cada una en los dos sentidos: que
-A no ve lo de B y que B no ve lo de A. `ruff check` limpio, sin migraciones pendientes,
-`tsc` y `eslint` limpios en el frontend.
+463 pruebas en el backend, **66 marcadas `aislamiento`**, cada una en los dos sentidos:
+que A no ve lo de B y que B no ve lo de A. `ruff check` limpio, sin migraciones pendientes,
+`tsc` y `eslint` limpios en el frontend y `npm run build` en verde.
 
 ```bash
 docker compose exec api pytest -m aislamiento

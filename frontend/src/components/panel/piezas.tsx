@@ -9,7 +9,7 @@ import type { Plan } from "@/lib/tipos";
 /*
  * Las piezas que repite cada sección del panel.
  *
- * Están juntas para que las quince pantallas se vean como una sola aplicación
+ * Están juntas para que las catorce pantallas se vean como una sola aplicación
  * y no como quince. Si mañana cambia el espaciado de un encabezado, cambia en
  * todas a la vez.
  */
