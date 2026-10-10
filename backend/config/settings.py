@@ -9,6 +9,9 @@ como valor por omisión.
 from pathlib import Path
 
 import environ
+from django.core.exceptions import ImproperlyConfigured
+
+from config.almacenamiento import dominio_publico
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -182,6 +185,20 @@ STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 if env("R2_BUCKET_NAME"):
+    # Subir y leer no van por el mismo camino. Subir usa el endpoint S3 con las
+    # llaves; leer usa el dominio público, porque el bucket es privado y su
+    # endpoint exige firma. Sin dominio público las fotos quedarían como enlaces
+    # rotos en la vitrina, y eso se descubriría recién en producción: mejor que
+    # falte al arrancar.
+    base_de_fotos = env("R2_PUBLIC_BASE_URL", default="")
+    if not base_de_fotos:
+        raise ImproperlyConfigured(
+            "Con R2_BUCKET_NAME definido hace falta R2_PUBLIC_BASE_URL: el "
+            "bucket de R2 es privado y su endpoint S3 exige firma, así que sin "
+            "un dominio público las fotos no cargan en la vitrina."
+        )
+    dominio_de_fotos, protocolo_de_fotos = dominio_publico(base_de_fotos)
+
     STORAGES = {
         "default": {
             "BACKEND": "storages.backends.s3.S3Storage",
@@ -193,6 +210,8 @@ if env("R2_BUCKET_NAME"):
                 "region_name": "auto",
                 "signature_version": "s3v4",
                 "querystring_auth": False,
+                "custom_domain": dominio_de_fotos,
+                "url_protocol": protocolo_de_fotos,
             },
         },
         "staticfiles": {
