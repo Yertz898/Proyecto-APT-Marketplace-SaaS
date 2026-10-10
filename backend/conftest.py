@@ -26,6 +26,19 @@ def _sin_redireccion_https(settings):
 
 
 @pytest.fixture(autouse=True)
+def _medios_aparte(settings, tmp_path):
+    """
+    Cada prueba guarda sus archivos en una carpeta temporal.
+
+    Sin esto, las pruebas que suben fotos o planillas escriben en
+    `backend/media/`, que es la carpeta real del entorno de desarrollo: queda
+    llena de basura que crece en cada corrida y, peor, una prueba podría pisar
+    un archivo que alguien subió a mano para probar.
+    """
+    settings.MEDIA_ROOT = tmp_path / "medios"
+
+
+@pytest.fixture(autouse=True)
 def _sin_intentos_acumulados():
     """
     Parte cada prueba con el contador de intentos en cero.
