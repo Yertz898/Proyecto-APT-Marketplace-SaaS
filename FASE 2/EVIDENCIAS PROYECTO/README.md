@@ -8,14 +8,14 @@ Cliente piloto: Joyas_ye.
 
 ## Contenido
 
-- `Evidencia de sistema aplicación/`: el código fuente del sistema. Backend Django,
+- `EVIDENCIA DE SISTEMA APLICACION/`: el código fuente del sistema. Backend Django,
   frontend Next.js, contenedores y documentación.
-- `base de datos/`: el esquema PostgreSQL y los datos de demostración, con instrucciones
+- `BASE DE DATOS/`: el esquema PostgreSQL y los datos de demostración, con instrucciones
   para restaurarla.
 
 ## Cómo levantarlo
 
-Dentro de `Evidencia de sistema aplicación/`:
+Dentro de `EVIDENCIA DE SISTEMA APLICACION/`:
 
 ```bash
 cp .env.example .env     # completar los valores
