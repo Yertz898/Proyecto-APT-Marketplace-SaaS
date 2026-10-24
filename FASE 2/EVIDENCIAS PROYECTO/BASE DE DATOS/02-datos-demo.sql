@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict AsCCqwGE4Rl6xDjgjoFKCHgb6H6X06TPW4JiJKcPSd7s8gCEA1eRqem5QNKqvQp
+\restrict ISVtMBwabk2Grb5sgbhM3sk2KxzvVvwf0HKUgYluvwAfb6mo5he06wjCNbVB0bT
 
 -- Dumped from database version 17.11
 -- Dumped by pg_dump version 17.11
@@ -23,7 +23,8 @@ SET row_security = off;
 -- Data for Name: tiendas_tienda; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-INSERT INTO public.tiendas_tienda (id, slug, nombre, activa, fecha_creacion, banner, color_acento, color_destacado, color_primario, color_primario_hover, instagram, logo, whatsapp) VALUES (1, 'joyas-ye', 'Joyas Ye', true, '2026-09-27 04:09:50.774017+00', '', '', '', '', '', '', '', '');
+INSERT INTO public.tiendas_tienda (id, slug, nombre, activa, fecha_creacion, banner, color_acento, color_destacado, color_primario, color_primario_hover, instagram, logo, whatsapp, plan, tipografia) VALUES (1, 'joyas-ye', 'Joyas Ye', true, '2026-09-27 04:09:50.774017+00', '', '#C8A96A', '#E0A526', '#7C3AED', '#6D28D9', '', '', '', 'ultimate', 'inter');
+INSERT INTO public.tiendas_tienda (id, slug, nombre, activa, fecha_creacion, banner, color_acento, color_destacado, color_primario, color_primario_hover, instagram, logo, whatsapp, plan, tipografia) VALUES (2, 'bazar-austral', 'Bazar Austral', true, '2026-10-04 23:29:16.582839+00', '', '#4A5568', '#D97706', '#0F766E', '#115E59', '', '', '', 'premium', 'inter');
 
 
 --
@@ -46,7 +47,7 @@ INSERT INTO public.agenda_bloquehorario (id, fecha_creacion, fecha_edicion, dia_
 -- Data for Name: agenda_configuracionagenda; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-INSERT INTO public.agenda_configuracionagenda (id, fecha_creacion, fecha_edicion, duracion_minutos, visitas_por_bloque, anticipacion_minima_horas, ventana_maxima_dias, confirmacion_automatica, direccion, indicaciones, correo_notificaciones, token_feed, tienda_id) VALUES (1, '2026-09-27 04:33:39.633656+00', '2026-09-27 04:33:39.633676+00', 30, 1, 24, 30, false, '', '', '', 'REEMPLAZAR-AL-RESTAURAR-token-de-ejemplo', 1);
+INSERT INTO public.agenda_configuracionagenda (id, fecha_creacion, fecha_edicion, duracion_minutos, visitas_por_bloque, anticipacion_minima_horas, ventana_maxima_dias, confirmacion_automatica, direccion, indicaciones, correo_notificaciones, token_feed, tienda_id) VALUES (1, '2026-09-27 04:33:39.633656+00', '2026-09-27 04:33:39.633676+00', 30, 1, 24, 30, false, '', '', '','REEMPLAZAR-AL-RESTAURAR-token-de-ejemplo', 1);
 
 
 --
@@ -79,6 +80,13 @@ INSERT INTO public.django_content_type (id, app_label, model) VALUES (11, 'agend
 INSERT INTO public.django_content_type (id, app_label, model) VALUES (12, 'agenda', 'configuracionagenda');
 INSERT INTO public.django_content_type (id, app_label, model) VALUES (13, 'agenda', 'diabloqueado');
 INSERT INTO public.django_content_type (id, app_label, model) VALUES (14, 'tiendas', 'solicituddeacceso');
+INSERT INTO public.django_content_type (id, app_label, model) VALUES (15, 'catalogo', 'categoria');
+INSERT INTO public.django_content_type (id, app_label, model) VALUES (16, 'catalogo', 'lineagranel');
+INSERT INTO public.django_content_type (id, app_label, model) VALUES (17, 'catalogo', 'lote');
+INSERT INTO public.django_content_type (id, app_label, model) VALUES (18, 'catalogo', 'composicionlote');
+INSERT INTO public.django_content_type (id, app_label, model) VALUES (19, 'precios', 'tramoprecio');
+INSERT INTO public.django_content_type (id, app_label, model) VALUES (20, 'catalogo', 'producto');
+INSERT INTO public.django_content_type (id, app_label, model) VALUES (21, 'ingesta', 'carga');
 
 
 --
@@ -141,12 +149,98 @@ INSERT INTO public.auth_permission (id, name, content_type_id, codename) VALUES 
 INSERT INTO public.auth_permission (id, name, content_type_id, codename) VALUES (54, 'Can change solicitud de acceso', 14, 'change_solicituddeacceso');
 INSERT INTO public.auth_permission (id, name, content_type_id, codename) VALUES (55, 'Can delete solicitud de acceso', 14, 'delete_solicituddeacceso');
 INSERT INTO public.auth_permission (id, name, content_type_id, codename) VALUES (56, 'Can view solicitud de acceso', 14, 'view_solicituddeacceso');
+INSERT INTO public.auth_permission (id, name, content_type_id, codename) VALUES (57, 'Can add categoría', 15, 'add_categoria');
+INSERT INTO public.auth_permission (id, name, content_type_id, codename) VALUES (58, 'Can change categoría', 15, 'change_categoria');
+INSERT INTO public.auth_permission (id, name, content_type_id, codename) VALUES (59, 'Can delete categoría', 15, 'delete_categoria');
+INSERT INTO public.auth_permission (id, name, content_type_id, codename) VALUES (60, 'Can view categoría', 15, 'view_categoria');
+INSERT INTO public.auth_permission (id, name, content_type_id, codename) VALUES (61, 'Can add línea de granel', 16, 'add_lineagranel');
+INSERT INTO public.auth_permission (id, name, content_type_id, codename) VALUES (62, 'Can change línea de granel', 16, 'change_lineagranel');
+INSERT INTO public.auth_permission (id, name, content_type_id, codename) VALUES (63, 'Can delete línea de granel', 16, 'delete_lineagranel');
+INSERT INTO public.auth_permission (id, name, content_type_id, codename) VALUES (64, 'Can view línea de granel', 16, 'view_lineagranel');
+INSERT INTO public.auth_permission (id, name, content_type_id, codename) VALUES (65, 'Can add lote', 17, 'add_lote');
+INSERT INTO public.auth_permission (id, name, content_type_id, codename) VALUES (66, 'Can change lote', 17, 'change_lote');
+INSERT INTO public.auth_permission (id, name, content_type_id, codename) VALUES (67, 'Can delete lote', 17, 'delete_lote');
+INSERT INTO public.auth_permission (id, name, content_type_id, codename) VALUES (68, 'Can view lote', 17, 'view_lote');
+INSERT INTO public.auth_permission (id, name, content_type_id, codename) VALUES (69, 'Can add composición del lote', 18, 'add_composicionlote');
+INSERT INTO public.auth_permission (id, name, content_type_id, codename) VALUES (70, 'Can change composición del lote', 18, 'change_composicionlote');
+INSERT INTO public.auth_permission (id, name, content_type_id, codename) VALUES (71, 'Can delete composición del lote', 18, 'delete_composicionlote');
+INSERT INTO public.auth_permission (id, name, content_type_id, codename) VALUES (72, 'Can view composición del lote', 18, 'view_composicionlote');
+INSERT INTO public.auth_permission (id, name, content_type_id, codename) VALUES (73, 'Can add tramo de precio', 19, 'add_tramoprecio');
+INSERT INTO public.auth_permission (id, name, content_type_id, codename) VALUES (74, 'Can change tramo de precio', 19, 'change_tramoprecio');
+INSERT INTO public.auth_permission (id, name, content_type_id, codename) VALUES (75, 'Can delete tramo de precio', 19, 'delete_tramoprecio');
+INSERT INTO public.auth_permission (id, name, content_type_id, codename) VALUES (76, 'Can view tramo de precio', 19, 'view_tramoprecio');
+INSERT INTO public.auth_permission (id, name, content_type_id, codename) VALUES (77, 'Can add producto', 20, 'add_producto');
+INSERT INTO public.auth_permission (id, name, content_type_id, codename) VALUES (78, 'Can change producto', 20, 'change_producto');
+INSERT INTO public.auth_permission (id, name, content_type_id, codename) VALUES (79, 'Can delete producto', 20, 'delete_producto');
+INSERT INTO public.auth_permission (id, name, content_type_id, codename) VALUES (80, 'Can view producto', 20, 'view_producto');
+INSERT INTO public.auth_permission (id, name, content_type_id, codename) VALUES (81, 'Can add carga', 21, 'add_carga');
+INSERT INTO public.auth_permission (id, name, content_type_id, codename) VALUES (82, 'Can change carga', 21, 'change_carga');
+INSERT INTO public.auth_permission (id, name, content_type_id, codename) VALUES (83, 'Can delete carga', 21, 'delete_carga');
+INSERT INTO public.auth_permission (id, name, content_type_id, codename) VALUES (84, 'Can view carga', 21, 'view_carga');
 
 
 --
 -- Data for Name: auth_group_permissions; Type: TABLE DATA; Schema: public; Owner: -
 --
 
+
+
+--
+-- Data for Name: catalogo_categoria; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+INSERT INTO public.catalogo_categoria (id, fecha_creacion, fecha_edicion, nombre, tienda_id) VALUES (8, '2026-10-04 23:29:16.448151+00', '2026-10-04 23:29:16.44817+00', 'anillos', 1);
+INSERT INTO public.catalogo_categoria (id, fecha_creacion, fecha_edicion, nombre, tienda_id) VALUES (9, '2026-10-04 23:29:16.450706+00', '2026-10-04 23:29:16.450715+00', 'aros', 1);
+INSERT INTO public.catalogo_categoria (id, fecha_creacion, fecha_edicion, nombre, tienda_id) VALUES (10, '2026-10-04 23:29:16.4525+00', '2026-10-04 23:29:16.452508+00', 'cadenas', 1);
+INSERT INTO public.catalogo_categoria (id, fecha_creacion, fecha_edicion, nombre, tienda_id) VALUES (11, '2026-10-04 23:29:16.45496+00', '2026-10-04 23:29:16.454972+00', 'collares', 1);
+INSERT INTO public.catalogo_categoria (id, fecha_creacion, fecha_edicion, nombre, tienda_id) VALUES (12, '2026-10-04 23:29:16.45727+00', '2026-10-04 23:29:16.457282+00', 'colgantes', 1);
+INSERT INTO public.catalogo_categoria (id, fecha_creacion, fecha_edicion, nombre, tienda_id) VALUES (13, '2026-10-04 23:29:16.459096+00', '2026-10-04 23:29:16.459106+00', 'pulseras', 1);
+INSERT INTO public.catalogo_categoria (id, fecha_creacion, fecha_edicion, nombre, tienda_id) VALUES (14, '2026-10-04 23:29:16.460877+00', '2026-10-04 23:29:16.460885+00', 'tobilleras', 1);
+INSERT INTO public.catalogo_categoria (id, fecha_creacion, fecha_edicion, nombre, tienda_id) VALUES (15, '2026-10-04 23:29:16.587623+00', '2026-10-04 23:29:16.587646+00', 'cocina', 2);
+INSERT INTO public.catalogo_categoria (id, fecha_creacion, fecha_edicion, nombre, tienda_id) VALUES (16, '2026-10-04 23:29:16.589998+00', '2026-10-04 23:29:16.590008+00', 'escritorio', 2);
+INSERT INTO public.catalogo_categoria (id, fecha_creacion, fecha_edicion, nombre, tienda_id) VALUES (17, '2026-10-04 23:29:16.591875+00', '2026-10-04 23:29:16.591887+00', 'hogar', 2);
+
+
+--
+-- Data for Name: catalogo_producto; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+INSERT INTO public.catalogo_producto (id, fecha_creacion, fecha_edicion, codigo, nombre, descripcion, precio_neto, foto, activo, forma_venta, unidad_medida, controla_stock, stock, cantidad_minima, cantidad_piezas, categoria_id, tienda_id) VALUES (25, '2026-10-13 00:31:34.060565+00', '2026-10-13 00:31:34.060576+00', 'EJEMPLO-01', 'Nombre del producto', 'Descripción breve', 4990, '', true, 'unidad', 'unidad', true, 10.000, 1.000, NULL, NULL, 1);
+INSERT INTO public.catalogo_producto (id, fecha_creacion, fecha_edicion, codigo, nombre, descripcion, precio_neto, foto, activo, forma_venta, unidad_medida, controla_stock, stock, cantidad_minima, cantidad_piezas, categoria_id, tienda_id) VALUES (7, '2026-10-04 23:29:16.465395+00', '2026-10-12 23:37:27.890412+00', 'granel-hombre', 'Gramo de hombre (cadenas y pulseras)', 'Enchape de plata · cadenas y pulseras.', 650, '', true, 'peso', 'g', false, NULL, 1.000, NULL, NULL, 1);
+INSERT INTO public.catalogo_producto (id, fecha_creacion, fecha_edicion, codigo, nombre, descripcion, precio_neto, foto, activo, forma_venta, unidad_medida, controla_stock, stock, cantidad_minima, cantidad_piezas, categoria_id, tienda_id) VALUES (8, '2026-10-04 23:29:16.482871+00', '2026-10-12 23:37:27.911378+00', 'granel-mujer', 'Gramo de mujer (cadenas, collares, pulseras y tobilleras)', 'Enchape de plata · cadenas, collares, pulseras y tobilleras.', 900, '', true, 'peso', 'g', false, NULL, 1.000, NULL, NULL, 1);
+INSERT INTO public.catalogo_producto (id, fecha_creacion, fecha_edicion, codigo, nombre, descripcion, precio_neto, foto, activo, forma_venta, unidad_medida, controla_stock, stock, cantidad_minima, cantidad_piezas, categoria_id, tienda_id) VALUES (9, '2026-10-04 23:29:16.496554+00', '2026-10-12 23:37:27.923225+00', 'granel-colgantes-aros-anillos', 'Gramo de colgantes, aros y anillos', 'Enchape de plata · colgantes, aros y anillos.', 1500, '', true, 'peso', 'g', false, NULL, 1.000, NULL, NULL, 1);
+INSERT INTO public.catalogo_producto (id, fecha_creacion, fecha_edicion, codigo, nombre, descripcion, precio_neto, foto, activo, forma_venta, unidad_medida, controla_stock, stock, cantidad_minima, cantidad_piezas, categoria_id, tienda_id) VALUES (10, '2026-10-04 23:29:16.510804+00', '2026-10-12 23:37:27.934204+00', 'granel-plata-colombiana', 'Gramo de plata colombiana', 'Plata colombiana.', 1800, '', true, 'peso', 'g', false, NULL, 1.000, NULL, NULL, 1);
+INSERT INTO public.catalogo_producto (id, fecha_creacion, fecha_edicion, codigo, nombre, descripcion, precio_neto, foto, activo, forma_venta, unidad_medida, controla_stock, stock, cantidad_minima, cantidad_piezas, categoria_id, tienda_id) VALUES (11, '2026-10-04 23:29:16.515992+00', '2026-10-12 23:37:27.938708+00', 'granel-colgantes-hombre-xl', 'Gramo de colgantes de hombre XL', 'Enchape de plata · colgantes.', 1000, '', true, 'peso', 'g', false, NULL, 1.000, NULL, NULL, 1);
+INSERT INTO public.catalogo_producto (id, fecha_creacion, fecha_edicion, codigo, nombre, descripcion, precio_neto, foto, activo, forma_venta, unidad_medida, controla_stock, stock, cantidad_minima, cantidad_piezas, categoria_id, tienda_id) VALUES (12, '2026-10-04 23:29:16.523046+00', '2026-10-04 23:29:16.523058+00', 'DEMO-01', 'Surtido de aros (ejemplo)', 'Enchape de plata.', 45990, '', true, 'lote', 'unidad', true, 8.000, 1.000, 18, NULL, 1);
+INSERT INTO public.catalogo_producto (id, fecha_creacion, fecha_edicion, codigo, nombre, descripcion, precio_neto, foto, activo, forma_venta, unidad_medida, controla_stock, stock, cantidad_minima, cantidad_piezas, categoria_id, tienda_id) VALUES (13, '2026-10-04 23:29:16.532929+00', '2026-10-04 23:29:16.532941+00', 'DEMO-02', 'Mix de cadenas de hombre (ejemplo)', 'Enchape de plata.', 89990, '', true, 'lote', 'unidad', true, 5.000, 1.000, 15, NULL, 1);
+INSERT INTO public.catalogo_producto (id, fecha_creacion, fecha_edicion, codigo, nombre, descripcion, precio_neto, foto, activo, forma_venta, unidad_medida, controla_stock, stock, cantidad_minima, cantidad_piezas, categoria_id, tienda_id) VALUES (14, '2026-10-04 23:29:16.540984+00', '2026-10-04 23:29:16.540993+00', 'DEMO-03', 'Colección de colgantes (ejemplo)', 'Enchape de plata.', 62990, '', true, 'lote', 'unidad', true, 6.000, 1.000, 18, NULL, 1);
+INSERT INTO public.catalogo_producto (id, fecha_creacion, fecha_edicion, codigo, nombre, descripcion, precio_neto, foto, activo, forma_venta, unidad_medida, controla_stock, stock, cantidad_minima, cantidad_piezas, categoria_id, tienda_id) VALUES (15, '2026-10-04 23:29:16.548047+00', '2026-10-08 01:11:40.567183+00', 'DEMO-04', 'Pieza única de plata colombiana (ejemplo)', 'Plata colombiana. Se vende una sola vez.', 129990, '', true, 'lote', 'unidad', true, 1.000, 1.000, 1, NULL, 1);
+INSERT INTO public.catalogo_producto (id, fecha_creacion, fecha_edicion, codigo, nombre, descripcion, precio_neto, foto, activo, forma_venta, unidad_medida, controla_stock, stock, cantidad_minima, cantidad_piezas, categoria_id, tienda_id) VALUES (16, '2026-10-04 23:29:16.552453+00', '2026-10-04 23:29:16.552461+00', 'DEMO-05', 'Set de tobilleras y pulseras (ejemplo)', 'Enchape de plata.', 38990, '', true, 'lote', 'unidad', true, 10.000, 1.000, 16, NULL, 1);
+INSERT INTO public.catalogo_producto (id, fecha_creacion, fecha_edicion, codigo, nombre, descripcion, precio_neto, foto, activo, forma_venta, unidad_medida, controla_stock, stock, cantidad_minima, cantidad_piezas, categoria_id, tienda_id) VALUES (17, '2026-10-04 23:29:16.559904+00', '2026-10-04 23:29:16.559912+00', 'DEMO-06', 'Lote mixto de temporada (ejemplo)', 'Enchape de plata. Se vende una sola vez.', 74990, '', true, 'lote', 'unidad', true, 1.000, 1.000, 15, NULL, 1);
+INSERT INTO public.catalogo_producto (id, fecha_creacion, fecha_edicion, codigo, nombre, descripcion, precio_neto, foto, activo, forma_venta, unidad_medida, controla_stock, stock, cantidad_minima, cantidad_piezas, categoria_id, tienda_id) VALUES (18, '2026-10-04 23:29:16.594487+00', '2026-10-04 23:29:16.594499+00', 'BAZ-01', 'Taza de cerámica (ejemplo)', 'Cerámica esmaltada, 350 ml.', 4990, '', true, 'unidad', 'unidad', true, 120.000, 1.000, NULL, 15, 2);
+INSERT INTO public.catalogo_producto (id, fecha_creacion, fecha_edicion, codigo, nombre, descripcion, precio_neto, foto, activo, forma_venta, unidad_medida, controla_stock, stock, cantidad_minima, cantidad_piezas, categoria_id, tienda_id) VALUES (19, '2026-10-04 23:29:16.602156+00', '2026-10-04 23:29:16.602164+00', 'BAZ-02', 'Set de velas aromáticas (ejemplo)', 'Tres velas de cera de soya.', 7990, '', true, 'unidad', 'unidad', true, 60.000, 1.000, NULL, 17, 2);
+INSERT INTO public.catalogo_producto (id, fecha_creacion, fecha_edicion, codigo, nombre, descripcion, precio_neto, foto, activo, forma_venta, unidad_medida, controla_stock, stock, cantidad_minima, cantidad_piezas, categoria_id, tienda_id) VALUES (20, '2026-10-04 23:29:16.610082+00', '2026-10-04 23:29:16.610093+00', 'BAZ-03', 'Cuaderno de tapa dura (ejemplo)', '120 hojas, tamaño carta.', 5490, '', true, 'unidad', 'unidad', true, 200.000, 1.000, NULL, 16, 2);
+INSERT INTO public.catalogo_producto (id, fecha_creacion, fecha_edicion, codigo, nombre, descripcion, precio_neto, foto, activo, forma_venta, unidad_medida, controla_stock, stock, cantidad_minima, cantidad_piezas, categoria_id, tienda_id) VALUES (21, '2026-10-04 23:29:16.61449+00', '2026-10-04 23:29:16.614498+00', 'BAZ-04', 'Organizador de escritorio (ejemplo)', 'Madera de pino, cuatro compartimentos.', 12990, '', true, 'unidad', 'unidad', true, 18.000, 1.000, NULL, 16, 2);
+INSERT INTO public.catalogo_producto (id, fecha_creacion, fecha_edicion, codigo, nombre, descripcion, precio_neto, foto, activo, forma_venta, unidad_medida, controla_stock, stock, cantidad_minima, cantidad_piezas, categoria_id, tienda_id) VALUES (22, '2026-10-04 23:29:16.616256+00', '2026-10-04 23:29:16.616264+00', 'BAZ-05', 'Tabla de picar de madera (ejemplo)', 'Lenga, 30 × 20 cm. Queda una.', 15990, '', true, 'unidad', 'unidad', true, 1.000, 1.000, NULL, 15, 2);
+
+
+--
+-- Data for Name: catalogo_composicionlote; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+INSERT INTO public.catalogo_composicionlote (id, fecha_creacion, fecha_edicion, cantidad, categoria_id, tienda_id, producto_id) VALUES (1, '2026-10-04 23:29:16.526862+00', '2026-10-12 23:37:27.950507+00', 12, 9, 1, 12);
+INSERT INTO public.catalogo_composicionlote (id, fecha_creacion, fecha_edicion, cantidad, categoria_id, tienda_id, producto_id) VALUES (2, '2026-10-04 23:29:16.530399+00', '2026-10-12 23:37:27.953051+00', 6, 8, 1, 12);
+INSERT INTO public.catalogo_composicionlote (id, fecha_creacion, fecha_edicion, cantidad, categoria_id, tienda_id, producto_id) VALUES (3, '2026-10-04 23:29:16.535443+00', '2026-10-12 23:37:27.957021+00', 10, 10, 1, 13);
+INSERT INTO public.catalogo_composicionlote (id, fecha_creacion, fecha_edicion, cantidad, categoria_id, tienda_id, producto_id) VALUES (4, '2026-10-04 23:29:16.538635+00', '2026-10-12 23:37:27.959135+00', 5, 13, 1, 13);
+INSERT INTO public.catalogo_composicionlote (id, fecha_creacion, fecha_edicion, cantidad, categoria_id, tienda_id, producto_id) VALUES (5, '2026-10-04 23:29:16.54311+00', '2026-10-12 23:37:27.963429+00', 14, 12, 1, 14);
+INSERT INTO public.catalogo_composicionlote (id, fecha_creacion, fecha_edicion, cantidad, categoria_id, tienda_id, producto_id) VALUES (6, '2026-10-04 23:29:16.545593+00', '2026-10-12 23:37:27.965398+00', 4, 10, 1, 14);
+INSERT INTO public.catalogo_composicionlote (id, fecha_creacion, fecha_edicion, cantidad, categoria_id, tienda_id, producto_id) VALUES (7, '2026-10-04 23:29:16.550288+00', '2026-10-12 23:37:27.970105+00', 1, 11, 1, 15);
+INSERT INTO public.catalogo_composicionlote (id, fecha_creacion, fecha_edicion, cantidad, categoria_id, tienda_id, producto_id) VALUES (8, '2026-10-04 23:29:16.555158+00', '2026-10-12 23:37:27.974043+00', 8, 14, 1, 16);
+INSERT INTO public.catalogo_composicionlote (id, fecha_creacion, fecha_edicion, cantidad, categoria_id, tienda_id, producto_id) VALUES (9, '2026-10-04 23:29:16.557831+00', '2026-10-12 23:37:27.976321+00', 8, 13, 1, 16);
+INSERT INTO public.catalogo_composicionlote (id, fecha_creacion, fecha_edicion, cantidad, categoria_id, tienda_id, producto_id) VALUES (10, '2026-10-04 23:29:16.562061+00', '2026-10-12 23:37:27.980219+00', 5, 8, 1, 17);
+INSERT INTO public.catalogo_composicionlote (id, fecha_creacion, fecha_edicion, cantidad, categoria_id, tienda_id, producto_id) VALUES (11, '2026-10-04 23:29:16.564635+00', '2026-10-12 23:37:27.982235+00', 5, 9, 1, 17);
+INSERT INTO public.catalogo_composicionlote (id, fecha_creacion, fecha_edicion, cantidad, categoria_id, tienda_id, producto_id) VALUES (12, '2026-10-04 23:29:16.567553+00', '2026-10-12 23:37:27.984147+00', 3, 11, 1, 17);
+INSERT INTO public.catalogo_composicionlote (id, fecha_creacion, fecha_edicion, cantidad, categoria_id, tienda_id, producto_id) VALUES (13, '2026-10-04 23:29:16.569995+00', '2026-10-12 23:37:27.986529+00', 2, 10, 1, 17);
 
 
 --
@@ -179,6 +273,35 @@ INSERT INTO public.django_migrations (id, app, name, applied) VALUES (23, 'agend
 INSERT INTO public.django_migrations (id, app, name, applied) VALUES (24, 'agenda', '0002_alter_bloquehorario_options_and_more', '2026-09-26 21:14:34.591356+00');
 INSERT INTO public.django_migrations (id, app, name, applied) VALUES (25, 'tiendas', '0002_tienda_banner_tienda_color_acento_and_more', '2026-09-27 04:08:07.941082+00');
 INSERT INTO public.django_migrations (id, app, name, applied) VALUES (26, 'tiendas', '0003_solicituddeacceso', '2026-09-28 02:53:34.748028+00');
+INSERT INTO public.django_migrations (id, app, name, applied) VALUES (31, 'tiendas', '0004_agrega_plan_y_tipografia', '2026-10-04 19:17:29.700435+00');
+INSERT INTO public.django_migrations (id, app, name, applied) VALUES (32, 'catalogo', '0001_initial', '2026-10-04 23:27:23.030378+00');
+INSERT INTO public.django_migrations (id, app, name, applied) VALUES (33, 'precios', '0001_initial', '2026-10-04 23:27:23.065058+00');
+INSERT INTO public.django_migrations (id, app, name, applied) VALUES (34, 'ingesta', '0001_initial', '2026-10-08 01:46:53.744833+00');
+
+
+--
+-- Data for Name: precios_tramoprecio; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+INSERT INTO public.precios_tramoprecio (id, fecha_creacion, fecha_edicion, unidad_umbral, umbral, valor, producto_id, tienda_id) VALUES (15, '2026-10-04 23:29:16.472091+00', '2026-10-12 23:37:27.900673+00', 'monto', 20000.00, 650, 7, 1);
+INSERT INTO public.precios_tramoprecio (id, fecha_creacion, fecha_edicion, unidad_umbral, umbral, valor, producto_id, tienda_id) VALUES (16, '2026-10-04 23:29:16.475117+00', '2026-10-12 23:37:27.904254+00', 'monto', 100000.00, 600, 7, 1);
+INSERT INTO public.precios_tramoprecio (id, fecha_creacion, fecha_edicion, unidad_umbral, umbral, valor, producto_id, tienda_id) VALUES (17, '2026-10-04 23:29:16.477812+00', '2026-10-12 23:37:27.906797+00', 'peso', 500.00, 560, 7, 1);
+INSERT INTO public.precios_tramoprecio (id, fecha_creacion, fecha_edicion, unidad_umbral, umbral, valor, producto_id, tienda_id) VALUES (18, '2026-10-04 23:29:16.480437+00', '2026-10-12 23:37:27.909016+00', 'peso', 1000.00, 500, 7, 1);
+INSERT INTO public.precios_tramoprecio (id, fecha_creacion, fecha_edicion, unidad_umbral, umbral, valor, producto_id, tienda_id) VALUES (19, '2026-10-04 23:29:16.48577+00', '2026-10-12 23:37:27.913955+00', 'monto', 20000.00, 900, 8, 1);
+INSERT INTO public.precios_tramoprecio (id, fecha_creacion, fecha_edicion, unidad_umbral, umbral, valor, producto_id, tienda_id) VALUES (20, '2026-10-04 23:29:16.48895+00', '2026-10-12 23:37:27.91654+00', 'monto', 100000.00, 850, 8, 1);
+INSERT INTO public.precios_tramoprecio (id, fecha_creacion, fecha_edicion, unidad_umbral, umbral, valor, producto_id, tienda_id) VALUES (21, '2026-10-04 23:29:16.491576+00', '2026-10-12 23:37:27.91863+00', 'peso', 500.00, 780, 8, 1);
+INSERT INTO public.precios_tramoprecio (id, fecha_creacion, fecha_edicion, unidad_umbral, umbral, valor, producto_id, tienda_id) VALUES (22, '2026-10-04 23:29:16.494042+00', '2026-10-12 23:37:27.921037+00', 'peso', 1000.00, 700, 8, 1);
+INSERT INTO public.precios_tramoprecio (id, fecha_creacion, fecha_edicion, unidad_umbral, umbral, valor, producto_id, tienda_id) VALUES (23, '2026-10-04 23:29:16.499434+00', '2026-10-12 23:37:27.925535+00', 'monto', 20000.00, 1500, 9, 1);
+INSERT INTO public.precios_tramoprecio (id, fecha_creacion, fecha_edicion, unidad_umbral, umbral, valor, producto_id, tienda_id) VALUES (24, '2026-10-04 23:29:16.502287+00', '2026-10-12 23:37:27.927725+00', 'monto', 100000.00, 1300, 9, 1);
+INSERT INTO public.precios_tramoprecio (id, fecha_creacion, fecha_edicion, unidad_umbral, umbral, valor, producto_id, tienda_id) VALUES (25, '2026-10-04 23:29:16.505519+00', '2026-10-12 23:37:27.930023+00', 'peso', 500.00, 1200, 9, 1);
+INSERT INTO public.precios_tramoprecio (id, fecha_creacion, fecha_edicion, unidad_umbral, umbral, valor, producto_id, tienda_id) VALUES (26, '2026-10-04 23:29:16.508293+00', '2026-10-12 23:37:27.932168+00', 'peso', 1000.00, 1050, 9, 1);
+INSERT INTO public.precios_tramoprecio (id, fecha_creacion, fecha_edicion, unidad_umbral, umbral, valor, producto_id, tienda_id) VALUES (27, '2026-10-04 23:29:16.513489+00', '2026-10-12 23:37:27.936494+00', 'monto', 20000.00, 1800, 10, 1);
+INSERT INTO public.precios_tramoprecio (id, fecha_creacion, fecha_edicion, unidad_umbral, umbral, valor, producto_id, tienda_id) VALUES (28, '2026-10-04 23:29:16.518983+00', '2026-10-12 23:37:27.941026+00', 'monto', 20000.00, 1000, 11, 1);
+INSERT INTO public.precios_tramoprecio (id, fecha_creacion, fecha_edicion, unidad_umbral, umbral, valor, producto_id, tienda_id) VALUES (29, '2026-10-04 23:29:16.597403+00', '2026-10-12 23:37:27.99853+00', 'cantidad', 12.00, 4490, 18, 2);
+INSERT INTO public.precios_tramoprecio (id, fecha_creacion, fecha_edicion, unidad_umbral, umbral, valor, producto_id, tienda_id) VALUES (30, '2026-10-04 23:29:16.600041+00', '2026-10-12 23:37:28.000673+00', 'cantidad', 48.00, 3990, 18, 2);
+INSERT INTO public.precios_tramoprecio (id, fecha_creacion, fecha_edicion, unidad_umbral, umbral, valor, producto_id, tienda_id) VALUES (31, '2026-10-04 23:29:16.604928+00', '2026-10-12 23:37:28.00555+00', 'cantidad', 6.00, 7290, 19, 2);
+INSERT INTO public.precios_tramoprecio (id, fecha_creacion, fecha_edicion, unidad_umbral, umbral, valor, producto_id, tienda_id) VALUES (32, '2026-10-04 23:29:16.607794+00', '2026-10-12 23:37:28.007716+00', 'cantidad', 24.00, 6590, 19, 2);
+INSERT INTO public.precios_tramoprecio (id, fecha_creacion, fecha_edicion, unidad_umbral, umbral, valor, producto_id, tienda_id) VALUES (33, '2026-10-04 23:29:16.612391+00', '2026-10-12 23:37:28.011671+00', 'cantidad', 10.00, 4990, 20, 2);
 
 
 --
@@ -234,7 +357,28 @@ SELECT pg_catalog.setval('public.auth_group_permissions_id_seq', 1, false);
 -- Name: auth_permission_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.auth_permission_id_seq', 56, true);
+SELECT pg_catalog.setval('public.auth_permission_id_seq', 84, true);
+
+
+--
+-- Name: catalogo_categoria_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.catalogo_categoria_id_seq', 17, true);
+
+
+--
+-- Name: catalogo_composicionlote_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.catalogo_composicionlote_id_seq', 13, true);
+
+
+--
+-- Name: catalogo_producto_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.catalogo_producto_id_seq', 25, true);
 
 
 --
@@ -255,14 +399,21 @@ SELECT pg_catalog.setval('public.django_admin_log_id_seq', 1, false);
 -- Name: django_content_type_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.django_content_type_id_seq', 14, true);
+SELECT pg_catalog.setval('public.django_content_type_id_seq', 21, true);
 
 
 --
 -- Name: django_migrations_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.django_migrations_id_seq', 26, true);
+SELECT pg_catalog.setval('public.django_migrations_id_seq', 34, true);
+
+
+--
+-- Name: precios_tramoprecio_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.precios_tramoprecio_id_seq', 33, true);
 
 
 --
@@ -276,7 +427,7 @@ SELECT pg_catalog.setval('public.tiendas_solicituddeacceso_id_seq', 2, true);
 -- Name: tiendas_tienda_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.tiendas_tienda_id_seq', 1, true);
+SELECT pg_catalog.setval('public.tiendas_tienda_id_seq', 2, true);
 
 
 --
@@ -290,7 +441,7 @@ SELECT pg_catalog.setval('public.usuarios_usuario_groups_id_seq', 1, false);
 -- Name: usuarios_usuario_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.usuarios_usuario_id_seq', 2, true);
+SELECT pg_catalog.setval('public.usuarios_usuario_id_seq', 5, true);
 
 
 --
@@ -304,5 +455,5 @@ SELECT pg_catalog.setval('public.usuarios_usuario_user_permissions_id_seq', 1, f
 -- PostgreSQL database dump complete
 --
 
-\unrestrict AsCCqwGE4Rl6xDjgjoFKCHgb6H6X06TPW4JiJKcPSd7s8gCEA1eRqem5QNKqvQp
+\unrestrict ISVtMBwabk2Grb5sgbhM3sk2KxzvVvwf0HKUgYluvwAfb6mo5he06wjCNbVB0bT
 

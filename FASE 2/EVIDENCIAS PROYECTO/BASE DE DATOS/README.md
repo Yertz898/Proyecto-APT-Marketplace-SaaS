@@ -5,8 +5,10 @@ foto de la base para poder revisarla y restaurarla sin levantar el proyecto ente
 
 - `01-estructura.sql`: tablas, llaves foráneas, restricciones, índices y secuencias. Sin
   filas.
-- `02-datos-demo.sql`: los datos de demostración. La tienda de ejemplo, su configuración
-  de agenda y sus diez bloques de atención, más las tablas internas de Django.
+- `02-datos-demo.sql`: los datos de demostración. Las dos tiendas de ejemplo con su
+  catálogo —diecisiete productos, diez categorías y diecinueve tramos de precio—, la
+  configuración de agenda con sus diez bloques de atención, y las tablas internas de
+  Django.
 
 ## Restaurarla
 
@@ -40,6 +42,7 @@ las filas de estas tablas:
 | `clientes_aprobacionmayorista` | Asocia un comprador con una tienda |
 | `django_session` | Sesiones activas |
 | `django_admin_log` | Actividad en el panel de administración |
+| `ingesta_carga` | Registra quién subió cada planilla; apunta a `usuarios_usuario`, que no viene |
 
 La estructura de todas esas tablas sí está en `01-estructura.sql`. Lo que se omitió son
 las filas, no el modelo de datos.
