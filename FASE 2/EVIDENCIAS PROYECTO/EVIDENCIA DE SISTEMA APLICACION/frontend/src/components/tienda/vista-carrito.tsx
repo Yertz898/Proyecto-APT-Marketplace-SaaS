@@ -10,16 +10,6 @@ import type { CarritoCotizado, LineaCarrito, PedidoConfirmado } from "@/lib/tipo
 import { useCarrito } from "./carrito";
 import { EnlaceExterno } from "./enlace-externo";
 
-/*
- * Carrito y checkout simulado.
- *
- * El carrito mezcla lotes (unidad: lote) y granel (unidad: gramo), y cada línea
- * muestra su unidad. Los totales vienen del backend, que también dice cuánto
- * falta para el siguiente tramo por cantidad de lotes.
- *
- * Al confirmar no se cobra nada: se genera el pedido y el pago se coordina por
- * fuera (CONVENCIONES.md > Pedido).
- */
 export function VistaCarrito({ slugTienda }: { slugTienda: string }) {
   const { lineas, quitar, vaciar } = useCarrito();
   const [cotizacion, setCotizacion] = useState<CarritoCotizado | null>(null);
@@ -27,8 +17,6 @@ export function VistaCarrito({ slugTienda }: { slugTienda: string }) {
   const [pedido, setPedido] = useState<PedidoConfirmado | null>(null);
   const [confirmando, setConfirmando] = useState(false);
 
-  // El carrito se cotiza cada vez que cambia: los totales y el aviso del
-  // próximo tramo los calcula el backend, no el navegador.
   useEffect(() => {
     if (lineas.length === 0) {
       return;
@@ -174,17 +162,11 @@ export function VistaCarrito({ slugTienda }: { slugTienda: string }) {
   );
 }
 
-/** Mientras no haya cotización, se muestra el código elegido. */
 function nombreDeLinea(cotizacion: CarritoCotizado | null, indice: number, linea: LineaCarrito): string {
   return cotizacion?.lineas[indice]?.nombre ?? linea.codigo;
 }
 
 function detalleDeLinea(cotizacion: CarritoCotizado | null, indice: number, linea: LineaCarrito): string {
-  /*
-   * El detalle con su unidad lo redacta el backend, que es el único que sabe
-   * si esa línea se cuenta en unidades, en lotes o en gramos. Mientras no
-   * llegue la cotización se muestra el número pelado.
-   */
   return cotizacion?.lineas[indice]?.detalle ?? String(linea.cantidad);
 }
 
