@@ -149,7 +149,7 @@ export function ContadorCarrito({ variante }: { variante: "escritorio" | "movil"
     <Link
       href={`/t/${slugTienda}/carrito`}
       aria-label={`Carrito: ${lineas.length} ${lineas.length === 1 ? "línea" : "líneas"}`}
-      className="relative block"
+      className="relative block text-texto"
     >
       <IconoBolsa tamano={movil ? 20 : 21} />
       <span

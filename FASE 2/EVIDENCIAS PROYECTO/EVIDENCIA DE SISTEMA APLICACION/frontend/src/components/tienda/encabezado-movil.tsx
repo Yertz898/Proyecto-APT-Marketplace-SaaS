@@ -11,6 +11,7 @@ import { Cuenta } from "./cuenta";
 import { IconoLupa } from "./iconos";
 import { Marca } from "./marca";
 import { clasesPanelLateral } from "./panel-lateral";
+import { SelectorDeTema } from "./selector-de-tema";
 
 type Seccion = { href: string; etiqueta: string; activa: boolean };
 
@@ -84,9 +85,11 @@ export function EncabezadoMovil({
           <Marca tienda={tienda} lugar="movil" />
         </div>
 
-        <button type="button" aria-label="Buscar" aria-disabled="true" data-pendiente="busqueda" className="block cursor-pointer">
-          <IconoLupa tamano={19} claro />
+        <button type="button" aria-label="Buscar" aria-disabled="true" data-pendiente="busqueda" className="block cursor-pointer text-texto">
+          <IconoLupa tamano={19} />
         </button>
+
+        <SelectorDeTema className="size-9" />
 
         <ContadorCarrito variante="movil" />
       </div>

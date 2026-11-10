@@ -6,6 +6,7 @@ import { Encabezado } from "@/components/tienda/encabezado";
 import { Pie } from "@/components/tienda/pie";
 import { obtenerIdentidadTienda } from "@/lib/api/tienda";
 import { variablesDeIdentidad } from "@/lib/identidad";
+import { GUION_DEL_TEMA } from "@/lib/tema";
 
 export async function generateMetadata({ params }: LayoutProps<"/t/[slug]">): Promise<Metadata> {
   const { slug } = await params;
@@ -19,6 +20,10 @@ export async function generateMetadata({ params }: LayoutProps<"/t/[slug]">): Pr
  *
  * Los colores de la tienda entran como variables CSS validadas. Nunca se
  * inserta CSS ni HTML escrito por el vendedor.
+ *
+ * El `data-identidad` no es decorativo: la hoja de estilos cuelga de ahí el
+ * reparto de la paleta, porque es el único elemento donde las variables
+ * `--tienda-*` existen.
  */
 export default async function LayoutTienda({ children, params }: LayoutProps<"/t/[slug]">) {
   const { slug } = await params;
@@ -30,7 +35,14 @@ export default async function LayoutTienda({ children, params }: LayoutProps<"/t
 
   return (
     <ProveedorCarrito slugTienda={slug}>
-      <div style={variablesDeIdentidad(tienda.colores)} className="flex min-h-full flex-1 flex-col">
+      {/* Deja puesto el tema que el comprador eligió, antes de que se pinte. */}
+      <script dangerouslySetInnerHTML={{ __html: GUION_DEL_TEMA }} />
+
+      <div
+        data-identidad
+        style={variablesDeIdentidad(tienda.colores)}
+        className="flex min-h-full flex-1 flex-col"
+      >
         <Encabezado tienda={tienda} />
         {children}
         <Pie tienda={tienda} />

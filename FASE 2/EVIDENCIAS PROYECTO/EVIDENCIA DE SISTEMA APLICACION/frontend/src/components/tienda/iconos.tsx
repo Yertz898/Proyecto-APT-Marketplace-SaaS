@@ -2,24 +2,23 @@
  * Íconos de la interfaz.
  *
  * Son de la plataforma, no de una tienda: acá no hay nada específico de un
- * rubro ni de un catálogo. Los colores de trazo van literales porque los
- * atributos de presentación de SVG no leen variables CSS de forma confiable.
+ * rubro ni de un catálogo. El trazo va en `currentColor` y el color lo pone
+ * quien los usa, con una clase: la vitrina tiene tema claro y oscuro, y un
+ * color literal acá se volvía invisible en uno de los dos. `currentColor` sí se
+ * resuelve de forma confiable en un atributo de presentación; una variable CSS
+ * es la que no.
  */
-
-const TEXTO = "#F5F3F7";
-const TEXTO_SUAVE = "#A09CAB";
 
 type PropsIcono = {
   tamano?: number;
   className?: string;
 };
 
-export function IconoLupa({ tamano = 15, claro = false, className }: PropsIcono & { claro?: boolean }) {
-  const color = claro ? TEXTO : TEXTO_SUAVE;
+export function IconoLupa({ tamano = 15, className }: PropsIcono) {
   return (
     <svg width={tamano} height={tamano} viewBox="0 0 24 24" fill="none" aria-hidden="true" className={className}>
-      <circle cx="11" cy="11" r="7" stroke={color} strokeWidth="1.8" />
-      <path d="M16.5 16.5L21 21" stroke={color} strokeWidth="1.8" />
+      <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M16.5 16.5L21 21" stroke="currentColor" strokeWidth="1.8" />
     </svg>
   );
 }
@@ -27,8 +26,36 @@ export function IconoLupa({ tamano = 15, claro = false, className }: PropsIcono 
 export function IconoBolsa({ tamano = 21, className }: PropsIcono) {
   return (
     <svg width={tamano} height={tamano} viewBox="0 0 24 24" fill="none" aria-hidden="true" className={className}>
-      <path d="M6 8h12l-1.2 11H7.2L6 8z" stroke={TEXTO} strokeWidth="1.5" />
-      <path d="M9 8V6.5a3 3 0 016 0V8" stroke={TEXTO} strokeWidth="1.5" />
+      <path d="M6 8h12l-1.2 11H7.2L6 8z" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M9 8V6.5a3 3 0 016 0V8" stroke="currentColor" strokeWidth="1.5" />
+    </svg>
+  );
+}
+
+/** Sol y luna del interruptor de tema. Se dibuja el destino, no el estado. */
+export function IconoSol({ tamano = 17, className }: PropsIcono) {
+  return (
+    <svg width={tamano} height={tamano} viewBox="0 0 24 24" fill="none" aria-hidden="true" className={className}>
+      <circle cx="12" cy="12" r="4.2" stroke="currentColor" strokeWidth="1.7" />
+      <path
+        d="M12 2.4v2.3M12 19.3v2.3M4.4 4.4l1.7 1.7M17.9 17.9l1.7 1.7M2.4 12h2.3M19.3 12h2.3M4.4 19.6l1.7-1.7M17.9 6.1l1.7-1.7"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+export function IconoLuna({ tamano = 17, className }: PropsIcono) {
+  return (
+    <svg width={tamano} height={tamano} viewBox="0 0 24 24" fill="none" aria-hidden="true" className={className}>
+      <path
+        d="M20 14.2A8.4 8.4 0 019.8 4a8.6 8.6 0 102.6 16.8 8.6 8.6 0 007.6-6.6z"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }

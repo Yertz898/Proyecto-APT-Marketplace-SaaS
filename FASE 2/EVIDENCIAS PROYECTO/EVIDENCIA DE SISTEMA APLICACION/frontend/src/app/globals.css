@@ -112,10 +112,64 @@
 }
 
 /*
+ * Los dos temas de la vitrina.
+ *
+ * El comprador elige claro u oscuro y el atributo queda en el <html>. Cambia el
+ * fondo y, con él, toda la paleta: el acento y el destacado de la tienda son
+ * texto, y el mismo tono que se lee sobre el negro desaparece sobre el crema.
+ * Por eso cada color de marca entra dos veces, ya resuelto para cada fondo, y
+ * acá solo se decide cuál de los dos toma el token.
+ *
+ * El mapeo cuelga de `[data-identidad]`, que es donde el layout de la tienda
+ * deja las variables `--tienda-*`: resueltas en el <html> no existirían.
+ */
+[data-identidad] {
+  --color-violeta: var(--tienda-primario, #7c3aed);
+  --color-violeta-hover: var(--tienda-primario-hover, #8b5cf6);
+  --color-lila: var(--tienda-acento, #a78bfa);
+  --color-oro: var(--tienda-destacado, #c9a227);
+}
+
+html[data-vitrina="claro"] [data-identidad] {
+  --color-violeta-hover: var(--tienda-primario-hover-claro, #642ac7);
+  --color-lila: var(--tienda-acento-claro, #7763b3);
+  --color-lila-claro: var(--tienda-acento-claro, #7763b3);
+  --color-oro: var(--tienda-destacado-claro, #876d1a);
+}
+
+html[data-vitrina="claro"] {
+  --color-tinta: #f7f5f0;
+  --color-tinta-honda: #efebe2;
+  --color-superficie: #ffffff;
+  --color-superficie-alta: #ffffff;
+  --color-texto: #1a1820;
+  --color-texto-suave: #56515f;
+  --color-texto-apagado: #6c677b;
+
+  /* Los de shadcn, que usan el panel lateral del menú móvil y los focos. */
+  --background: #f7f5f0;
+  --foreground: #1a1820;
+  --card: #ffffff;
+  --card-foreground: #1a1820;
+  --popover: #ffffff;
+  --popover-foreground: #1a1820;
+  --secondary: #ffffff;
+  --secondary-foreground: #1a1820;
+  --muted: #ffffff;
+  --muted-foreground: #56515f;
+  --border: rgb(26 24 32 / 14%);
+  --input: rgb(26 24 32 / 22%);
+  --ring: var(--tienda-acento-claro, #7763b3);
+}
+
+/*
  * La portada de DealCommerce va sobre fondo claro y el resto del sitio es
  * oscuro. El fondo se corrige en el body, y no solo dentro de la página, porque
  * el que se ve al rebotar el scroll es el del documento: sin esto, estirar la
  * portada hacia arriba mostraría el fondo de la vitrina.
+ *
+ * Va después del bloque de la vitrina a propósito: el atributo del tema queda
+ * puesto en el <html> al salir de la tienda, y acá el panel manda.
  */
 html:has([data-tema="claro"]) body {
   background: var(--color-hueso);

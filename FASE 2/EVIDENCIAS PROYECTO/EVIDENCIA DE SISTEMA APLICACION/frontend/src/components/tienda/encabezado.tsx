@@ -11,6 +11,7 @@ import { Cuenta } from "./cuenta";
 import { EncabezadoMovil } from "./encabezado-movil";
 import { IconoLupa } from "./iconos";
 import { Marca } from "./marca";
+import { SelectorDeTema } from "./selector-de-tema";
 
 /*
  * Encabezado de la tienda pública.
@@ -60,11 +61,13 @@ export function Encabezado({ tienda }: { tienda: IdentidadTienda }) {
           <div className="ml-auto flex items-center gap-4">
             <div
               data-pendiente="busqueda"
-              className="flex h-10 w-[230px] items-center gap-[9px] rounded-[20px] border border-lila/16 bg-texto/5 px-3.5"
+              className="flex h-10 w-[230px] items-center gap-[9px] rounded-[20px] border border-lila/16 bg-texto/5 px-3.5 text-texto-suave"
             >
               <IconoLupa tamano={15} />
-              <span className="text-[13px] text-texto-suave">Buscar</span>
+              <span className="text-[13px]">Buscar</span>
             </div>
+
+            <SelectorDeTema />
 
             <ContadorCarrito variante="escritorio" />
 

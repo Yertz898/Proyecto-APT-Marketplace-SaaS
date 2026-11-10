@@ -8,9 +8,12 @@ import { Campo } from "@/components/campo";
 import { esDuenoDeTienda, useSesion } from "@/components/sesion/usar-sesion";
 import { ErrorDeApi } from "@/lib/api/errores";
 import { guardarPerfil, obtenerPerfil } from "@/lib/api/perfil-tienda";
+import { esHexadecimal, paletaParaFondoClaro } from "@/lib/color";
+import type { Paleta } from "@/lib/color";
 import type { CambiosDelPerfil, PerfilDeTienda } from "@/lib/tipos-panel";
 
 import { Cabecera, Cargando, Error as Aviso, Tarjeta } from "./piezas";
+import { SelectorDeColor } from "./selector-de-color";
 
 /*
  * Tienda y marca.
@@ -26,12 +29,15 @@ import { Cabecera, Cargando, Error as Aviso, Tarjeta } from "./piezas";
 /** Los cuatro colores, con el nombre que les da el contrato. */
 const COLORES = [
   { campo: "colorPrimario", etiqueta: "Primario", ayuda: "El color de los botones." },
-  { campo: "colorPrimarioHover", etiqueta: "Primario al pasar el mouse", ayuda: "Un tono más oscuro." },
-  { campo: "colorAcento", etiqueta: "Acento", ayuda: "Detalles y enlaces." },
-  { campo: "colorDestacado", etiqueta: "Destacado", ayuda: "Ofertas y avisos." },
+  { campo: "colorPrimarioHover", etiqueta: "Primario al pasar el mouse", ayuda: "Un tono más claro." },
+  { campo: "colorAcento", etiqueta: "Acento", ayuda: "Detalles y enlaces. Va sobre el fondo oscuro." },
+  { campo: "colorDestacado", etiqueta: "Destacado", ayuda: "Precios, ofertas y avisos." },
 ] as const;
 
 type CampoDeColor = (typeof COLORES)[number]["campo"];
+
+/** Los tres que salen del primero. Se pueden corregir uno por uno, pero plegados. */
+const DERIVADOS = COLORES.filter(({ campo }) => campo !== "colorPrimario");
 
 export function PantallaTienda() {
   const { sesion, hidratado } = useSesion();
@@ -94,6 +100,18 @@ function Formulario({
 
   function cambiar<C extends keyof PerfilDeTienda>(campo: C, valor: PerfilDeTienda[C]) {
     setBorrador((actual) => ({ ...actual, [campo]: valor }));
+    setGuardado(false);
+  }
+
+  /** Una elección del selector: los cuatro colores de una sola vez. */
+  function aplicarPaleta(paleta: Paleta) {
+    setBorrador((actual) => ({
+      ...actual,
+      colorPrimario: paleta.primario,
+      colorPrimarioHover: paleta.hover,
+      colorAcento: paleta.acento,
+      colorDestacado: paleta.destacado,
+    }));
     setGuardado(false);
   }
 
@@ -194,24 +212,55 @@ function Formulario({
           <Tarjeta>
             <Titulo>Colores</Titulo>
             <p className="mt-1 text-[13px] text-pizarra">
-              En hexadecimal, como #7C3AED. Se usan los cuatro o ninguno: con la paleta a medias, tu
-              vitrina usa la de DealCommerce.
+              Elige una plantilla y armamos los otros tres colores. Se usan los cuatro o ninguno:
+              con la paleta a medias, tu vitrina usa la de DealCommerce.
             </p>
 
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              {COLORES.map(({ campo, etiqueta, ayuda }) => (
-                <ColorDeLaMarca
-                  key={campo}
-                  campo={campo}
-                  etiqueta={etiqueta}
-                  ayuda={ayuda}
-                  valor={borrador[campo]}
-                  onCambio={(valor) => cambiar(campo, valor)}
-                  deshabilitado={bloqueado(campo)}
-                  error={error?.de(campo)}
+            <div className="mt-4">
+              <label htmlFor="colorPrimario" className="text-[13px] font-semibold text-marino">
+                Color de tu tienda
+              </label>
+
+              <div className="mt-2">
+                <SelectorDeColor
+                  id="colorPrimario"
+                  valor={borrador.colorPrimario}
+                  onPaleta={aplicarPaleta}
+                  onTexto={(texto) => cambiar("colorPrimario", texto)}
+                  deshabilitado={bloqueado("colorPrimario")}
+                  error={error?.de("colorPrimario")}
                 />
-              ))}
+              </div>
+
+              {error?.de("colorPrimario") ? (
+                <p className="mt-1.5 text-xs font-medium text-ambar-hondo">
+                  {error.de("colorPrimario")}
+                </p>
+              ) : (
+                <p className="mt-1.5 text-xs text-pizarra">El color de los botones.</p>
+              )}
             </div>
+
+            <details className="mt-4 border-t border-arena pt-4">
+              <summary className="cursor-pointer text-[13px] font-semibold text-acero">
+                Ajustar los otros tres por separado
+              </summary>
+
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                {DERIVADOS.map(({ campo, etiqueta, ayuda }) => (
+                  <ColorDeLaMarca
+                    key={campo}
+                    campo={campo}
+                    etiqueta={etiqueta}
+                    ayuda={ayuda}
+                    valor={borrador[campo]}
+                    onCambio={(valor) => cambiar(campo, valor)}
+                    deshabilitado={bloqueado(campo)}
+                    error={error?.de(campo)}
+                  />
+                ))}
+              </div>
+            </details>
           </Tarjeta>
 
           <Tarjeta>
@@ -431,61 +480,112 @@ function ColorDeLaMarca({
  * publicarla. Los colores se aplican solo si pasan el mismo formato que exige
  * el backend; un valor a medio escribir no se inyecta en el estilo.
  */
+/*
+ * Los dos fondos de la vitrina, con los mismos valores que la hoja de estilos.
+ * Si allá cambian, acá también: es una muestra, y una muestra que miente no
+ * sirve para elegir.
+ */
+const TEMAS = [
+  { nombre: "oscuro", etiqueta: "Oscuro", pagina: "#0b0a0f", tarjeta: "#16141d", texto: "#f5f3f7" },
+  { nombre: "claro", etiqueta: "Claro", pagina: "#f7f5f0", tarjeta: "#ffffff", texto: "#1a1820" },
+] as const;
+
 function VistaPrevia({ perfil, logo }: { perfil: PerfilDeTienda; logo: File | null }) {
-  const primario = esHexadecimal(perfil.colorPrimario) ? perfil.colorPrimario : "#1f4e79";
-  const acento = esHexadecimal(perfil.colorAcento) ? perfil.colorAcento : "#4a5468";
-  const destacado = esHexadecimal(perfil.colorDestacado) ? perfil.colorDestacado : "#e0a526";
+  // Los mismos valores de reserva que usa la vitrina cuando la tienda no eligió
+  // paleta. Antes acá había otros tres y la muestra no se parecía a la vitrina.
+  const oscura: Paleta = {
+    primario: esHexadecimal(perfil.colorPrimario) ? perfil.colorPrimario : "#7c3aed",
+    hover: esHexadecimal(perfil.colorPrimarioHover) ? perfil.colorPrimarioHover : "#8b5cf6",
+    acento: esHexadecimal(perfil.colorAcento) ? perfil.colorAcento : "#a78bfa",
+    destacado: esHexadecimal(perfil.colorDestacado) ? perfil.colorDestacado : "#c9a227",
+  };
+
+  const paletas = { oscuro: oscura, claro: paletaParaFondoClaro(oscura) };
 
   return (
     <aside className="lg:sticky lg:top-6 lg:self-start">
       <Tarjeta>
         <Titulo>Vista previa</Titulo>
         <p className="mt-1 text-[13px] text-pizarra">
-          Una muestra de tu vitrina. {logo && "El logo nuevo se ve al guardar."}
+          Tu vitrina en los dos temas: el comprador elige cuál ve, así que tu color tiene que
+          funcionar en ambos. {logo && "El logo nuevo se ve al guardar."}
         </p>
 
-        <div className="mt-4 overflow-hidden rounded-[12px] border border-arena">
-          <div className="flex items-center gap-2.5 px-4 py-3" style={{ background: primario }}>
-            {perfil.logoActual && (
-              <Image
-                src={perfil.logoActual.url}
-                alt=""
-                width={24}
-                height={24}
-                className="size-6 rounded-full border border-white/40 object-cover"
-              />
-            )}
-            <span className="truncate text-[14px] font-bold text-white">{perfil.nombre}</span>
-          </div>
-
-          <div className="bg-white p-4">
-            <p className="text-[13px] font-semibold text-marino">Un producto</p>
-            <p className="mt-0.5 text-[12px]" style={{ color: acento }}>
-              Categoría de ejemplo
-            </p>
-            <p className="mt-2 text-[15px] font-extrabold text-marino">$19.990</p>
-            <span
-              className="mt-2 inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold text-white"
-              style={{ background: destacado }}
-            >
-              Oferta
-            </span>
-            <span
-              className="mt-3 block rounded-[10px] py-2 text-center text-[13px] font-semibold text-white"
-              style={{ background: primario }}
-            >
-              Agregar
-            </span>
-          </div>
+        <div className="mt-4 flex flex-col gap-3">
+          {TEMAS.map((tema) => (
+            <Muestra
+              key={tema.nombre}
+              tema={tema}
+              paleta={paletas[tema.nombre]}
+              nombre={perfil.nombre}
+              logo={perfil.logoActual}
+            />
+          ))}
         </div>
       </Tarjeta>
     </aside>
   );
 }
 
-/** El mismo formato que exige el backend: seis dígitos y nada más. */
-function esHexadecimal(valor: string): boolean {
-  return /^#[0-9a-fA-F]{6}$/.test(valor);
+function Muestra({
+  tema,
+  paleta,
+  nombre,
+  logo,
+}: {
+  tema: (typeof TEMAS)[number];
+  paleta: Paleta;
+  nombre: string;
+  logo: PerfilDeTienda["logoActual"];
+}) {
+  return (
+    <div className="overflow-hidden rounded-[12px] border border-arena" style={{ background: tema.pagina }}>
+      <div className="flex items-center gap-2.5 px-4 py-3" style={{ background: paleta.primario }}>
+        {logo && (
+          <Image
+            src={logo.url}
+            alt=""
+            width={24}
+            height={24}
+            className="size-6 rounded-full border border-white/40 object-cover"
+          />
+        )}
+        <span className="truncate text-[14px] font-bold text-white">{nombre}</span>
+        <span className="ml-auto shrink-0 text-[10px] font-semibold tracking-[.08em] text-white/70 uppercase">
+          {tema.etiqueta}
+        </span>
+      </div>
+
+      <div className="p-4" style={{ background: tema.tarjeta }}>
+        <p className="text-[13px] font-semibold" style={{ color: tema.texto }}>
+          Un producto
+        </p>
+        <p className="mt-0.5 text-[12px]" style={{ color: paleta.acento }}>
+          Categoría de ejemplo
+        </p>
+        <p className="mt-2 font-serif text-[18px] font-semibold" style={{ color: paleta.destacado }}>
+          $19.990
+        </p>
+        <span
+          className="mt-2 inline-block rounded-full border px-2 py-0.5 text-[11px] font-semibold"
+          style={{ color: paleta.destacado, borderColor: `${paleta.destacado}80` }}
+        >
+          Oferta
+        </span>
+        {/*
+          Texto blanco fijo, igual que la vitrina. No se corrige solo a un tono
+          legible a propósito: si el color elegido deja el botón ilegible, el
+          dueño tiene que verlo acá, que es donde el selector se lo advierte.
+        */}
+        <span
+          className="mt-3 block rounded-[10px] py-2 text-center text-[13px] font-semibold text-white"
+          style={{ background: paleta.primario }}
+        >
+          Agregar
+        </span>
+      </div>
+    </div>
+  );
 }
 
 function tieneDetalles(error: ErrorDeApi): boolean {
