@@ -44,6 +44,12 @@ export type ResumenFotos = {
   emparejadas: number;
   productosSinFoto: string[];
   fotosSinProducto: string[];
+  /**
+   * Imágenes que el backend no pudo usar: archivos que no son imagen, o un
+   * nombre que más de un producto reclama. Van aparte de `fotosSinProducto`
+   * porque esas sí se entendieron, solo que no le tocaban a nadie.
+   */
+  rechazos: FilaRechazada[];
 };
 
 export type CargaHistorial = {

@@ -6,6 +6,10 @@ nada**; `aplicar` escribe. Entre las dos pasa la decisión del dueño, que ve el
 resumen antes de que nada toque su catálogo.
 
 La clave es `(tienda, código)`: subir dos veces la misma planilla no duplica.
+
+La columna `foto` no trae una imagen: trae el **nombre** que esa imagen tiene
+dentro del .zip que se sube después. Se guarda para que la carga de fotos sepa
+cuál va con cuál sin obligar a nadie a renombrar sus archivos.
 """
 
 from dataclasses import dataclass, field
@@ -202,6 +206,9 @@ def _convertir(fila: dict, categorias: dict) -> dict:
         "controla_stock": controla,
         "stock": stock,
         "activo": True,
+        # El nombre con que la foto viene en el .zip. Si va vacía, la foto se
+        # llama como el código, que es la regla por omisión.
+        "archivo_de_la_foto": texto(fila, "foto"),
     }
 
     minima = decimal(fila, "cantidad_minima")

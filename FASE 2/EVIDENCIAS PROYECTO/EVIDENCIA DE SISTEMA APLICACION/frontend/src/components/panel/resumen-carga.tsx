@@ -106,6 +106,22 @@ export function ResumenDeFotos({
         <Contador titulo="Fotos sin producto" valor={resumen.fotosSinProducto.length} />
       </div>
 
+      {resumen.rechazos.length > 0 && (
+        <div className="mt-5">
+          <h3 className="text-[13px] font-semibold text-marino">Fotos que no se pudieron usar</h3>
+          <ul className="mt-3 flex flex-col gap-2">
+            {resumen.rechazos.map((rechazo) => (
+              <li
+                key={rechazo.motivo}
+                className="rounded-[10px] border border-ambar bg-trigo px-3 py-2 text-[13px] text-pizarra"
+              >
+                {rechazo.motivo}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <ListaDeCodigos titulo="Productos que quedarían sin foto" codigos={resumen.productosSinFoto} />
       <ListaDeCodigos
         titulo="Fotos que no corresponden a ningún producto"

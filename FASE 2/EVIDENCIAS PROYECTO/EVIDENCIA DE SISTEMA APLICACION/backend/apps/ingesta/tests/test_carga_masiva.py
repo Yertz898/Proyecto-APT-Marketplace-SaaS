@@ -543,6 +543,25 @@ def test_un_tramo_de_un_producto_que_no_existe_se_rechaza(client, dueno_a):
     assert "catálogo" in cuerpo["rechazos"][0]["motivo"]
 
 
+def test_la_columna_foto_se_guarda_en_el_producto(client, dueno_a, tienda_a):
+    """
+    La planilla declara el nombre y la carga de fotos lo usa después.
+
+    Sin esto la columna sería decorativa: se llenaría, no se leería, y el .zip
+    no emparejaría nada. Es exactamente lo que pasaba antes.
+    """
+    archivo = xlsx(
+        encabezados=[*ENCABEZADOS, "foto"],
+        filas=[[*FILA, "pulseras-doradas.png"]],
+    )
+
+    cuerpo = validar(como(client, dueno_a), "productos", archivo).json()
+    confirmar(como(client, dueno_a), cuerpo["cargaId"])
+
+    producto = Producto.objects.de_tienda(tienda_a).get(codigo="NUEVO-1")
+    assert producto.archivo_de_la_foto == "pulseras-doradas.png"
+
+
 # ── Fotos ───────────────────────────────────────────────────────────────────
 
 
@@ -557,6 +576,112 @@ def test_las_fotos_se_emparejan_por_el_nombre_del_archivo(
     producto_a.refresh_from_db()
     assert cuerpo["emparejadas"] == 1
     assert producto_a.foto
+
+
+def test_una_foto_se_empareja_por_el_nombre_declarado_en_la_planilla(
+    client, dueno_a, tienda_a, crear_producto
+):
+    """
+    La columna `foto` de la planilla existe para esto.
+
+    Quien ya tiene sus fotos nombradas —por el modelo, por el proveedor, por el
+    número que les puso el teléfono— declara ese nombre y sube el .zip tal como
+    está, sin renombrar un archivo.
+    """
+    producto = crear_producto(
+        tienda_a, codigo="A-100", archivo_de_la_foto="pulseras-doradas.png"
+    )
+    archivo = zip_archivo({"pulseras-doradas.png": imagen_bytes()})
+
+    cuerpo = validar(como(client, dueno_a), "fotos", archivo).json()
+    confirmar(como(client, dueno_a), cuerpo["cargaId"])
+
+    producto.refresh_from_db()
+    assert cuerpo["emparejadas"] == 1
+    assert producto.foto
+    # El nombre declarado sirve para encontrarlo, no para guardarlo: en el
+    # disco la imagen sigue llamándose como el código.
+    assert producto.codigo in producto.foto.name
+
+
+def test_el_nombre_declarado_ignora_mayusculas_y_extension(
+    client, dueno_a, tienda_a, crear_producto
+):
+    """La columna la llena una persona, así que no puede exigir exactitud."""
+    producto = crear_producto(
+        tienda_a, codigo="A-100", archivo_de_la_foto="Pulseras Doradas.JPG"
+    )
+    archivo = zip_archivo({"pulseras doradas.png": imagen_bytes()})
+
+    cuerpo = validar(como(client, dueno_a), "fotos", archivo).json()
+
+    assert cuerpo["emparejadas"] == 1
+    assert producto.codigo not in cuerpo["productosSinFoto"]
+
+
+def test_el_codigo_manda_sobre_el_nombre_declarado(
+    client, dueno_a, tienda_a, crear_producto
+):
+    """
+    Si dos productos se disputan un archivo y uno lo gana por su código, gana.
+
+    El código es único y lo garantiza la base; el nombre declarado lo escribe
+    una persona y puede apuntar a cualquier cosa, incluso al código ajeno.
+    """
+    dueno_del_codigo = crear_producto(tienda_a, codigo="A-100")
+    impostor = crear_producto(tienda_a, codigo="A-200", archivo_de_la_foto="A-100.png")
+    archivo = zip_archivo({"A-100.png": imagen_bytes()})
+
+    cuerpo = validar(como(client, dueno_a), "fotos", archivo).json()
+    confirmar(como(client, dueno_a), cuerpo["cargaId"])
+
+    dueno_del_codigo.refresh_from_db()
+    impostor.refresh_from_db()
+    assert cuerpo["emparejadas"] == 1
+    assert dueno_del_codigo.foto
+    assert not impostor.foto
+
+
+def test_dos_productos_que_declaran_el_mismo_archivo_se_rechazan(
+    client, dueno_a, tienda_a, crear_producto
+):
+    """
+    Nadie puede decidir cuál de los dos era. Se dice y se sigue con las demás.
+
+    Que gane el último leído dejaría la foto en un producto al azar, y el dueño
+    no tendría cómo enterarse.
+    """
+    uno = crear_producto(tienda_a, codigo="A-100", archivo_de_la_foto="repetida.png")
+    otro = crear_producto(tienda_a, codigo="A-200", archivo_de_la_foto="repetida.png")
+    archivo = zip_archivo(
+        {"repetida.png": imagen_bytes(), "A-100.png": imagen_bytes()}
+    )
+
+    cuerpo = validar(como(client, dueno_a), "fotos", archivo).json()
+    confirmar(como(client, dueno_a), cuerpo["cargaId"])
+
+    uno.refresh_from_db()
+    otro.refresh_from_db()
+    assert cuerpo["emparejadas"] == 1  # la que entró por código
+    assert "repetida.png" in cuerpo["rechazos"][0]["motivo"]
+    assert not otro.foto
+
+
+def test_el_nombre_declarado_no_alcanza_a_otra_tienda(
+    client, dueno_a, tienda_b, crear_producto
+):
+    """La columna no puede servir de puerta de atrás entre tiendas."""
+    ajeno = crear_producto(
+        tienda_b, codigo="B-100", archivo_de_la_foto="pulseras.png"
+    )
+    archivo = zip_archivo({"pulseras.png": imagen_bytes()})
+
+    cuerpo = validar(como(client, dueno_a), "fotos", archivo).json()
+
+    ajeno.refresh_from_db()
+    assert cuerpo["emparejadas"] == 0
+    assert cuerpo["fotosSinProducto"] == ["pulseras.png"]
+    assert not ajeno.foto
 
 
 def test_el_nombre_con_que_se_guarda_lo_pone_el_sistema(

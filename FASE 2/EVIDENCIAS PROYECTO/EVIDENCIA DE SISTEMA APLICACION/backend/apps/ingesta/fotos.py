@@ -15,8 +15,17 @@ acepta un sistema, así que acá se desconfía de todo:
 - **El nombre con que se guarda lo pone el sistema.** El del archivo solo sirve
   para emparejar con el producto.
 
-El emparejado es por el nombre del archivo —sin extensión— contra el código del
-producto, que es como la gente las nombra cuando las saca del teléfono.
+El emparejado es por el nombre del archivo, sin extensión y sin distinguir
+mayúsculas ni acentos, contra dos cosas:
+
+1. **El código del producto**, que es la regla por omisión.
+2. **El nombre que el producto declaró en la columna `foto`** de la planilla,
+   para quien ya tiene sus fotos nombradas de otra forma y no va a renombrar
+   ochenta archivos para poder cargarlas.
+
+El código manda sobre lo declarado: es único por tienda y lo pone el sistema,
+mientras que la columna la escribe una persona a mano y dos filas pueden
+terminar reclamando el mismo archivo.
 """
 
 import zipfile
@@ -43,6 +52,10 @@ MAXIMO_ARCHIVOS = 500
 MAXIMO_DESCOMPRIMIDO = 200 * 1024 * 1024
 
 
+#: Marca un nombre que más de un producto declaró como suyo. No se decide solo.
+AMBIGUO = object()
+
+
 @dataclass
 class ResumenFotos:
     emparejadas: int = 0
@@ -64,9 +77,7 @@ def revisar(tienda, archivo) -> ResumenFotos:
         raise ArchivoInvalido("Esto es una planilla, no un .zip de fotos.")
 
     resumen = ResumenFotos()
-    productos = {
-        normalizar(p.codigo): p for p in Producto.objects.de_tienda(tienda)
-    }
+    por_codigo, por_declarado = _indexar(tienda)
     con_foto: set[str] = set()
 
     archivo.seek(0)
@@ -84,8 +95,20 @@ def revisar(tienda, archivo) -> ResumenFotos:
             if nombre is None:
                 continue  # Entrada sin nombre utilizable; no es una foto.
 
-            codigo = normalizar(PurePath(nombre).stem)
-            producto = productos.get(codigo)
+            clave = normalizar(PurePath(nombre).stem)
+            producto = por_codigo.get(clave) or por_declarado.get(clave)
+
+            if producto is AMBIGUO:
+                resumen.rechazos.append(
+                    {
+                        "fila": 0,
+                        "motivo": (
+                            f"{nombre}: más de un producto dice llamarse así en "
+                            "la columna foto. Deja el nombre en uno solo."
+                        ),
+                    }
+                )
+                continue
 
             if producto is None:
                 resumen.fotos_sin_producto.append(nombre)
@@ -104,9 +127,39 @@ def revisar(tienda, archivo) -> ResumenFotos:
             resumen.emparejadas += 1
 
     resumen.productos_sin_foto = sorted(
-        p.codigo for p in productos.values() if p.codigo not in con_foto and not p.foto
+        p.codigo
+        for p in por_codigo.values()
+        if p.codigo not in con_foto and not p.foto
     )
     return resumen
+
+
+def _indexar(tienda) -> tuple[dict, dict]:
+    """
+    Con qué nombres se puede encontrar cada producto. Devuelve (código, declarado).
+
+    Van separados porque no valen lo mismo: el código es único por tienda y lo
+    garantiza la base, mientras que el nombre declarado en la planilla lo
+    escribe una persona y puede repetirse. Un nombre declarado por dos
+    productos queda marcado `AMBIGUO` en vez de que gane el último leído.
+    """
+    por_codigo: dict = {}
+    por_declarado: dict = {}
+
+    for producto in Producto.objects.de_tienda(tienda):
+        por_codigo[normalizar(producto.codigo)] = producto
+
+        # La extensión no cuenta: la columna se llena a mano y da lo mismo si
+        # quien la escribió puso «foto.jpg», «foto.JPEG» o solo «foto».
+        declarado = normalizar(PurePath(producto.archivo_de_la_foto.strip()).stem)
+        if not declarado:
+            continue
+
+        por_declarado[declarado] = (
+            AMBIGUO if declarado in por_declarado else producto
+        )
+
+    return por_codigo, por_declarado
 
 
 @transaction.atomic

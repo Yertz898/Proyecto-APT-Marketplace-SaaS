@@ -157,6 +157,10 @@ class ValidarCarga(MixinTiendaDelUsuario, generics.GenericAPIView):
                 "emparejadas": resumen.emparejadas,
                 "productosSinFoto": resumen.productos_sin_foto,
                 "fotosSinProducto": resumen.fotos_sin_producto,
+                # Una imagen que no se pudo usar se guardaba en la carga y no
+                # se le decía a nadie: la pantalla mostraba el recuento y la
+                # foto simplemente no aparecía nunca.
+                "rechazos": resumen.rechazos,
             }
 
         return {

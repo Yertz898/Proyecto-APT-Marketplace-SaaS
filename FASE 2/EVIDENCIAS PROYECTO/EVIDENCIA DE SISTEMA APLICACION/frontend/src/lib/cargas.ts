@@ -39,7 +39,7 @@ export const TIPOS_DE_CARGA = {
   fotos: {
     titulo: "Fotos de productos",
     descripcion:
-      "Un .zip con las imágenes. Se emparejan con los productos por el nombre de archivo de la columna foto.",
+      "Un .zip con las imágenes. Cada foto se llama como el código de su producto; si las tuyas ya tienen otro nombre, decláralo en la columna foto de la planilla.",
     columnas: [],
     extensiones: [".zip"],
   },

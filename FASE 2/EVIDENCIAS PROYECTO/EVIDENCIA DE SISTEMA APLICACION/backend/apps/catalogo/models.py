@@ -121,6 +121,27 @@ class Producto(ModeloDeTienda):
     foto = models.ImageField(
         "foto", upload_to="productos/", max_length=255, blank=True, null=True
     )
+
+    # Con qué nombre llega la foto de este producto dentro del .zip de la carga
+    # masiva. La regla por omisión es que el archivo se llame como el código,
+    # pero quien tiene las fotos ya nombradas —por el modelo, por el proveedor,
+    # por el número que les puso el teléfono— no debería tener que renombrar
+    # ochenta archivos para poder cargarlas. Lo declara en la planilla y el .zip
+    # se sube tal como está.
+    #
+    # Guarda el nombre tal cual lo escribió la persona; la comparación ignora
+    # mayúsculas, acentos y extensión. No es el nombre con que se guarda la
+    # imagen: ese lo pone el sistema y es siempre el código.
+    archivo_de_la_foto = models.CharField(
+        "nombre del archivo de la foto",
+        max_length=255,
+        blank=True,
+        default="",
+        help_text=(
+            "Solo si la foto no se llama como el código del producto. "
+            "El nombre que tiene dentro del .zip."
+        ),
+    )
     activo = models.BooleanField("activo", default=True)
 
     forma_venta = models.CharField(

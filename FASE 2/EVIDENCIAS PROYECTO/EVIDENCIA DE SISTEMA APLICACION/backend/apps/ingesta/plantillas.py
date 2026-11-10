@@ -31,7 +31,8 @@ AYUDA = {
     "controla_stock": "si | no",
     "stock": "Solo si controla stock.",
     "cantidad_minima": "Opcional. Por omisión, 1.",
-    "foto": "Nombre del archivo dentro del .zip de fotos.",
+    "foto": "Opcional. Solo si la foto no se llama como el código. "
+    "El nombre que tiene dentro del .zip.",
     "codigo_producto": "Obligatorio. El código del producto que ya cargaste.",
     "umbral": "Desde cuánto aplica este precio.",
     "unidad_umbral": " | ".join(v for v, _ in UnidadUmbral.choices),
