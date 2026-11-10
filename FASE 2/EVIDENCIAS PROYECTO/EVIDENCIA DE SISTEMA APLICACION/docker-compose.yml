@@ -6,6 +6,12 @@
 #
 # Requiere un archivo .env en la raíz. Partir desde .env.example.
 
+# El nombre del proyecto, fijo. Sin esto Compose lo deduce del nombre de la
+# carpeta, y como el código vive dentro de «EVIDENCIA DE SISTEMA APLICACION»,
+# bastaba con mover o renombrar la carpeta para que los volúmenes cambiaran de
+# nombre y la base apareciera vacía.
+name: dealcommerce
+
 services:
   db:
     image: postgres:17-alpine
