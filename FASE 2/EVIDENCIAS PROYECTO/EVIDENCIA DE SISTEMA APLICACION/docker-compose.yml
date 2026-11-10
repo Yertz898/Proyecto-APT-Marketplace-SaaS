@@ -40,6 +40,10 @@ services:
     volumes:
       # Código montado desde el host: los cambios recargan sin reconstruir.
       - ./backend:/app
+      # Los datos crudos del cliente, para poder importarlos. Van montados
+      # fuera de /app a propósito: no son código, no se versionan y no tienen
+      # por qué aparecer dentro del árbol del backend.
+      - ./data:/datos
     ports:
       - "8000:8000"
     depends_on:

@@ -65,7 +65,14 @@ export function PantallaVentas() {
     );
   }
 
-  const sinVentas = resumen.ventas.pedidos === 0 && resumen.porCoordinar.pedidos === 0;
+  // El vacío es «esta tienda nunca ha vendido», no «este mes va en cero».
+  // Mirando solo el mes, una tienda con un año de historial escondía sus
+  // tablas cada primero de mes.
+  const sinVentas =
+    resumen.ventas.pedidos === 0 &&
+    resumen.porCoordinar.pedidos === 0 &&
+    resumen.mesAnterior.pedidos === 0 &&
+    resumen.masVendidos.length === 0;
 
   return (
     <>
