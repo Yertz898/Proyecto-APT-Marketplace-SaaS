@@ -330,7 +330,7 @@ class PedidoPanelListView(APIView):
         pedidos = (
             Pedido.objects.filter(tienda=tienda)
             .prefetch_related("lineas__producto")
-            .order_by("-creado_en")
+            .order_by("-fecha_creacion")
         )
         return Response(PedidoDetalleSerializer(pedidos, many=True).data)
 
@@ -362,6 +362,6 @@ class PedidoPanelEstadoView(APIView):
             pedido.anular()
         else:
             pedido.estado = nuevo_estado
-            pedido.save(update_fields=["estado", "actualizado_en"])
+            pedido.save(update_fields=["estado", "fecha_edicion"])
 
         return Response(PedidoDetalleSerializer(pedido).data)

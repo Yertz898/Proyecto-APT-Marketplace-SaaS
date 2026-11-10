@@ -213,3 +213,48 @@ export type PedidoDelPanel = {
   creadoEn: string;
   lineas: LineaDelPedido[];
 };
+
+// ── Ventas ──────────────────────────────────────────────────────────────────
+
+export type CifrasDeVentas = {
+  pedidos: number;
+  neto: Pesos;
+  iva: Pesos;
+  total: Pesos;
+};
+
+export type ProductoMasVendido = {
+  codigo: string;
+  nombre: string;
+  neto: Pesos;
+  /** Suma de las cantidades vendidas, como decimal: "10.00", "650.00". */
+  cantidad: string;
+};
+
+export type ProductoDetenido = {
+  codigo: string;
+  nombre: string;
+  precioNeto: Pesos;
+  /** Días desde su última venta, o null si no se vendió nunca. */
+  diasSinVender: number | null;
+  /** Fecha aaaa-mm-dd en que entró al catálogo. */
+  enCatalogoDesde: string;
+};
+
+/**
+ * Lo que la tienda vendió. Son hechos sumados de pedidos, no estimaciones.
+ *
+ * Un pedido pendiente no cuenta como venta —el pago se coordina fuera de la
+ * plataforma— y va aparte en `porCoordinar`. Uno anulado no cuenta nunca.
+ */
+export type ResumenDeVentas = {
+  mes: { etiqueta: string; desde: string };
+  ventas: CifrasDeVentas;
+  /** `variacion` es null si el mes anterior no tuvo ventas: no hay con qué comparar. */
+  mesAnterior: CifrasDeVentas & { variacion: number | null };
+  porCoordinar: { pedidos: number; total: Pesos };
+  /** Sobre cuántos días se miran los más vendidos y los detenidos. */
+  diasDeVentana: number;
+  masVendidos: ProductoMasVendido[];
+  sinMovimiento: ProductoDetenido[];
+};

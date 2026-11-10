@@ -27,16 +27,16 @@ class PedidoAdmin(admin.ModelAdmin):
         "telefono_contacto",
         "estado",
         "total",
-        "creado_en",
+        "fecha_creacion",
     )
-    list_filter = ("estado", "tienda", "creado_en")
+    list_filter = ("estado", "tienda", "fecha_creacion")
     search_fields = ("folio", "nombre_contacto", "telefono_contacto")
     readonly_fields = (
         "folio",
         "total_neto",
         "total_iva",
         "total",
-        "creado_en",
-        "actualizado_en",
+        "fecha_creacion",
+        "fecha_edicion",
     )
     inlines = [LineaPedidoInline]

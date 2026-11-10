@@ -9,6 +9,7 @@ es parte del criterio de terminado.
 | `modelo-datos.md` | Esquema relacional y justificación de las tablas |
 | `api.md` | Endpoints, roles que los pueden invocar y formato de respuesta |
 | `frontend.md` | Cómo está armado el frontend y qué decide cada capa |
+| `ventas-y-pedidos.md` | Los estados del pedido, el inventario y de dónde sale cada indicador |
 | `analitica.md` | Los dos modelos, sus métricas y el resultado frente a la línea base |
 | `bitacora/` | Una nota por sprint: qué se comprometió, qué se cerró, qué quedó |
 

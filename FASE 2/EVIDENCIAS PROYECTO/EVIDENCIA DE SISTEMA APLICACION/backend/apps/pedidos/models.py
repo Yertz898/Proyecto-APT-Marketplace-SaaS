@@ -90,16 +90,18 @@ class Pedido(ModeloDeTienda):
         verbose_name=_("Total general"),
     )
 
-    creado_en = models.DateTimeField(auto_now_add=True, db_index=True)
-    actualizado_en = models.DateTimeField(auto_now=True)
+    # Las fechas las trae ModeloDeTienda: `fecha_creacion` y `fecha_edicion`.
+    # Este modelo declaraba además `creado_en` y `actualizado_en`, así que la
+    # tabla tenía cuatro columnas para dos cosas y cualquier consulta podía
+    # tomar la equivocada sin fallar.
 
-    class Meta:
+    class Meta(ModeloDeTienda.Meta):
         verbose_name = _("Pedido")
         verbose_name_plural = _("Pedidos")
-        ordering = ["-creado_en"]
+        ordering = ["-fecha_creacion"]
         indexes = [
             models.Index(fields=["tienda", "estado"]),
-            models.Index(fields=["tienda", "creado_en"]),
+            models.Index(fields=["tienda", "fecha_creacion"]),
         ]
 
     def __str__(self):
@@ -137,7 +139,7 @@ class Pedido(ModeloDeTienda):
             producto.save(update_fields=["stock"])
 
         self.estado = self.Estado.CANCELADO
-        self.save(update_fields=["estado", "actualizado_en"])
+        self.save(update_fields=["estado", "fecha_edicion"])
 
 
 class LineaPedido(models.Model):

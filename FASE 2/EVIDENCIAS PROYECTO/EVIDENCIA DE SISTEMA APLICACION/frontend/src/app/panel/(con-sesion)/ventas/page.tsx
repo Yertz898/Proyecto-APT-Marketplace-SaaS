@@ -1,12 +1,7 @@
-import { Cabecera, SinConectar } from "@/components/panel/piezas";
+import { PantallaVentas } from "@/components/panel/pantalla-ventas";
 
 export const metadata = { title: "Panel de ventas" };
 
 export default function PaginaVentas() {
-  return (
-    <>
-      <Cabecera titulo="Panel de ventas" descripcion="Cómo va el mes comparado con el anterior." />
-      <SinConectar seccion="El panel de ventas" />
-    </>
-  );
+  return <PantallaVentas />;
 }

@@ -76,7 +76,7 @@ class PedidoDetalleSerializer(serializers.ModelSerializer):
     direccionEntrega = serializers.CharField(source="direccion_entrega", read_only=True)
     totalNeto = serializers.IntegerField(source="total_neto", read_only=True)
     totalIva = serializers.IntegerField(source="total_iva", read_only=True)
-    creadoEn = serializers.DateTimeField(source="creado_en", read_only=True)
+    creadoEn = serializers.DateTimeField(source="fecha_creacion", read_only=True)
 
     class Meta:
         model = Pedido

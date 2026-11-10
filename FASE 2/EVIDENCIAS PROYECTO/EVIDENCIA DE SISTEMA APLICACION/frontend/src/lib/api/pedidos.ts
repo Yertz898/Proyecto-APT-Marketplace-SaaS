@@ -1,6 +1,10 @@
 import { leerError } from "@/lib/api/errores";
 import { pedirConSesion } from "@/lib/api/sesion";
-import type { EstadoPedido, PedidoDelPanel } from "@/lib/tipos-panel";
+import type {
+  EstadoPedido,
+  PedidoDelPanel,
+  ResumenDeVentas,
+} from "@/lib/tipos-panel";
 
 /*
  * Los pedidos de la tienda, desde el panel.
@@ -38,4 +42,9 @@ export async function cambiarEstadoDePedido(
     body: JSON.stringify({ estado }),
   });
   return (await respuesta.json()) as PedidoDelPanel;
+}
+
+/** Los indicadores de ventas del panel. */
+export async function obtenerResumenDeVentas(): Promise<ResumenDeVentas> {
+  return (await (await pedir("/panel/ventas")).json()) as ResumenDeVentas;
 }

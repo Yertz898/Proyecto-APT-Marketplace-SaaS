@@ -73,6 +73,8 @@ Sin sesión. La tienda sale del slug de la ruta.
 | `GET` | `/t/<slug>/productos/<codigo>` | un producto |
 | `POST` | `/t/<slug>/productos/<codigo>/cotizar` | qué cuesta una cantidad |
 | `GET` | `/t/<slug>/agenda/horas` | horas disponibles; filtra con `desde` y `hasta` |
+| `POST` | `/t/<slug>/carrito/cotizar` | qué cuesta el carrito completo; no escribe nada |
+| `POST` | `/t/<slug>/pedidos` | cierra el pedido y devuelve folio y enlace de WhatsApp |
 | `POST` | `/t/<slug>/agenda/visitas` | pide una hora (**comprador con sesión**) |
 
 `colores` es `null` cuando la tienda no definió los cuatro: con la paleta a medias, la
@@ -145,6 +147,9 @@ Con sesión. La tienda sale del token. Entran el dueño y los vendedores, salvo 
 | `POST` | `/panel/cargas/<tipo>/validar` | dueño o vendedor |
 | `POST` | `/panel/cargas/<id>/confirmar` | dueño o vendedor |
 | `DELETE` | `/panel/cargas/<id>` | dueño o vendedor |
+| `GET` | `/panel/pedidos/` | dueño o vendedor |
+| `PATCH` | `/panel/pedidos/<id>/estado/` | dueño o vendedor |
+| `GET` | `/panel/ventas` | dueño o vendedor |
 
 ### Catálogo
 
@@ -351,3 +356,39 @@ invitación a averiguar qué negocios ya pidieron entrar.
 Las pantallas existen y su cliente de API tiene los tipos finales, pero el backend falta:
 equipo, carrito, pedidos y todo lo de analítica. Mientras tanto esas pantallas dicen que
 no están conectadas en vez de mostrar números inventados.
+
+## Carrito, pedidos y ventas
+
+El recorrido completo, los estados y de dónde sale cada indicador están en
+`ventas-y-pedidos.md`. Lo que importa saber acá:
+
+- **Cotizar no escribe nada** y se puede repetir en cada cambio de cantidad. Los precios
+  salen del mismo motor que la ficha del producto, así que los tramos y el aviso de
+  conveniencia llegan al carrito.
+- **Confirmar vuelve a cotizar** en el servidor y no confía en lo que manda el navegador.
+  Si alguna línea ya no se puede pedir, responde `400` y no crea nada.
+- `nombre_contacto` y `telefono_contacto` son **obligatorios**, también para un comprador
+  con sesión: el pago se coordina fuera de la plataforma y un pedido sin forma de
+  contactar a quien lo hizo no se puede cerrar.
+- En el panel, **la tienda sale del token** y no de la URL. Un pedido de otra tienda
+  responde `404` y no `403`: que exista ya es información que no corresponde.
+
+```jsonc
+// POST /t/joyas-ye/pedidos
+{
+  "nombre_contacto": "Camila Rojas",
+  "telefono_contacto": "+56 9 8765 4321",
+  "direccion_entrega": "",          // opcional
+  "notas": "",                      // opcional
+  "lineas": [{ "codigo": "LOTE-039", "cantidad": 2 }]
+}
+```
+
+```jsonc
+// 201
+{
+  "numero": "DC-2FCE5FC5",
+  "mensaje": "Tu pedido quedó registrado con el folio DC-2FCE5FC5…",
+  "enlaceWhatsapp": null            // null si la tienda no tiene WhatsApp configurado
+}
+```
