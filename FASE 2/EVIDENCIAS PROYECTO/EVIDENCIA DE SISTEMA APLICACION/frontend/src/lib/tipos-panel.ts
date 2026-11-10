@@ -5,7 +5,7 @@
  * distintas y no deben compartir componentes ni modelos.
  */
 
-import type { FormaVenta, Imagen, Plan, UnidadMedida } from "@/lib/tipos";
+import type { FormaVenta, Imagen, Pesos, Plan, UnidadMedida } from "@/lib/tipos";
 
 /** Cada tipo de carga tiene su plantilla, su validación y su pantalla. */
 export type TipoCarga = "productos" | "tramos" | "fotos";
@@ -166,4 +166,50 @@ export type CategoriaDelPanel = {
   id: number;
   nombre: string;
   productos: number;
+};
+
+// ── Pedidos ─────────────────────────────────────────────────────────────────
+
+/**
+ * Los cuatro estados por los que pasa un pedido.
+ *
+ * `CANCELADO` no es un estado más: anular devuelve el inventario reservado,
+ * así que es la única transición que toca el catálogo.
+ */
+export type EstadoPedido = "PENDIENTE" | "CONFIRMADO" | "ENTREGADO" | "CANCELADO";
+
+export type LineaDelPedido = {
+  id: number;
+  productoNombre: string;
+  productoCodigo: string;
+  /** Viene como texto decimal del backend: "2.00", "166.50". */
+  cantidad: string;
+  precioUnitarioNeto: Pesos;
+  subtotalNeto: Pesos;
+  subtotalIva: Pesos;
+  subtotalTotal: Pesos;
+};
+
+/**
+ * Un pedido como lo ve el dueño.
+ *
+ * Los precios son los del momento en que se confirmó, no los del catálogo de
+ * hoy: cambiar un precio no puede reescribir lo que ya se cobró.
+ */
+export type PedidoDelPanel = {
+  id: number;
+  folio: string;
+  estado: EstadoPedido;
+  estadoVisible: string;
+  nombreContacto: string;
+  telefonoContacto: string;
+  emailContacto: string;
+  direccionEntrega: string;
+  notas: string;
+  totalNeto: Pesos;
+  totalIva: Pesos;
+  total: Pesos;
+  /** Fecha en ISO. */
+  creadoEn: string;
+  lineas: LineaDelPedido[];
 };
