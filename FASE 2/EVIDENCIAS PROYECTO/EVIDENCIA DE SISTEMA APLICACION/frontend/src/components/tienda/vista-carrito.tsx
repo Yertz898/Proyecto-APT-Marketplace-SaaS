@@ -5,7 +5,12 @@ import { useEffect, useState } from "react";
 
 import { confirmarPedido, cotizarCarrito } from "@/lib/api/carrito";
 import { formatearPesos } from "@/lib/formato";
-import type { CarritoCotizado, LineaCarrito, PedidoConfirmado } from "@/lib/tipos";
+import type {
+  CarritoCotizado,
+  DatosDeContacto,
+  LineaCarrito,
+  PedidoConfirmado,
+} from "@/lib/tipos";
 
 import { useCarrito } from "./carrito";
 import { EnlaceExterno } from "./enlace-externo";
@@ -16,6 +21,23 @@ export function VistaCarrito({ slugTienda }: { slugTienda: string }) {
   const [error, setError] = useState<string | null>(null);
   const [pedido, setPedido] = useState<PedidoConfirmado | null>(null);
   const [confirmando, setConfirmando] = useState(false);
+
+  // El pago se coordina fuera de la plataforma, así que sin nombre ni
+  // teléfono el pedido no sirve para nada: la tienda no tendría a quién
+  // escribirle. Por eso el botón no se habilita hasta que están los dos.
+  const [contacto, setContacto] = useState<DatosDeContacto>({
+    nombre_contacto: "",
+    telefono_contacto: "",
+    direccion_entrega: "",
+    notas: "",
+  });
+
+  const faltanDatos =
+    contacto.nombre_contacto.trim() === "" || contacto.telefono_contacto.trim() === "";
+
+  function escribir(campo: keyof DatosDeContacto, valor: string) {
+    setContacto((previo) => ({ ...previo, [campo]: valor }));
+  }
 
   useEffect(() => {
     if (lineas.length === 0) {
@@ -44,7 +66,7 @@ export function VistaCarrito({ slugTienda }: { slugTienda: string }) {
   async function confirmar() {
     setConfirmando(true);
     try {
-      setPedido(await confirmarPedido(slugTienda, lineas));
+      setPedido(await confirmarPedido(slugTienda, lineas, contacto));
       setError(null);
       vaciar();
     } catch (problema) {
@@ -118,7 +140,46 @@ export function VistaCarrito({ slugTienda }: { slugTienda: string }) {
         ))}
       </ul>
 
-      <aside className="rounded-2xl border border-lila/16 p-5">
+      <aside className="flex flex-col gap-5">
+        <section className="rounded-2xl border border-lila/16 p-5">
+          <h2 className="text-[13px] font-semibold text-texto">Tus datos</h2>
+          <p className="mt-1.5 text-xs leading-[1.5] text-texto-suave">
+            Para coordinar el pago y la entrega. No se cobra en línea.
+          </p>
+
+          <div className="mt-4 flex flex-col gap-3">
+            <Campo
+              id="nombre-contacto"
+              etiqueta="Nombre"
+              valor={contacto.nombre_contacto}
+              onCambio={(valor) => escribir("nombre_contacto", valor)}
+              autoComplete="name"
+            />
+            <Campo
+              id="telefono-contacto"
+              etiqueta="WhatsApp"
+              valor={contacto.telefono_contacto}
+              onCambio={(valor) => escribir("telefono_contacto", valor)}
+              autoComplete="tel"
+              inputMode="tel"
+            />
+            <Campo
+              id="direccion-entrega"
+              etiqueta="Dirección (opcional)"
+              valor={contacto.direccion_entrega ?? ""}
+              onCambio={(valor) => escribir("direccion_entrega", valor)}
+              autoComplete="street-address"
+            />
+            <Campo
+              id="notas-pedido"
+              etiqueta="Notas (opcional)"
+              valor={contacto.notas ?? ""}
+              onCambio={(valor) => escribir("notas", valor)}
+            />
+          </div>
+        </section>
+
+        <section className="rounded-2xl border border-lila/16 p-5">
         <h2 className="text-[13px] font-semibold text-texto">Resumen</h2>
 
         {cotizacion ? (
@@ -147,7 +208,9 @@ export function VistaCarrito({ slugTienda }: { slugTienda: string }) {
 
         <button
           type="button"
-          disabled={confirmando || cotizacion === null || cotizacion.rechazo !== null}
+          disabled={
+            confirmando || faltanDatos || cotizacion === null || cotizacion.rechazo !== null
+          }
           onClick={confirmar}
           className="mt-5 h-12 w-full cursor-pointer rounded-full bg-violeta text-sm font-semibold text-white transition-colors hover:bg-violeta-hover disabled:cursor-not-allowed disabled:opacity-50"
         >
@@ -155,8 +218,11 @@ export function VistaCarrito({ slugTienda }: { slugTienda: string }) {
         </button>
 
         <p className="mt-3 text-center text-xs text-texto-suave">
-          No se cobra en línea: el pago se coordina al confirmar.
+          {faltanDatos
+            ? "Completa tu nombre y tu WhatsApp para confirmar."
+            : "No se cobra en línea: el pago se coordina al confirmar."}
         </p>
+        </section>
       </aside>
     </div>
   );
@@ -168,6 +234,39 @@ function nombreDeLinea(cotizacion: CarritoCotizado | null, indice: number, linea
 
 function detalleDeLinea(cotizacion: CarritoCotizado | null, indice: number, linea: LineaCarrito): string {
   return cotizacion?.lineas[indice]?.detalle ?? String(linea.cantidad);
+}
+
+function Campo({
+  id,
+  etiqueta,
+  valor,
+  onCambio,
+  autoComplete,
+  inputMode,
+}: {
+  id: string;
+  etiqueta: string;
+  valor: string;
+  onCambio: (valor: string) => void;
+  autoComplete?: string;
+  inputMode?: "tel" | "text";
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label htmlFor={id} className="text-xs text-texto-suave">
+        {etiqueta}
+      </label>
+      <input
+        id={id}
+        type="text"
+        value={valor}
+        autoComplete={autoComplete}
+        inputMode={inputMode}
+        onChange={(evento) => onCambio(evento.target.value)}
+        className="h-11 rounded-xl border border-lila/20 bg-transparent px-3 text-sm text-texto outline-none transition-colors focus-visible:border-lila"
+      />
+    </div>
+  );
 }
 
 function Fila({ termino, valor, destacado = false }: { termino: string; valor: string; destacado?: boolean }) {

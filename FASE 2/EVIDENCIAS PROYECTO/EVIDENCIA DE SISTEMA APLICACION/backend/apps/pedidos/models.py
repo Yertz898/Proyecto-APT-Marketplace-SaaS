@@ -113,26 +113,28 @@ class Pedido(ModeloDeTienda):
     @transaction.atomic
     def anular(self):
         """
-        Cancela el pedido y devuelve los cupos/stock bloqueados a cada producto
-        utilizando select_for_update para evitar condiciones de carrera.
+        Cancela el pedido y devuelve a cada producto lo que tenía reservado.
+
+        La fila se bloquea para reponer: si el dueño anula mientras alguien
+        está comprando, los dos leen y escriben el mismo stock y uno de los
+        dos cambios se pierde.
+
+        Anular dos veces no repone dos veces: se sale temprano si ya estaba
+        cancelado.
         """
         if self.estado == self.Estado.CANCELADO:
             return
 
-        for linea in self.lineas.select_related("producto").all():
-            # Bloqueo concurrente sobre el producto/lote para reponer cupo
-            producto = Producto.objects.select_for_update().get(id=linea.producto_id)
+        for linea in self.lineas.all():
+            producto = Producto.objects.select_for_update().get(pk=linea.producto_id)
 
-            # Verificamos si el producto maneja inventario o cupos
-            if hasattr(producto, "stock") and producto.stock is not None:
-                producto.stock += linea.cantidad
-                producto.save(update_fields=["stock"])
-            elif (
-                hasattr(producto, "cupos_disponibles")
-                and producto.cupos_disponibles is not None
-            ):
-                producto.cupos_disponibles += int(linea.cantidad)
-                producto.save(update_fields=["cupos_disponibles"])
+            # Quien no lleva inventario no tiene nada que reponer: la tienda
+            # no sabe cuánto le queda y el stock es nulo a propósito.
+            if not producto.controla_stock:
+                continue
+
+            producto.stock += linea.cantidad
+            producto.save(update_fields=["stock"])
 
         self.estado = self.Estado.CANCELADO
         self.save(update_fields=["estado", "actualizado_en"])

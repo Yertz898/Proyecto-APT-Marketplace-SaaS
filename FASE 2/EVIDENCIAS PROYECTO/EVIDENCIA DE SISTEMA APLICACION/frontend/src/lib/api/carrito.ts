@@ -1,4 +1,9 @@
-import type { CarritoCotizado, LineaCarrito, PedidoConfirmado } from "@/lib/tipos";
+import type {
+  CarritoCotizado,
+  DatosDeContacto,
+  LineaCarrito,
+  PedidoConfirmado,
+} from "@/lib/tipos";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
@@ -19,13 +24,17 @@ export async function cotizarCarrito(slug: string, lineas: LineaCarrito[]): Prom
   return respuesta.json();
 }
 
-export async function confirmarPedido(slug: string, lineas: LineaCarrito[]): Promise<PedidoConfirmado> {
+export async function confirmarPedido(
+  slug: string,
+  lineas: LineaCarrito[],
+  contacto: DatosDeContacto,
+): Promise<PedidoConfirmado> {
   const respuesta = await fetch(`${API_URL}/t/${slug}/pedidos/`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ lineas }),
+    body: JSON.stringify({ ...contacto, lineas }),
   });
 
   if (!respuesta.ok) {

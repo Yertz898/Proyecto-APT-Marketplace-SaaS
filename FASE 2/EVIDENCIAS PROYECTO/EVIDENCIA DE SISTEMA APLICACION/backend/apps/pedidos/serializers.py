@@ -1,3 +1,12 @@
+"""
+Lo que entra y lo que sale de la API de pedidos.
+
+La entrada del carrito identifica el producto por su **código**, que es como
+lo nombra la tienda y lo que viaja en la URL de la vitrina. No por su id: un
+número correlativo le dice a cualquiera cuántos productos hay en la
+plataforma, y se puede recorrer.
+"""
+
 from decimal import Decimal
 
 from rest_framework import serializers
@@ -5,14 +14,23 @@ from rest_framework import serializers
 from apps.pedidos.models import LineaPedido, Pedido
 
 
-class LineaPedidoInputSerializer(serializers.Serializer):
-    producto_id = serializers.IntegerField()
+class LineaDelCarritoSerializer(serializers.Serializer):
+    codigo = serializers.CharField(max_length=40)
     cantidad = serializers.DecimalField(
-        max_digits=10, decimal_places=2, min_value=Decimal("0.01")
+        max_digits=12, decimal_places=3, min_value=Decimal("0.001")
     )
 
 
-class CheckoutSimuladoSerializer(serializers.Serializer):
+class CheckoutSerializer(serializers.Serializer):
+    """
+    Con qué datos se cierra un pedido.
+
+    El nombre y el teléfono son obligatorios aunque el comprador tenga cuenta:
+    el pago y la entrega se coordinan por WhatsApp, y un pedido sin forma de
+    contactar a quien lo hizo no se puede cerrar. Antes se tomaban del usuario
+    autenticado, así que un invitado quedaba guardado como «Cliente Vitrina».
+    """
+
     nombre_contacto = serializers.CharField(max_length=150)
     telefono_contacto = serializers.CharField(max_length=30)
     email_contacto = serializers.EmailField(
@@ -22,31 +40,43 @@ class CheckoutSimuladoSerializer(serializers.Serializer):
         max_length=255, required=False, allow_blank=True, default=""
     )
     notas = serializers.CharField(required=False, allow_blank=True, default="")
-    lineas = LineaPedidoInputSerializer(many=True, allow_empty=False)
+    lineas = LineaDelCarritoSerializer(many=True, allow_empty=False)
 
 
 class LineaPedidoDetalleSerializer(serializers.ModelSerializer):
-    producto_nombre = serializers.CharField(source="producto.nombre", read_only=True)
-    producto_codigo = serializers.CharField(source="producto.codigo", read_only=True)
+    productoNombre = serializers.CharField(source="producto.nombre", read_only=True)
+    productoCodigo = serializers.CharField(source="producto.codigo", read_only=True)
+    precioUnitarioNeto = serializers.IntegerField(
+        source="precio_unitario_neto", read_only=True
+    )
+    subtotalNeto = serializers.IntegerField(source="subtotal_neto", read_only=True)
+    subtotalIva = serializers.IntegerField(source="subtotal_iva", read_only=True)
+    subtotalTotal = serializers.IntegerField(source="subtotal_total", read_only=True)
 
     class Meta:
         model = LineaPedido
         fields = [
             "id",
-            "producto",
-            "producto_nombre",
-            "producto_codigo",
+            "productoNombre",
+            "productoCodigo",
             "cantidad",
-            "precio_unitario_neto",
-            "subtotal_neto",
-            "subtotal_iva",
-            "subtotal_total",
+            "precioUnitarioNeto",
+            "subtotalNeto",
+            "subtotalIva",
+            "subtotalTotal",
         ]
 
 
 class PedidoDetalleSerializer(serializers.ModelSerializer):
     lineas = LineaPedidoDetalleSerializer(many=True, read_only=True)
-    estado_display = serializers.CharField(source="get_estado_display", read_only=True)
+    estadoVisible = serializers.CharField(source="get_estado_display", read_only=True)
+    nombreContacto = serializers.CharField(source="nombre_contacto", read_only=True)
+    telefonoContacto = serializers.CharField(source="telefono_contacto", read_only=True)
+    emailContacto = serializers.CharField(source="email_contacto", read_only=True)
+    direccionEntrega = serializers.CharField(source="direccion_entrega", read_only=True)
+    totalNeto = serializers.IntegerField(source="total_neto", read_only=True)
+    totalIva = serializers.IntegerField(source="total_iva", read_only=True)
+    creadoEn = serializers.DateTimeField(source="creado_en", read_only=True)
 
     class Meta:
         model = Pedido
@@ -54,15 +84,15 @@ class PedidoDetalleSerializer(serializers.ModelSerializer):
             "id",
             "folio",
             "estado",
-            "estado_display",
-            "nombre_contacto",
-            "telefono_contacto",
-            "email_contacto",
-            "direccion_entrega",
+            "estadoVisible",
+            "nombreContacto",
+            "telefonoContacto",
+            "emailContacto",
+            "direccionEntrega",
             "notas",
-            "total_neto",
-            "total_iva",
+            "totalNeto",
+            "totalIva",
             "total",
-            "creado_en",
+            "creadoEn",
             "lineas",
         ]

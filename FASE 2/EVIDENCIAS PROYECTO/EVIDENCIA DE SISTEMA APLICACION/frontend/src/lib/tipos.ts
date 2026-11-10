@@ -228,6 +228,21 @@ export type CarritoCotizado = {
   rechazo: string | null;
 };
 
+/**
+ * Con qué datos se cierra un pedido.
+ *
+ * El nombre y el teléfono son obligatorios aunque el comprador tenga cuenta:
+ * el pago y la entrega se coordinan por WhatsApp, y un pedido sin forma de
+ * contactar a quien lo hizo no se puede cerrar.
+ */
+export type DatosDeContacto = {
+  nombre_contacto: string;
+  telefono_contacto: string;
+  email_contacto?: string;
+  direccion_entrega?: string;
+  notas?: string;
+};
+
 export type PedidoConfirmado = {
   numero: string;
   mensaje: string;

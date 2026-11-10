@@ -38,7 +38,11 @@ npm-debug.log*
 
 # ── Analítica ───────────────────────────────────────────────────────────
 # Los datos del cliente y los modelos entrenados no van al repositorio.
-/data/
+# El README sí: documenta qué va en esa carpeta sin exponer nada. Se excluye
+# el contenido y no la carpeta, porque git no entra a una carpeta excluida y
+# la excepción del README nunca llegaría a aplicarse.
+/data/*
+!/data/README.md
 *.pkl
 *.joblib
 .ipynb_checkpoints/

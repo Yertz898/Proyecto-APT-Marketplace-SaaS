@@ -76,12 +76,12 @@ def cotizar(producto, cantidad: Decimal) -> Cotizacion:
         return _rechazo(
             cantidad,
             f"La compra mínima de este producto es "
-            f"{_cantidad_legible(producto, producto.cantidad_minima)}.",
+            f"{cantidad_legible(producto, producto.cantidad_minima)}.",
             MotivoRechazo.BAJO_CANTIDAD_MINIMA,
         )
 
     if producto.controla_stock and cantidad > (producto.stock or 0):
-        disponible = _cantidad_legible(producto, producto.stock or Decimal(0))
+        disponible = cantidad_legible(producto, producto.stock or Decimal(0))
         return _rechazo(
             cantidad,
             f"Quedan {disponible} de este producto.",
@@ -173,9 +173,7 @@ def _aviso_de_conveniencia(tramos, producto, cantidad, neto) -> str | None:
     por el comprador.
     """
     unidad = _unidad_natural(producto)
-    mayores = [
-        t for t in tramos if t.unidad_umbral == unidad and t.umbral > cantidad
-    ]
+    mayores = [t for t in tramos if t.unidad_umbral == unidad and t.umbral > cantidad]
     if not mayores:
         return None
 
@@ -185,7 +183,7 @@ def _aviso_de_conveniencia(tramos, producto, cantidad, neto) -> str | None:
         return None
 
     return (
-        f"Llevando {_cantidad_legible(producto, siguiente.umbral)} pagas "
+        f"Llevando {cantidad_legible(producto, siguiente.umbral)} pagas "
         f"{_pesos(neto_mayor)} neto, menos que ahora."
     )
 
@@ -201,12 +199,16 @@ def _pesos(monto) -> str:
     return f"${int(monto):,}".replace(",", ".")
 
 
-def _cantidad_legible(producto, cantidad: Decimal) -> str:
+def cantidad_legible(producto, cantidad: Decimal) -> str:
     """
     La cantidad con su unidad, sin ceros decimales de adorno.
 
     Se arma desde los datos del producto: la plataforma no sabe si lo que
     cuenta son gramos, piezas o lotes, y no debe saberlo.
+
+    Es pública porque el carrito muestra la misma frase que la ficha del
+    producto, y dos tiendas con dos redacciones distintas de «1,5 kg» es
+    exactamente la clase de detalle que delata que son dos pantallas y no una.
     """
     from apps.catalogo.models import UnidadMedida
 
