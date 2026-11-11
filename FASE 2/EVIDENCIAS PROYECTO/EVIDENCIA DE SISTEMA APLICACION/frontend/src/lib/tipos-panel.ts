@@ -310,3 +310,23 @@ export type SegmentacionDeCompradores = {
   conteo: Record<NombreDeSegmento, number>;
   clientes: CompradorSegmentado[];
 };
+
+// ── Asistente ───────────────────────────────────────────────────────────────
+
+/**
+ * Lo que el asistente sabe contestar.
+ *
+ * Se pide a la API en vez de escribirse en el frontend: si las dos listas se
+ * separaran, la pantalla ofrecería preguntas que el backend ya no responde.
+ */
+export type PreguntasDelAsistente = {
+  preguntas: { intencion: string; texto: string }[];
+  largoMaximo: number;
+};
+
+export type RespuestaDelAsistente = {
+  intencion: string;
+  texto: string;
+  /** A qué sección del panel lleva el detalle, si corresponde. */
+  seccion: string | null;
+};

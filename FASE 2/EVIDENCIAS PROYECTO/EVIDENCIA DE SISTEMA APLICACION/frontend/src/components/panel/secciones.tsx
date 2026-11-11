@@ -206,7 +206,7 @@ export const SECCIONES: Seccion[] = [
     etiqueta: "Asistente",
     descripcion: "Pregúntale por tus ventas.",
     grupo: "Inteligencia",
-    estado: "demostracion",
+    estado: "real",
     plan: "ultimate",
     vendedor: "completo",
     icono: (

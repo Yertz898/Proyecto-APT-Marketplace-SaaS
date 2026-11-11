@@ -24,7 +24,7 @@ urlpatterns = [
     # path("api/clientes/", include("apps.clientes.urls")),
     path("api/", include("apps.ingesta.urls")),
     path("api/", include("apps.analitica.urls")),
-    # path("api/asistente/", include("apps.asistente.urls")),
+    path("api/", include("apps.asistente.urls")),
 ]
 
 # En desarrollo las imágenes se guardan en disco y las sirve el mismo Django.

@@ -3,7 +3,9 @@ import { pedirConSesion } from "@/lib/api/sesion";
 import type {
   EstadoPedido,
   PedidoDelPanel,
+  PreguntasDelAsistente,
   PronosticoDeDemanda,
+  RespuestaDelAsistente,
   ResumenDeVentas,
   SegmentacionDeCompradores,
 } from "@/lib/tipos-panel";
@@ -61,4 +63,20 @@ export async function obtenerSegmentos(): Promise<SegmentacionDeCompradores> {
   return (await (
     await pedir("/panel/segmentos")
   ).json()) as SegmentacionDeCompradores;
+}
+
+/** Qué preguntas sabe contestar el asistente. */
+export async function obtenerPreguntas(): Promise<PreguntasDelAsistente> {
+  return (await (await pedir("/panel/asistente")).json()) as PreguntasDelAsistente;
+}
+
+export async function preguntarAlAsistente(
+  pregunta: string,
+): Promise<RespuestaDelAsistente> {
+  const respuesta = await pedir("/panel/asistente", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ pregunta }),
+  });
+  return (await respuesta.json()) as RespuestaDelAsistente;
 }

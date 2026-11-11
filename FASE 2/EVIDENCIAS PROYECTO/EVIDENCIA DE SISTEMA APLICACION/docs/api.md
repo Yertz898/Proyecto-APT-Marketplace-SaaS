@@ -150,6 +150,9 @@ Con sesión. La tienda sale del token. Entran el dueño y los vendedores, salvo 
 | `GET` | `/panel/pedidos/` | dueño o vendedor |
 | `PATCH` | `/panel/pedidos/<id>/estado/` | dueño o vendedor |
 | `GET` | `/panel/ventas` | dueño o vendedor |
+| `GET` | `/panel/pronostico` | dueño o vendedor |
+| `GET` | `/panel/segmentos` | dueño o vendedor |
+| `GET` `POST` | `/panel/asistente` | dueño o vendedor |
 
 ### Catálogo
 

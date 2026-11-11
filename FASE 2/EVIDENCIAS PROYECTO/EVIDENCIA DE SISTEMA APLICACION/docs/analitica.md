@@ -127,6 +127,129 @@ más». Mientras no haya una segunda temporada, la estacionalidad se trata como 
 declarado y no como algo aprendido de los datos, y el contraste contra la línea base de
 promedio móvil pasa a ser más importante que de costumbre.
 
+## Las líneas base
+
+Están construidas y probadas **antes que los modelos**, a propósito. Una línea base que
+aparece después del modelo se termina escribiendo para que el modelo la gane.
+
+Las dos declaran su método en la respuesta de la API, y las pantallas lo muestran. Mientras
+el dueño no pueda distinguir una medición de una estimación, no sabe cuánto confiar en el
+número que está mirando.
+
+### Pronóstico: promedio móvil de tres meses
+
+`apps/analitica/pronostico.py`. Por producto, no por categoría: en Joyas_ye los tres
+productos por gramo tienen quince meses de historia cada uno y los lotes no tienen ninguna,
+así que agrupar por categoría daría el mismo «datos insuficientes» con otro nombre.
+
+Tres meses: suficiente para que un mes raro no mande, corto para que un cambio de nivel se
+note.
+
+**El mes en curso no entra.** Va por la mitad, así que suma menos que un mes cerrado: si
+entrara, la proyección bajaría cada vez que alguien abre la pantalla a principio de mes y
+subiría sola hacia fin de mes.
+
+**No se proyecta con menos de seis meses de ventas.** Un producto con tres meses no tiene
+una serie de tiempo, tiene tres números, y repetir el último mes no es un pronóstico. La
+respuesta dice cuántos meses lleva y la pantalla lo muestra. Hoy: 3 productos con
+proyección y 87 sin ella.
+
+### La regla de la alerta de quiebre
+
+No es un modelo aparte. Es el stock dividido por el ritmo proyectado:
+
+    días hasta el quiebre = stock ÷ (proyección mensual ÷ 30)
+
+Con dos negativas:
+
+- **Sin pronóstico no hay alerta.** Sin saber cuánto se vende no se puede decir cuándo se
+  acaba, y un plazo inventado en una pantalla de inventario hace que el dueño compre
+  mercadería con él.
+- **Quien no lleva inventario no recibe alerta.** La tienda no registra cuánto le queda de
+  su granel. Se muestra la proyección y nada más.
+
+En la pantalla, treinta días o menos es lo que se destaca arriba: es el plazo en que el
+cliente alcanza a reponer con su proveedor.
+
+### Segmentación: regla por recencia
+
+`apps/analitica/segmentos.py`. Se agrupa por recencia, frecuencia y monto, pero **la que
+decide es la recencia**: cuánto gastó alguien el año pasado no dice si va a volver.
+
+**El umbral sale de los datos de cada tienda.** Es el percentil 90 de los días que pasan
+entre dos compras de un mismo cliente: si nueve de cada diez veces alguien vuelve antes de
+ese plazo, quien lo pasó rompió su propio patrón. En Joyas_ye son 104 días. Una tienda sin
+suficientes compras repetidas cae a un plazo por omisión de 90 días y la respuesta declara
+que no se midió.
+
+| Grupo | Regla |
+|---|---|
+| Habitual | Dos o más compras y volvió dentro del umbral |
+| Nuevo | Una compra, dentro del umbral |
+| En riesgo | Pasó el umbral y no el doble |
+| Perdido | Pasó el doble del umbral |
+
+«Perdido» empieza al doble y no al umbral porque entre uno y otro hay alguien a quien
+todavía tiene sentido escribirle, y mezclarlo con quien se fue hace un año haría que el
+dueño no le escriba a ninguno.
+
+Sobre el historial del cliente: 88 habituales, 123 nuevos, 304 en riesgo y 1.201 perdidos.
+Esa proporción es consistente con la caída de alcance descrita más arriba.
+
+## El asistente
+
+`apps/asistente/`. Responde preguntas del vendedor sobre su propia tienda.
+
+### Qué puede contestar
+
+| Pregunta | De dónde sale |
+|---|---|
+| Cómo van mis ventas este mes | Panel de ventas |
+| Qué productos me dejaron más | Panel de ventas, últimos 90 días |
+| Qué llevo sin vender | Panel de ventas |
+| Qué pedidos tengo pendientes | Bandeja de pedidos |
+| Cuánto voy a vender el próximo mes | Pronóstico |
+| Qué se me va a acabar | Pronóstico, alerta de quiebre |
+| Qué clientes dejaron de comprarme | Segmentos, grupo «en riesgo» |
+| Cómo se reparten mis clientes | Segmentos |
+
+Nada más. Cuando no entiende, lo dice y enumera esta lista. No conversa, no
+recuerda la pregunta anterior y no opina.
+
+### Por qué el modelo de lenguaje no ve los datos
+
+Es la decisión que sostiene todo lo demás. El modelo —cuando se configure uno—
+hace **una sola cosa**: mirar la pregunta y devolver a cuál de esas ocho
+intenciones se parece. Una etiqueta de una lista cerrada, nada más. La
+respuesta la arma el backend leyendo la base con el filtro de tienda de
+siempre.
+
+Lo que eso compra:
+
+- **Una instrucción inyectada en la pregunta no tiene a qué acceder.** El peor
+  caso es que la clasificación salga mal y el vendedor reciba la respuesta a
+  otra pregunta sobre su propio negocio. No hay camino desde el texto que
+  escribe una persona hasta la base de datos.
+- **No puede inventar cifras.** Salen de las mismas funciones que pintan el
+  panel, así que el asistente y las pantallas no se pueden contradecir.
+- **Funciona sin clave de API.** Hoy la clasificación es por palabras clave:
+  entiende menos variantes de la misma pregunta, pero entiende. El modelo es
+  una mejora de la comprensión, no un requisito para que el asistente exista.
+
+La frontera está en `clasificador._es_valida`: cualquier respuesta de un
+clasificador externo que no sea una intención conocida se trata como «no
+entendí». La pregunta además se recorta a 500 caracteres y se limpia de todo
+lo que no sea letra, número o espacio **antes** de mirarla.
+
+### Lo que se niega a responder
+
+- Sin historial suficiente, el pronóstico dice que no puede proyectar y
+  cuántos meses hacen falta.
+- Sin pronóstico, no anuncia quiebres: sin saber a qué ritmo se vende, no se
+  puede decir cuándo se acaba.
+- Sin ventas en el mes, lo dice en vez de mostrar un cero, que se leería como
+  un resultado y no como una ausencia de datos.
+
 ## Registro de resultados
 
 Cada vez que se evalúa un modelo, se anota acá: fecha, versión, métrica obtenida y el
