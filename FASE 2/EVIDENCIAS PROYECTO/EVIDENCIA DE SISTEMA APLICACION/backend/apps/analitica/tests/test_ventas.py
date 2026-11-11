@@ -14,7 +14,7 @@ import pytest
 from django.utils import timezone
 
 from apps.analitica import ventas
-from apps.pedidos.models import LineaPedido, Pedido
+from apps.pedidos.models import Pedido
 
 pytestmark = pytest.mark.django_db
 
@@ -26,46 +26,6 @@ def como(client, usuario):
 
     client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {AccessToken.for_user(usuario)}"
     return client
-
-
-@pytest.fixture
-def crear_pedido(db):
-    """
-    Un pedido con una línea, con fecha y estado a elección.
-
-    La fecha se reescribe con `update` porque `fecha_creacion` es
-    `auto_now_add` y no se puede fijar al crear.
-    """
-
-    def _crear(tienda, producto, *, cantidad=1, neto=1000, estado=None, hace_dias=0):
-        estado = estado or Pedido.Estado.CONFIRMADO
-        iva = round(neto * 0.19)
-        pedido = Pedido.objects.create(
-            tienda=tienda,
-            nombre_contacto="Compradora",
-            telefono_contacto="+56900000000",
-            total_neto=neto,
-            total_iva=iva,
-            total=neto + iva,
-            estado=estado,
-        )
-        LineaPedido.objects.create(
-            pedido=pedido,
-            producto=producto,
-            cantidad=Decimal(cantidad),
-            precio_unitario_neto=neto // cantidad,
-            subtotal_neto=neto,
-            subtotal_iva=iva,
-            subtotal_total=neto + iva,
-        )
-        if hace_dias:
-            Pedido.objects.filter(pk=pedido.pk).update(
-                fecha_creacion=timezone.now() - timedelta(days=hace_dias)
-            )
-            pedido.refresh_from_db()
-        return pedido
-
-    return _crear
 
 
 # ── Qué cuenta como venta ───────────────────────────────────────────────────
