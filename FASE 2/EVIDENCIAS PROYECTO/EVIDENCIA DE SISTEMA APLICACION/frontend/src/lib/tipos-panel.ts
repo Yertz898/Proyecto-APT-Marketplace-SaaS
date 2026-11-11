@@ -258,3 +258,55 @@ export type ResumenDeVentas = {
   masVendidos: ProductoMasVendido[];
   sinMovimiento: ProductoDetenido[];
 };
+
+// ── Pronóstico y segmentos ──────────────────────────────────────────────────
+
+/**
+ * Lo que se espera vender de un producto el próximo mes.
+ *
+ * `suficiente` manda sobre todo lo demás: cuando es falso no hay proyección,
+ * hay un producto del que todavía no se puede decir nada. La pantalla tiene
+ * que decir eso y no un cero.
+ */
+export type ProyeccionDeProducto = {
+  codigo: string;
+  nombre: string;
+  unidad: UnidadMedida;
+  mesesConVentas: number;
+  suficiente: boolean;
+  esperado: number | null;
+  /** Con qué se calculó: hoy siempre la línea base. Null si no se proyectó. */
+  metodo: string | null;
+  stock: number | null;
+  /** Días hasta quedarse sin stock al ritmo proyectado. Null si no aplica. */
+  diasHastaQuiebre: number | null;
+  serie: { mes: string; cantidad: number }[];
+};
+
+export type PronosticoDeDemanda = {
+  /** Cuántos meses de ventas necesita un producto para que se lo proyecte. */
+  minimoDeMeses: number;
+  productos: ProyeccionDeProducto[];
+};
+
+export type NombreDeSegmento = "habitual" | "nuevo" | "en_riesgo" | "perdido";
+
+export type CompradorSegmentado = {
+  nombre: string;
+  segmento: NombreDeSegmento;
+  /** Días desde su última compra. */
+  recencia: number;
+  frecuencia: number;
+  monto: Pesos;
+};
+
+export type SegmentacionDeCompradores = {
+  metodo: string;
+  /** Días sin volver a partir de los cuales se considera que alguien se fue. */
+  umbralDeDias: number;
+  /** Si el umbral salió de los datos de la tienda o es el valor por omisión. */
+  umbralCalculado: boolean;
+  descripciones: Record<NombreDeSegmento, string>;
+  conteo: Record<NombreDeSegmento, number>;
+  clientes: CompradorSegmentado[];
+};

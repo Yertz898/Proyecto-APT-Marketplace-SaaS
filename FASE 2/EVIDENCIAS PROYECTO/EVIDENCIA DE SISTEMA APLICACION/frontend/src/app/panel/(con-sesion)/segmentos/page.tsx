@@ -1,12 +1,7 @@
-import { Cabecera, SinConectar } from "@/components/panel/piezas";
+import { PantallaSegmentos } from "@/components/panel/pantalla-segmentos";
 
 export const metadata = { title: "Segmentos" };
 
 export default function PaginaSegmentos() {
-  return (
-    <>
-      <Cabecera titulo="Segmentos" descripcion="Quiénes compran seguido y quiénes se están yendo." />
-      <SinConectar seccion="La segmentación" />
-    </>
-  );
+  return <PantallaSegmentos />;
 }

@@ -143,7 +143,7 @@ export const SECCIONES: Seccion[] = [
     etiqueta: "Pedidos",
     descripcion: "Qué te pidieron y en qué va cada uno.",
     grupo: "Ventas",
-    estado: "demostracion",
+    estado: "real",
     plan: "basico",
     vendedor: "completo",
     icono: (
@@ -158,7 +158,7 @@ export const SECCIONES: Seccion[] = [
     etiqueta: "Panel de ventas",
     descripcion: "Cómo va el mes comparado con el anterior.",
     grupo: "Ventas",
-    estado: "demostracion",
+    estado: "real",
     plan: "premium",
     vendedor: "completo",
     icono: (
@@ -175,7 +175,7 @@ export const SECCIONES: Seccion[] = [
     etiqueta: "Pronóstico",
     descripcion: "Qué va a pedirte el próximo mes, y qué se te puede acabar.",
     grupo: "Inteligencia",
-    estado: "demostracion",
+    estado: "real",
     plan: "ultimate",
     vendedor: "completo",
     icono: (
@@ -190,7 +190,7 @@ export const SECCIONES: Seccion[] = [
     etiqueta: "Segmentos",
     descripcion: "Quiénes compran seguido y quiénes se están yendo.",
     grupo: "Inteligencia",
-    estado: "demostracion",
+    estado: "real",
     plan: "ultimate",
     vendedor: "completo",
     icono: (

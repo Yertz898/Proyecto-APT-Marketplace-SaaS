@@ -1,12 +1,7 @@
-import { Cabecera, SinConectar } from "@/components/panel/piezas";
+import { PantallaPronostico } from "@/components/panel/pantalla-pronostico";
 
 export const metadata = { title: "Pronóstico" };
 
 export default function PaginaPronostico() {
-  return (
-    <>
-      <Cabecera titulo="Pronóstico" descripcion="Qué categorías van a pedirte el próximo mes." />
-      <SinConectar seccion="El pronóstico" />
-    </>
-  );
+  return <PantallaPronostico />;
 }

@@ -3,7 +3,9 @@ import { pedirConSesion } from "@/lib/api/sesion";
 import type {
   EstadoPedido,
   PedidoDelPanel,
+  PronosticoDeDemanda,
   ResumenDeVentas,
+  SegmentacionDeCompradores,
 } from "@/lib/tipos-panel";
 
 /*
@@ -47,4 +49,16 @@ export async function cambiarEstadoDePedido(
 /** Los indicadores de ventas del panel. */
 export async function obtenerResumenDeVentas(): Promise<ResumenDeVentas> {
   return (await (await pedir("/panel/ventas")).json()) as ResumenDeVentas;
+}
+
+/** Cuánto se espera vender el próximo mes, y qué se queda sin stock antes. */
+export async function obtenerPronostico(): Promise<PronosticoDeDemanda> {
+  return (await (await pedir("/panel/pronostico")).json()) as PronosticoDeDemanda;
+}
+
+/** En qué grupo cae cada comprador de la tienda. */
+export async function obtenerSegmentos(): Promise<SegmentacionDeCompradores> {
+  return (await (
+    await pedir("/panel/segmentos")
+  ).json()) as SegmentacionDeCompradores;
 }
