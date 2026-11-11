@@ -136,6 +136,37 @@ Tres reglas del dinero, en `apps/precios/dinero.py`:
 - Las cantidades se guardan como `Decimal`, nunca como `Float`: una venta por peso admite
   decimales y de ahí sale un precio.
 
+## Pedidos
+
+`Pedido` y `LineaPedido`. El pago **no pasa por la plataforma**: la tienda cobra por
+transferencia y coordina por WhatsApp, así que lo que el modelo guarda es el compromiso y
+su estado, no una transacción.
+
+Cuatro estados: `PENDIENTE`, `CONFIRMADO`, `ENTREGADO`, `CANCELADO`. Avanzan y no
+retroceden. Solo los dos del medio cuentan como venta en la analítica; el pendiente puede
+no concretarse nunca y el anulado no ocurrió.
+
+**Cada línea guarda el precio del momento**: unitario, neto, IVA y total. No se lee del
+producto al mostrar el pedido. Si se leyera, subir un precio reescribiría lo que alguien
+ya pagó.
+
+Dos decisiones del modelo que vale la pena justificar:
+
+- **`producto` es `PROTECT`.** Un producto con pedidos encima no se puede borrar; se
+  desactiva. Borrarlo dejaría pedidos sin saber qué se vendió.
+- **`comprador` es opcional y `SET_NULL`.** La mayoría compra sin registrarse, y quien se
+  registró y después cierra su cuenta no se lleva por delante el historial de la tienda.
+  Por eso el nombre y el teléfono de contacto viven en el pedido y no se leen del usuario:
+  son los datos de esa venta, no los de una cuenta que puede cambiar o desaparecer.
+
+El inventario se descuenta **al confirmar el pedido**, no al agregar al carrito —un
+carrito abandonado no puede dejar el catálogo bloqueado— y con la fila del producto
+bloqueada, que es lo que impide que dos compradores simultáneos se lleven el mismo último
+lote. Anular repone con el mismo bloqueo, y anular dos veces no repone dos veces. Quien no
+lleva inventario no descuenta ni repone nada.
+
+El recorrido completo está en `ventas-y-pedidos.md`.
+
 ## Agenda
 
 `ConfiguracionAgenda` por tienda y `BloqueHorario` por franja de atención. Cada bloque

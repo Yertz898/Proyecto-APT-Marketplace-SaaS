@@ -112,7 +112,7 @@ export const SECCIONES: Seccion[] = [
     etiqueta: "Precios",
     descripcion: "Los tramos de precio por volumen de cada producto.",
     grupo: "Catálogo",
-    estado: "real",
+    estado: "proximamente",
     plan: "basico",
     vendedor: "completo",
     icono: (
@@ -239,7 +239,7 @@ export const SECCIONES: Seccion[] = [
     etiqueta: "Equipo",
     descripcion: "Quién más atiende tu tienda.",
     grupo: "Configuración",
-    estado: "real",
+    estado: "proximamente",
     plan: "premium",
     vendedor: "no",
     icono: (

@@ -279,14 +279,13 @@ docker compose up -d --force-recreate --renew-anon-volumes web
 
 Anotado acá porque es más útil escrito que descubierto dos sprints después:
 
-- **El campo `estado` de `secciones.tsx` no coincide con las pantallas.** Dice
-  `demostracion` en Pedidos, Panel de ventas, Pronóstico, Segmentos y Asistente, y `real` en
-  Precios y Equipo; las siete muestran `SinConectar`. La definición del tipo describe
-  `demostracion` como «pantalla terminada con datos de ejemplo», y eso no existe todavía.
-- **`FranjaDeDemostracion` y `AvisoSimulado`** quedaron sin uso cuando esas pantallas
-  pasaron a `SinConectar`.
+- **`FranjaDeDemostracion` y `AvisoSimulado` siguen sin uso.** Se escribieron para
+  pantallas con datos de ejemplo, y ninguna terminó teniéndolos: las que existen leen de
+  la API. Ya no hay ninguna sección en `demostracion`.
 - **Precios tiene backend y no tiene pantalla.** Los endpoints de tramos existen y están
-  documentados; la sección sigue en `SinConectar`.
-- **El comentario de cabecera de `vista-carrito.tsx`** sigue hablando de lotes y granel como
-  si fueran dos cosas del sistema, que es el lenguaje de antes del modelo `Producto`. El
-  carrito todavía no está conectado, así que se corrige cuando se conecte.
+  documentados, pero desde el panel la sección no funciona, así que figura como
+  «pronto». Lo mismo Equipo, que además necesita el envío de correo, y Agenda, que está
+  congelada esperando al cliente.
+- **No hay pruebas de frontend.** Ni Vitest, ni Jest, ni Playwright. Lo que respalda esta
+  parte es el tipado, el linter y la revisión a mano, y eso no cubre que un botón llame a
+  la función que corresponde.
