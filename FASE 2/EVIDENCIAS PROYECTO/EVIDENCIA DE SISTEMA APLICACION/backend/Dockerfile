@@ -12,10 +12,22 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends build-essential libpq-dev curl \
     && rm -rf /var/lib/apt/lists/*
 
+# Qué dependencias entran a la imagen.
+#
+# Por omisión, solo las que hacen falta para servir. En desarrollo,
+# docker-compose.yml pide `dev.txt`, que además trae pytest, ruff y la pila de
+# analítica.
+#
+# La diferencia no es cosmética: `analitica.txt` arrastra xgboost, y xgboost
+# arrastra las librerías CUDA de NVIDIA —351 MB solo una de ellas—. Una imagen
+# de producción con eso adentro tarda en desplegarse, cuesta más de alojar y no
+# ejecuta una sola línea de ese código.
+ARG REQUIREMENTS=base.txt
+
 # Las dependencias se copian antes que el código para aprovechar la caché de capas:
 # cambiar un archivo .py no obliga a reinstalar todo.
 COPY requirements/ requirements/
-RUN pip install --upgrade pip && pip install -r requirements/dev.txt
+RUN pip install --upgrade pip && pip install -r "requirements/${REQUIREMENTS}"
 
 COPY . .
 

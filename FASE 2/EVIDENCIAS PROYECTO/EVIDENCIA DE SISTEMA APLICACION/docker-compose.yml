@@ -33,7 +33,12 @@ services:
       retries: 10
 
   api:
-    build: ./backend
+    build:
+      context: ./backend
+      args:
+        # En desarrollo hacen falta pytest, ruff y la pila de analítica. La
+        # imagen por omisión no los trae: ver el comentario del Dockerfile.
+        REQUIREMENTS: dev.txt
     container_name: dealcommerce-api
     command: python manage.py runserver 0.0.0.0:8000
     env_file: .env

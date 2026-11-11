@@ -161,6 +161,14 @@ pedido a `confirmado`, no al agregar al carrito. El descuento va dentro de una t
 con bloqueo de la fila del producto (`select_for_update`), porque dos compradores pueden
 confirmar la última unidad a la vez. Anular un pedido devuelve el stock.
 
+**El asistente no le entrega los datos al modelo de lenguaje** — Responde solo sobre la
+tienda de quien pregunta, y la respuesta la arma el backend. Cuando haya un modelo
+configurado, lo único que hará es mirar la pregunta y devolver a cuál de las intenciones
+conocidas se parece: una etiqueta de una lista cerrada. Así, una instrucción metida en la
+pregunta no tiene a qué acceder —lo peor que logra es que el vendedor reciba la respuesta
+a otra pregunta sobre su propio negocio— y las cifras no se pueden inventar, porque salen
+de las mismas funciones que pintan el panel. Detalle en `docs/analitica.md`.
+
 **Imágenes del catálogo** — En Cloudflare R2. Son públicas: se sirven por URL directa, sin
 firmar. La base guarda solo la clave del objeto, nunca la URL completa. Validar tipo y tamaño
 al subir. El nombre del archivo lo genera el sistema, nunca se usa el que envía el usuario.
@@ -183,9 +191,20 @@ Es el módulo que más va a fallar, porque el archivo lo hace una persona a mano
   marca explícitamente: una planilla incompleta no puede vaciar el catálogo.
 - Guardar cada carga con su archivo original, fecha y usuario, para poder auditar de dónde
   salió cada dato.
-- No hay historial real suficiente para entrenar. Se trabaja con datos sintéticos generados
-  por nosotros, y **todo gráfico o métrica producido con ellos se rotula como tal** en la
-  interfaz. Nunca mostrar un número sintético como si fuera del cliente.
+- **Sí hay historial real, desde el Sprint 3.** El cliente entregó la planilla que llevó a
+  mano durante dos años: 2.795 ventas en quince meses, importadas con
+  `manage.py importar_historial`. Esto deja sin efecto la regla anterior de trabajar con
+  datos sintéticos y rotularlos.
+- Lo que sí se rotula es **qué está medido y qué está estimado**. Las ventas son hechos
+  sumados de pedidos; el pronóstico y los segmentos son estimaciones, van en pantallas
+  aparte y cada respuesta declara con qué método se calculó. En una sola pantalla nadie
+  distinguiría una cosa de la otra.
+- Los nombres de los clientes **se seudonimizan al importar**. Son personas reales y el
+  repositorio es público. Los montos del historial tampoco se versionan: el volcado de la
+  base de las evidencias va sin pedidos, y el porqué está en su README.
+- Dos límites de esos datos cambian lo que un modelo puede afirmar, y están desarrollados
+  en `docs/analitica.md`: la caída de ventas de la serie no está explicada, y hay una sola
+  Navidad, así que la estacionalidad no se puede validar todavía.
 
 ## Los dos modelos y sus métricas
 
@@ -249,11 +268,11 @@ Pendientes con el cliente:
 Pendientes del equipo:
 
 - Qué proveedor de modelo de lenguaje usa el asistente conversacional, y con qué presupuesto.
-- Si el asistente responde solo sobre datos de la tienda o también sobre el catálogo público.
 - Cómo se cobra la suscripción: los precios de los planes están fijados (Básico
   $10.990, Premium $20.990 y Ultimate $35.990 al mes, netos), pero no está decidido por
   dónde se cobran ni si se modela en esta fase.
-- Si el vendedor puede ver el pronóstico. En el código es un permiso de una línea.
+- Si el vendedor puede ver el pronóstico. **Hoy está implementado que sí**, con el mismo
+  permiso que el resto del panel; si la respuesta es que no, es un cambio de una línea.
 - Qué entra a la demostración de noviembre y qué queda como trabajo futuro.
 - Qué versión de PostgreSQL es la única: el diagrama dice 16 y el CI usa 17.
 

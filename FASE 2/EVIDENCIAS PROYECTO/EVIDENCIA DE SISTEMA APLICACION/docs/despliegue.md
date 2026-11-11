@@ -26,6 +26,14 @@ Tres cosas que no son opcionales y que, si faltan, fallan **en producción y no 
 La imagen de `backend/Dockerfile` ya arranca con gunicorn. El `runserver` que se usa en
 desarrollo lo pone `docker-compose.yml` y no viaja a la imagen.
 
+**La imagen por omisión instala solo `requirements/base.txt`**, que es lo que hace falta
+para servir. `docker-compose.yml` pide `dev.txt` con un argumento de build, y ahí entran
+pytest, ruff y la pila de analítica. La diferencia medida es **843 MB contra 2,53 GB**:
+`analitica.txt` arrastra xgboost, y xgboost arrastra las librerías CUDA de NVIDIA, de las
+que una sola pesa 351 MB. Si en algún momento los modelos entrenados corren dentro del
+mismo proceso del backend, hay que desplegar con `--build-arg REQUIREMENTS=analitica.txt`
+y contar con que la imagen triplica su tamaño.
+
 Railway entrega el puerto en `$PORT`; el comando lo toma de ahí.
 
 ### Variables
