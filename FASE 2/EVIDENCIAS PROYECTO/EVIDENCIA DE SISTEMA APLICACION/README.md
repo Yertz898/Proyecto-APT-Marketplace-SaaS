@@ -44,7 +44,17 @@ docker compose exec api python manage.py makemigrations
 docker compose exec api python manage.py migrate
 
 docker compose exec web npm run lint            # lint del frontend
+
+docker compose exec api python manage.py cargar_demo        # catálogos de ejemplo
+docker compose exec api python manage.py cuentas_demo       # cuentas con las que entrar
+# historial real de ventas del cliente
+docker compose exec api python manage.py importar_historial "/datos/<planilla>.xlsx" --desplazar-anos 1
 ```
+
+El historial del cliente vive en `data/`, que **no se versiona**: son ventas reales con
+nombres de personas y el repositorio es público. La carpeta se monta en `/datos` dentro
+del contenedor. Ver [`data/README.md`](data/README.md) y
+[`docs/analitica.md`](docs/analitica.md).
 
 ## Estructura
 
@@ -67,10 +77,21 @@ docker compose exec web npm run lint            # lint del frontend
 │   ├── requirements/         base.txt, analitica.txt, dev.txt
 │   └── tests/                pruebas transversales
 ├── frontend/                 Next.js + Tailwind + shadcn/ui
+├── data/                     datos crudos del cliente; no se versiona
 ├── docs/                     documentación del proyecto
 ├── infra/                    scripts de infraestructura
 └── docker-compose.yml
 ```
+
+## Producción
+
+Cómo se despliega, qué variable necesita cada parte y en qué orden se levanta está en
+[docs/despliegue.md](docs/despliegue.md). En resumen: el frontend en Vercel, el backend y
+la base en Railway, las fotos en Cloudflare R2.
+
+La imagen de `backend/` **arranca con gunicorn**. El `runserver` de arriba lo pone
+`docker-compose.yml` y solo existe en desarrollo: así nadie despliega la imagen con el
+servidor de desarrollo de Django adentro sin enterarse.
 
 ## Trabajar fuera de Docker
 

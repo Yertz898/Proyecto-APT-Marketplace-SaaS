@@ -2,21 +2,37 @@ import type { NextConfig } from "next";
 
 const enDesarrollo = process.env.NODE_ENV !== "production";
 
+/*
+ * De dónde vienen las fotos de los productos.
+ *
+ * En desarrollo las sirve Django desde `/media/`. En producción vienen de
+ * Cloudflare R2, por el dominio público del bucket. Next exige que ese
+ * dominio esté declarado acá —es una lista blanca contra la que valida el
+ * optimizador de imágenes— y esta configuración se evalúa **al compilar**,
+ * así que la variable tiene que existir en el entorno de build y no solo en
+ * el de ejecución.
+ *
+ * Estaba escrito a mano como `localhost:8000`. En producción eso no es un
+ * error de configuración que avise: las fotos simplemente no cargan.
+ */
+const origenDeLasFotos =
+  process.env.NEXT_PUBLIC_MEDIA_URL?.trim() || "http://localhost:8000";
+
+function patronDeImagenes() {
+  const url = new URL(origenDeLasFotos);
+  return {
+    protocol: url.protocol.replace(":", "") as "http" | "https",
+    hostname: url.hostname,
+    // Cadena vacía cuando el origen no trae puerto: es lo que Next espera
+    // para decir «el puerto por omisión del protocolo».
+    port: url.port,
+    pathname: "/**",
+  };
+}
+
 const nextConfig: NextConfig = {
   images: {
-    /*
-     * En desarrollo las imágenes las sirve Django desde /media/, en
-     * `localhost:8000`. En producción vienen de Cloudflare R2 y hay que
-     * agregar ese dominio a `remotePatterns`.
-     */
-    remotePatterns: [
-      {
-        protocol: "http",
-        hostname: "localhost",
-        port: "8000",
-        pathname: "/media/**",
-      },
-    ],
+    remotePatterns: [patronDeImagenes()],
 
     /*
      * En desarrollo las imágenes no pasan por el optimizador, y no es pereza.

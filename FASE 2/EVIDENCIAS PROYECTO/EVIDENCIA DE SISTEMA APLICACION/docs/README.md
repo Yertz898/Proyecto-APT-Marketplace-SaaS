@@ -11,6 +11,7 @@ es parte del criterio de terminado.
 | `frontend.md` | Cómo está armado el frontend y qué decide cada capa |
 | `ventas-y-pedidos.md` | Los estados del pedido, el inventario y de dónde sale cada indicador |
 | `analitica.md` | Los dos modelos, sus métricas y el resultado frente a la línea base |
+| `despliegue.md` | Dónde vive cada parte en producción y qué variable necesita |
 | `bitacora/` | Una nota por sprint: qué se comprometió, qué se cerró, qué quedó |
 
-Falta `arquitectura.md`. El resto ya está escrito.
+Todo lo de la tabla está escrito.

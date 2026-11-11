@@ -76,6 +76,11 @@ INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    # Sirve los estáticos del admin en producción. Sin esto, con DEBUG=False
+    # Django deja de servirlos y el admin sale sin estilos: funciona, pero se
+    # ve roto, y eso se descubre recién en el servidor. Va justo después del
+    # middleware de seguridad, que es donde lo pide whitenoise.
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -184,6 +189,20 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
+# En producción los estáticos se sirven comprimidos y con el hash en el
+# nombre, para que el navegador los pueda cachear sin quedarse con una
+# versión vieja. En desarrollo no: el hash obliga a correr collectstatic
+# después de cada cambio.
+ALMACEN_DE_ESTATICOS = (
+    "django.contrib.staticfiles.storage.StaticFilesStorage"
+    if DEBUG
+    else "whitenoise.storage.CompressedManifestStaticFilesStorage"
+)
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": ALMACEN_DE_ESTATICOS},
+}
+
 if env("R2_BUCKET_NAME"):
     # Subir y leer no van por el mismo camino. Subir usa el endpoint S3 con las
     # llaves; leer usa el dominio público, porque el bucket es privado y su
@@ -214,9 +233,7 @@ if env("R2_BUCKET_NAME"):
                 "url_protocol": protocolo_de_fotos,
             },
         },
-        "staticfiles": {
-            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"
-        },
+        "staticfiles": {"BACKEND": ALMACEN_DE_ESTATICOS},
     }
 else:
     # Sin R2 configurado (desarrollo temprano, CI) se guarda en disco local.
