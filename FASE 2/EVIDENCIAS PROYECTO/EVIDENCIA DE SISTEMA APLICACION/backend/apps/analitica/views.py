@@ -94,6 +94,11 @@ class SegmentosDeCompradores(generics.GenericAPIView):
                 "umbralCalculado": resumen.umbral_calculado,
                 "descripciones": segmentos.DESCRIPCION,
                 "conteo": resumen.conteo,
+                # Los que más gastaron **de cada grupo**, no los que más
+                # gastaron en total. Ordenados por prioridad, los primeros
+                # cincuenta salían todos «en riesgo» y el dueño no tenía forma
+                # de mirar a sus habituales. Mandar los mil setecientos
+                # tampoco: a una pantalla no le sirven.
                 "clientes": [
                     {
                         "nombre": c.nombre,
@@ -102,9 +107,27 @@ class SegmentosDeCompradores(generics.GenericAPIView):
                         "frecuencia": c.frecuencia,
                         "monto": c.monto,
                     }
-                    # Los primeros cincuenta: son los que el dueño va a mirar,
-                    # y mandar mil setecientos a una pantalla no ayuda a nadie.
-                    for c in resumen.clientes[:50]
+                    for c in _mejores_de_cada_grupo(resumen.clientes)
                 ],
             }
         )
+
+
+#: Cuántos clientes se mandan por grupo.
+#:
+#: Doce: alcanzan para una pantalla de lista y para que el dueño reconozca a
+#: quién escribirle. El resto no se mira.
+POR_GRUPO = 12
+
+
+def _mejores_de_cada_grupo(clientes):
+    """Los que más gastaron dentro de cada grupo, conservando el orden general."""
+    cuenta: dict[str, int] = {}
+    elegidos = []
+    for cliente in clientes:
+        vistos = cuenta.get(cliente.segmento, 0)
+        if vistos >= POR_GRUPO:
+            continue
+        cuenta[cliente.segmento] = vistos + 1
+        elegidos.append(cliente)
+    return elegidos

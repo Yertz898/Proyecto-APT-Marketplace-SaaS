@@ -253,6 +253,18 @@ export type ResumenDeVentas = {
   /** `variacion` es null si el mes anterior no tuvo ventas: no hay con qué comparar. */
   mesAnterior: CifrasDeVentas & { variacion: number | null };
   porCoordinar: { pedidos: number; total: Pesos };
+  /**
+   * Los últimos doce meses, para el gráfico. Los meses sin ventas vienen en
+   * cero: omitirlos uniría octubre con diciembre como si fueran seguidos.
+   */
+  serieMensual: {
+    mes: string;
+    etiqueta: string;
+    pedidos: number;
+    total: Pesos;
+    /** El mes en curso. Va por la mitad, así que su cifra no es comparable. */
+    enCurso: boolean;
+  }[];
   /** Sobre cuántos días se miran los más vendidos y los detenidos. */
   diasDeVentana: number;
   masVendidos: ProductoMasVendido[];

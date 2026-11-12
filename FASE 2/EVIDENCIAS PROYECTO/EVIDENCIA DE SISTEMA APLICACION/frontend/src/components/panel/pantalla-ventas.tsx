@@ -7,6 +7,7 @@ import { formatearPesos } from "@/lib/formato";
 import type { ResumenDeVentas } from "@/lib/tipos-panel";
 import { cn } from "@/lib/utils";
 
+import { BarrasRanqueadas, Grafico, LineaDeTiempo, SERIE } from "./graficos";
 import { Cabecera, Cargando, Error as Aviso, Tarjeta, Vacio } from "./piezas";
 
 /*
@@ -102,6 +103,38 @@ export function PantallaVentas() {
         porque el pago se coordina fuera de la plataforma; los anulados no se cuentan.
       </p>
 
+      {resumen.serieMensual.some((mes) => mes.total > 0) && (
+        <Tarjeta className="mt-4">
+          <Grafico
+            titulo="Cómo viene el año"
+            detalle="Ventas confirmadas y entregadas por mes. El mes en curso va hueco porque todavía no cierra."
+            tabla={{
+              columnas: ["Mes", "Pedidos", "Total"],
+              filas: resumen.serieMensual.map((mes) => [
+                mes.etiqueta,
+                mes.pedidos,
+                formatearPesos(mes.total),
+              ]),
+            }}
+          >
+            <LineaDeTiempo
+              formatear={formatearPesos}
+              series={[
+                {
+                  nombre: "Ventas del mes",
+                  color: SERIE[0],
+                  puntos: resumen.serieMensual.map((mes) => ({
+                    etiqueta: mes.etiqueta,
+                    valor: mes.total,
+                    atenuado: mes.enCurso,
+                  })),
+                },
+              ]}
+            />
+          </Grafico>
+        </Tarjeta>
+      )}
+
       {sinVentas ? (
         <div className="mt-4">
           <Vacio
@@ -112,38 +145,31 @@ export function PantallaVentas() {
       ) : (
         <div className="mt-4 grid gap-3 lg:grid-cols-2">
           <Tarjeta>
-            <h2 className="text-[13px] font-semibold text-marino">
-              Lo que más te dejó
-            </h2>
-            <p className="mt-1 text-xs text-pizarra">
-              Últimos {resumen.diasDeVentana} días, ordenado por dinero y no por
-              unidades.
-            </p>
-
-            {resumen.masVendidos.length === 0 ? (
-              <p className="mt-4 text-[13px] text-pizarra">
-                Sin ventas en este período.
-              </p>
-            ) : (
-              <ul className="mt-3.5 flex flex-col gap-2.5">
-                {resumen.masVendidos.map((producto) => (
-                  <li key={producto.codigo} className="flex justify-between gap-4">
-                    <span className="min-w-0">
-                      <span className="block truncate text-[13px] text-marino">
-                        {producto.nombre}
-                      </span>
-                      <span className="text-xs text-pizarra">
-                        {sinCerosDeAdorno(producto.cantidad)}{" "}
-                        {plural(Number(producto.cantidad), "vendido", "vendidos")}
-                      </span>
-                    </span>
-                    <span className="shrink-0 text-[13px] font-semibold text-marino">
-                      {formatearPesos(producto.neto)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <Grafico
+              titulo="Lo que más te dejó"
+              detalle={`Últimos ${resumen.diasDeVentana} días, ordenado por dinero y no por unidades.`}
+              tabla={{
+                columnas: ["Producto", "Vendido", "Neto"],
+                filas: resumen.masVendidos.map((p) => [
+                  p.nombre,
+                  sinCerosDeAdorno(p.cantidad),
+                  formatearPesos(p.neto),
+                ]),
+              }}
+            >
+              {resumen.masVendidos.length === 0 ? (
+                <p className="text-[13px] text-pizarra">Sin ventas en este período.</p>
+              ) : (
+                <BarrasRanqueadas
+                  formatear={formatearPesos}
+                  filas={resumen.masVendidos.map((p) => ({
+                    nombre: p.nombre,
+                    valor: p.neto,
+                    detalle: `${sinCerosDeAdorno(p.cantidad)} ${plural(Number(p.cantidad), "vendido", "vendidos")}`,
+                  }))}
+                />
+              )}
+            </Grafico>
           </Tarjeta>
 
           <Tarjeta>

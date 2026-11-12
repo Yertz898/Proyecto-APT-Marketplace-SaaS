@@ -7,6 +7,7 @@ import { formatearCantidad } from "@/lib/formato";
 import type { PronosticoDeDemanda, ProyeccionDeProducto } from "@/lib/tipos-panel";
 import { cn } from "@/lib/utils";
 
+import { Grafico, LineaDeTiempo, SERIE } from "./graficos";
 import { Cabecera, Cargando, Error as Aviso, Tarjeta, Vacio } from "./piezas";
 
 /*
@@ -72,6 +73,15 @@ export function PantallaPronostico() {
 
   const conProyeccion = pronostico.productos.filter((p) => p.suficiente);
   const sinDatos = pronostico.productos.filter((p) => !p.suficiente);
+  // El techo más alto de los tres, redondeado como lo haría cada gráfico por
+  // su cuenta, para que los tres compartan el eje.
+  const topeComun = Math.max(
+    ...conProyeccion.flatMap((p) => [
+      ...p.serie.map((punto) => punto.cantidad),
+      p.esperado ?? 0,
+    ]),
+    1,
+  );
   const porAgotarse = conProyeccion.filter(
     (p) => p.diasHastaQuiebre !== null && p.diasHastaQuiebre <= DIAS_TRANQUILOS,
   );
@@ -111,7 +121,61 @@ export function PantallaPronostico() {
         </div>
       )}
 
-      <Tarjeta className="mt-4">
+      {conProyeccion.length > 0 && (
+        <Tarjeta className="mt-4">
+          <Grafico
+            titulo="Lo que vendiste y lo que viene"
+            detalle={`Un gráfico por producto y todos a la misma escala, para que se puedan comparar. La línea llena es lo que pasó; el punto hueco del final es la estimación del próximo mes, calculada con ${conProyeccion[0].metodo}.`}
+            tabla={{
+              columnas: ["Producto", "Meses", "Esperado el próximo mes"],
+              filas: conProyeccion.map((producto) => [
+                producto.nombre,
+                producto.mesesConVentas,
+                formatearCantidad(producto.esperado ?? 0, producto.unidad),
+              ]),
+            }}
+          >
+            <div className="flex flex-col gap-4">
+              {conProyeccion.map((producto, i) => (
+                <div key={producto.codigo}>
+                  <p className="flex items-center gap-1.5 text-xs text-pizarra">
+                    <span
+                      aria-hidden="true"
+                      style={{ background: SERIE[i % SERIE.length] }}
+                      className="block h-[2px] w-4 shrink-0 rounded-full"
+                    />
+                    {producto.nombre}
+                  </p>
+                  <LineaDeTiempo
+                    compacta
+                    tope={topeComun}
+                    formatear={(valor) => formatearCantidad(valor, producto.unidad)}
+                    series={[
+                      {
+                        nombre: producto.nombre,
+                        color: SERIE[i % SERIE.length],
+                        puntos: [
+                          ...producto.serie.map((punto) => ({
+                            etiqueta: mesCorto(punto.mes),
+                            valor: punto.cantidad,
+                          })),
+                          {
+                            etiqueta: "próx.",
+                            valor: producto.esperado ?? 0,
+                            atenuado: true,
+                          },
+                        ],
+                      },
+                    ]}
+                  />
+                </div>
+              ))}
+            </div>
+          </Grafico>
+        </Tarjeta>
+      )}
+
+      <Tarjeta className="mt-3">
         <h2 className="text-[13px] font-semibold text-marino">
           Lo que se espera vender
         </h2>
@@ -194,4 +258,24 @@ function Fila({ producto }: { producto: ProyeccionDeProducto }) {
       </span>
     </li>
   );
+}
+
+/** «2026-03» se lee «mar 26», que es lo que cabe en un eje. */
+function mesCorto(mes: string): string {
+  const [ano, numero] = mes.split("-");
+  const nombres = [
+    "ene",
+    "feb",
+    "mar",
+    "abr",
+    "may",
+    "jun",
+    "jul",
+    "ago",
+    "sep",
+    "oct",
+    "nov",
+    "dic",
+  ];
+  return `${nombres[Number(numero) - 1] ?? mes} ${ano.slice(2)}`;
 }

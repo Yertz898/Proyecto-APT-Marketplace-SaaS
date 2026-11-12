@@ -6,7 +6,7 @@ curso, los últimos noventa días, cuántos días lleva un cliente sin volver—
 así que poder fechar un pedido hacia atrás es el requisito de base.
 """
 
-from datetime import timedelta
+from datetime import date, timedelta
 from decimal import Decimal
 
 import pytest
@@ -67,14 +67,24 @@ def crear_pedido(db):
 @pytest.fixture
 def venta_hace_meses(crear_pedido):
     """
-    Una venta fechada N meses atrás, a mitad de mes.
+    Una venta fechada N **meses de calendario** atrás, el día 15.
 
-    A mitad y no el día 1 ni el 30: así ni el corte del mes ni la zona
-    horaria cambian en qué mes cae, que es justo lo que no se quiere estar
-    depurando dentro de una prueba de pronóstico.
+    De calendario y no de treinta días: treinta días no son un mes y el error
+    se acumula. Retrocediendo seis veces treinta días desde noviembre, dos de
+    las fechas caen en mayo, el producto queda con cinco meses distintos en
+    vez de seis y el pronóstico se niega a proyectar. La prueba entonces falla
+    o pasa según el día en que se corra, que es la peor clase de prueba.
+
+    El día 15 por la misma razón de antes: lejos de los dos bordes del mes,
+    así ni el corte ni la zona horaria cambian en qué mes cae.
     """
 
     def _crear(tienda, producto, meses, **extra):
-        return crear_pedido(tienda, producto, hace_dias=meses * 30 + 15, **extra)
+        hoy = timezone.localdate()
+        # El mes como número absoluto hace el retroceso sin casos especiales
+        # en enero.
+        total = hoy.year * 12 + (hoy.month - 1) - meses
+        objetivo = date(total // 12, total % 12 + 1, 15)
+        return crear_pedido(tienda, producto, hace_dias=(hoy - objetivo).days, **extra)
 
     return _crear

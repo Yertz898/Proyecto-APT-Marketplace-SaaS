@@ -22,6 +22,7 @@ Tres decisiones que cambian todos los números y por eso van escritas acá:
 from datetime import timedelta
 
 from django.db.models import Count, Max, Q, Sum
+from django.db.models.functions import TruncMonth
 from django.utils import timezone
 
 from apps.catalogo.models import Producto
@@ -36,6 +37,12 @@ VENDIDOS = (Pedido.Estado.CONFIRMADO, Pedido.Estado.ENTREGADO)
 #: lote que no se vendió en noviembre no es necesariamente un lote detenido.
 #: Noventa días es un trimestre, que es como mira el negocio el cliente.
 DIAS_DE_VENTANA = 90
+
+#: Cuántos meses de historia muestra el gráfico de ventas.
+#:
+#: Doce: un año cerrado deja ver si lo de este mes es temporada o es un
+#: cambio. Con seis, diciembre no tiene contra qué compararse.
+MESES_DEL_GRAFICO = 12
 
 #: Cuántos productos se listan en cada tabla de la pantalla.
 CUANTOS_LISTAR = 5
@@ -85,10 +92,57 @@ def resumen(tienda, ahora=None) -> dict:
             "pedidos": pendientes["pedidos"] or 0,
             "total": int(pendientes["total"] or 0),
         },
+        "serieMensual": serie_mensual(tienda, ahora),
         "diasDeVentana": DIAS_DE_VENTANA,
         "masVendidos": mas_vendidos(tienda, desde_ventana),
         "sinMovimiento": sin_movimiento(tienda, desde_ventana, ahora),
     }
+
+
+def serie_mensual(tienda, ahora, meses=MESES_DEL_GRAFICO) -> list[dict]:
+    """
+    Cuánto se vendió cada mes, para el gráfico.
+
+    Los meses sin ventas vienen igual, en cero. Si se omitieran, el gráfico
+    uniría octubre con diciembre como si fueran consecutivos y una caída se
+    vería como una línea plana.
+
+    El mes en curso va incluido y marcado `enCurso`: va por la mitad, así que
+    su columna siempre es más baja y sin el aviso parecería un desplome.
+    """
+    inicio = _inicio_del_mes(ahora)
+    for _ in range(meses - 1):
+        inicio = _inicio_del_mes(inicio - timedelta(days=1))
+
+    vendidos = {
+        fila["mes"].strftime("%Y-%m"): fila
+        for fila in Pedido.objects.filter(
+            tienda=tienda, estado__in=VENDIDOS, fecha_creacion__gte=inicio
+        )
+        .annotate(mes=TruncMonth("fecha_creacion"))
+        .values("mes")
+        .annotate(pedidos=Count("id"), total=Sum("total"))
+    }
+
+    serie, cursor = [], inicio
+    mes_actual = _inicio_del_mes(ahora).strftime("%Y-%m")
+    for _ in range(meses):
+        clave = cursor.strftime("%Y-%m")
+        fila = vendidos.get(clave)
+        serie.append(
+            {
+                "mes": clave,
+                "etiqueta": f"{MESES[cursor.month - 1][:3]} {cursor.year % 100:02d}",
+                "pedidos": fila["pedidos"] if fila else 0,
+                "total": int(fila["total"]) if fila else 0,
+                "enCurso": clave == mes_actual,
+            }
+        )
+        # Al día 28 de cualquier mes, sumar cuatro días siempre cae en el
+        # siguiente, sin importar si el mes tiene 28, 30 o 31.
+        cursor = _inicio_del_mes(cursor.replace(day=28) + timedelta(days=4))
+
+    return serie
 
 
 def mas_vendidos(tienda, desde, cuantos=CUANTOS_LISTAR) -> list[dict]:
