@@ -34,7 +34,10 @@ import random
 from dataclasses import dataclass
 from itertools import product as combinaciones
 
-from apps.analitica.pronostico import MINIMO_DE_MESES, VENTANA
+# Holt vive en `pronostico.py` porque es el que usa la pantalla: así lo que se
+# evalúa acá es exactamente lo que se muestra, y no una copia que puede
+# divergir.
+from apps.analitica.pronostico import MINIMO_DE_MESES, VENTANA, holt_amortiguado
 
 #: Cuántos de los meses finales se reservan para la prueba.
 #:
@@ -66,24 +69,6 @@ def ultimo_mes(historia: list[float]) -> float:
     Si la línea base no le gana a esto, el problema es la línea base.
     """
     return historia[-1]
-
-
-def holt_amortiguado(historia, alfa, beta, phi) -> float:
-    """
-    Suavizado exponencial con tendencia amortiguada.
-
-    Sigue el nivel y la tendencia de la serie, pero la tendencia se va
-    apagando (`phi` menor que 1). Es lo que corresponde cuando no se sabe si
-    una caída va a seguir: una tendencia sin amortiguar proyecta que la caída
-    sigue igual para siempre, y en pocos meses pronostica cero.
-    """
-    nivel = historia[0]
-    tendencia = historia[1] - historia[0] if len(historia) > 1 else 0.0
-    for valor in historia[1:]:
-        anterior = nivel
-        nivel = alfa * valor + (1 - alfa) * (nivel + phi * tendencia)
-        tendencia = beta * (nivel - anterior) + (1 - beta) * phi * tendencia
-    return max(nivel + phi * tendencia, 0.0)
 
 
 def tendencia_lineal(historia, meses) -> float:

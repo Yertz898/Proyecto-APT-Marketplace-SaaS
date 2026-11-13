@@ -154,6 +154,11 @@ una serie de tiempo, tiene tres números, y repetir el último mes no es un pron
 respuesta dice cuántos meses lleva y la pantalla lo muestra. Hoy: 3 productos con
 proyección y 87 sin ella.
 
+**Desde el 12-11-2026 la pantalla no proyecta con esto sino con Holt amortiguado**, que le
+ganó en la evaluación (ver «Los modelos del pronóstico»). Las reglas de arriba —el mes en
+curso fuera, seis meses como mínimo— siguen valiendo igual para Holt. El promedio móvil
+queda como la línea base contra la que se mide cada evaluación futura.
+
 ### La regla de la alerta de quiebre
 
 No es un modelo aparte. Es el stock dividido por el ritmo proyectado:
@@ -248,8 +253,10 @@ promedio móvil en 9,6 puntos, y la diferencia, remuestreando los doce pronósti
 va de −15,8 a −2,7 puntos al 95%: **no incluye el cero. Le gana a la línea base**, y le gana
 también en validación, así que no es un golpe de suerte de un período.
 
-**Todavía no está conectado a la pantalla.** La pantalla de pronóstico y la alerta de
-quiebre siguen calculando con el promedio móvil, y lo declaran en su campo `metodo`.
+**Está conectado a la pantalla desde el 12-11-2026.** La pantalla de pronóstico, la alerta
+de quiebre y el asistente calculan con Holt, y lo declaran en su campo `metodo`. Los
+parámetros quedan fijos en `pronostico.py` (`ALFA`, `BETA`, `PHI`): cambiarlos es volver a
+correr la evaluación y anotarla en el registro de abajo, no ajustarlos a mano.
 
 ### Lo que hay que saber antes de usarlo
 
@@ -419,6 +426,6 @@ lado, el resultado no significa nada.
 |---|---|---|---|---|---|---|
 | 12-11-2026 | Segmentación · XGBoost | 1 | F1 de «vuelve», corte 15-07-2026 | 0,253 | 0,255 | No: diferencia entre −0,034 y +0,032 |
 | 12-11-2026 | Segmentación · regresión logística | 1 | F1 de «vuelve», corte 15-07-2026 | 0,238 | 0,255 | No |
-| 12-11-2026 | Pronóstico · Holt amortiguado | 1 | MAPE, jul a oct 2026 | 55,2% | 64,8% | Le gana: diferencia entre −15,8 y −2,7 puntos |
+| 12-11-2026 | Pronóstico · Holt amortiguado | 1 | MAPE, jul a oct 2026 | 55,2% | 64,8% | Sí, desde el 12-11-2026: diferencia entre −15,8 y −2,7 puntos |
 | 12-11-2026 | Pronóstico · tendencia lineal | 1 | MAPE, jul a oct 2026 | 44,3% | 64,8% | No elegido en validación |
 | 12-11-2026 | Pronóstico · XGBoost | 1 | MAPE, jul a oct 2026 | 24,8% | 64,8% | No elegido en validación |

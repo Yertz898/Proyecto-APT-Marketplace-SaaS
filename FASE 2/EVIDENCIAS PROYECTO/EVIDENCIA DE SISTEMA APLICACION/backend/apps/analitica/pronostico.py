@@ -1,10 +1,14 @@
 """
 Cuánto se va a vender el próximo mes, y qué se va a quedar sin stock.
 
-Acá está **la línea base**: el promedio móvil de los últimos meses. No es el
-modelo; es contra qué se mide el modelo. La regla del proyecto es que ningún
-modelo entra si no supera su línea base (ver `docs/analitica.md`), y para eso
-la línea base tiene que existir primero y estar probada.
+Proyecta con **suavizado de Holt amortiguado**, el modelo que le ganó a la
+línea base en la evaluación del 12-11-2026: MAPE 55,2% contra 64,8% del
+promedio móvil, y también le ganó en validación (ver `docs/analitica.md` y
+`modelos_pronostico.py`, que es donde se mide).
+
+El promedio móvil sigue acá porque sigue siendo **la línea base**: todo modelo
+futuro se mide contra él, y si algún día Holt deja de ganarle, se vuelve a él
+cambiando una línea.
 
 Dos cosas que este módulo se niega a hacer:
 
@@ -47,6 +51,14 @@ MINIMO_DE_MESES = 6
 #: nombra explícitamente.
 VENTANA = 3
 
+#: Los parámetros de Holt, elegidos en validación (feb a jun de 2026).
+#:
+#: No se ajustan solos con cada mes nuevo: cambiarlos es volver a correr
+#: `manage.py entrenar_pronostico`, mirar si sigue ganando y anotarlo en
+#: `docs/analitica.md`. Un parámetro que se mueve sin que nadie lo mida es
+#: un modelo que nadie evaluó.
+ALFA, BETA, PHI = 0.4, 0.1, 0.8
+
 #: Qué estados de pedido son una venta. Igual que en `ventas.py`: un pedido
 #: pendiente todavía no ocurrió y uno anulado no ocurrió nunca.
 VENDIDOS = (Pedido.Estado.CONFIRMADO, Pedido.Estado.ENTREGADO)
@@ -70,8 +82,8 @@ class Proyeccion:
     esperado: Decimal | None = None
     #: Los últimos meses, del más viejo al más nuevo: [(aaaa-mm, cantidad)].
     serie: list = None
-    #: Con qué se calculó. Hoy siempre la línea base.
-    metodo: str = "promedio móvil de 3 meses"
+    #: Con qué se calculó. Lo muestran la pantalla y el asistente.
+    metodo: str = "suavizado de Holt amortiguado"
     #: Días hasta quedarse sin stock al ritmo proyectado. None si no aplica.
     dias_hasta_quiebre: int | None = None
     stock: Decimal | None = None
@@ -143,7 +155,10 @@ def _proyectar_uno(producto, serie) -> Proyeccion:
     if len(serie) < MINIMO_DE_MESES:
         return Proyeccion(**comun, suficiente=False)
 
-    esperado = promedio_movil([cantidad for _, cantidad in serie])
+    historia = [float(cantidad) for _, cantidad in serie]
+    esperado = Decimal(str(holt_amortiguado(historia, ALFA, BETA, PHI))).quantize(
+        Decimal("0.01")
+    )
 
     return Proyeccion(
         **comun,
@@ -152,6 +167,26 @@ def _proyectar_uno(producto, serie) -> Proyeccion:
         stock=producto.stock,
         dias_hasta_quiebre=_dias_hasta_quiebre(producto, esperado),
     )
+
+
+def holt_amortiguado(historia: list[float], alfa, beta, phi) -> float:
+    """
+    Suavizado exponencial con tendencia amortiguada.
+
+    Sigue el nivel y la tendencia de la serie, pero la tendencia se va
+    apagando (`phi` menor que 1). Es lo que corresponde cuando no se sabe si
+    una caída va a seguir: una tendencia sin amortiguar proyecta que la caída
+    sigue igual para siempre, y en pocos meses pronostica cero.
+
+    Con ventas constantes da esas mismas ventas: no inventa movimiento.
+    """
+    nivel = historia[0]
+    tendencia = historia[1] - historia[0] if len(historia) > 1 else 0.0
+    for valor in historia[1:]:
+        anterior = nivel
+        nivel = alfa * valor + (1 - alfa) * (nivel + phi * tendencia)
+        tendencia = beta * (nivel - anterior) + (1 - beta) * phi * tendencia
+    return max(nivel + phi * tendencia, 0.0)
 
 
 def promedio_movil(cantidades: list[Decimal], ventana: int = VENTANA) -> Decimal:

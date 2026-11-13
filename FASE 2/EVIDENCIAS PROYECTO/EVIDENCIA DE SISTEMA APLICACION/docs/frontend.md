@@ -209,7 +209,7 @@ cada número está en `ventas-y-pedidos.md` y `analitica.md`; acá va cómo se d
 | Segmentos | `pantalla-segmentos.tsx` | Barra segmentada con la proporción de cada grupo |
 
 **Pronóstico y segmentos declaran su método.** Muestran con qué se calculó lo que se ve
-—hoy, las líneas base— porque mientras el dueño no pueda distinguir una medición de una
+—el pronóstico, con Holt amortiguado; los segmentos, con la regla por recencia— porque mientras el dueño no pueda distinguir una medición de una
 estimación, no sabe cuánto confiar en el número.
 
 **En segmentos, el filtro acota la lista y no los recuentos.** Las tarjetas de arriba

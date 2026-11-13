@@ -88,6 +88,28 @@ def test_el_promedio_movil_mira_solo_los_ultimos_meses():
     assert pronostico.promedio_movil(cantidades) == Decimal("20.00")
 
 
+def test_la_proyeccion_sale_de_holt_y_no_del_promedio_movil(
+    tienda_a, producto_a, venta_hace_meses
+):
+    """
+    Holt le ganó al promedio móvil en la evaluación, así que es el que se
+    muestra. Con ventas que caen los dos dan distinto: el promedio repite el
+    nivel de los últimos tres meses y Holt sigue la caída, amortiguada.
+    """
+    ventas = (60, 50, 40, 30, 20, 10)
+    for meses_atras, cantidad in zip(range(6, 0, -1), ventas, strict=True):
+        venta_hace_meses(tienda_a, producto_a, meses_atras, cantidad=cantidad)
+
+    proyeccion = de(pronostico.proyectar(tienda_a), producto_a.codigo)
+
+    esperado = pronostico.holt_amortiguado(
+        [60, 50, 40, 30, 20, 10], pronostico.ALFA, pronostico.BETA, pronostico.PHI
+    )
+    assert proyeccion.esperado == Decimal(str(esperado)).quantize(Decimal("0.01"))
+    assert proyeccion.esperado < Decimal("20.00")  # el promedio móvil diría 20
+    assert proyeccion.metodo == "suavizado de Holt amortiguado"
+
+
 def test_el_mes_en_curso_no_entra_en_el_promedio(
     tienda_a, producto_a, venta_hace_meses, crear_pedido
 ):
@@ -218,7 +240,7 @@ def test_el_endpoint_dice_con_que_metodo_calculo(
     cuerpo = como(client, dueno_a).get(PRONOSTICO).json()
 
     fila = next(p for p in cuerpo["productos"] if p["codigo"] == producto_a.codigo)
-    assert fila["metodo"] == "promedio móvil de 3 meses"
+    assert fila["metodo"] == "suavizado de Holt amortiguado"
     assert cuerpo["minimoDeMeses"] == pronostico.MINIMO_DE_MESES
 
 
