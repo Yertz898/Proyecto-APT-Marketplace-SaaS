@@ -196,6 +196,93 @@ dueño no le escriba a ninguno.
 Sobre el historial del cliente: 88 habituales, 123 nuevos, 304 en riesgo y 1.201 perdidos.
 Esa proporción es consistente con la caída de alcance descrita más arriba.
 
+## El clasificador de la segmentación
+
+`apps/analitica/clasificador.py`, y se corre con:
+
+    docker compose exec api python manage.py entrenar_segmentacion joyas-ye
+
+Imprime el informe y lo guarda en `data/modelos/`, que no se versiona. El modelo entrenado
+se guarda **solo si le gana a la regla**.
+
+### Qué pregunta responde
+
+Para cada cliente que ya compró: **¿vuelve a comprar en los próximos 104 días?** Ciento
+cuatro es el umbral de la tienda, el mismo plazo con que la regla decide quién se fue, así
+que modelo y regla responden exactamente la misma pregunta y se pueden comparar.
+
+### Por qué se mide sobre «vuelve» y no sobre «se va»
+
+Dentro del plazo vuelve entre el 5% y el 13% de los clientes, según la fecha. Medido sobre
+«se va», decir que todos se van da un F1 cercano a 0,95 y cualquier regla parece excelente.
+Medido sobre «vuelve», ese atajo da cero. Es además la pregunta que le sirve al dueño: a
+quién le conviene escribir.
+
+La métrica que decide es **el F1 de la clase «vuelve»**, fijada antes de ver los resultados.
+Precisión y exhaustividad se reportan al lado.
+
+### Las variables
+
+Siete, todas calculadas solo con las compras hasta la fecha de corte: recencia,
+frecuencia, monto, ticket promedio, antigüedad, días entre compras y compras de los últimos
+90 días. Ninguna dice quién es la persona.
+
+### Cómo se evita mirar el futuro
+
+Es lo que más fácil invalida un resultado, y por eso tiene sus propias pruebas.
+
+- **Fechas de corte, una por mes.** Las variables salen de lo anterior al corte; la
+  etiqueta, de los 104 días siguientes. Una compra posterior no mueve ninguna variable.
+- **La prueba va después de todo.** Es el último corte cuya etiqueta ya se conoce entera
+  (15-07-2026). Se entrena con los cortes cuya etiqueta termina antes de esa fecha.
+- **El modelo y su umbral de probabilidad se eligen en validación** (el corte del
+  29-03-2026), entrenando solo con lo anterior. La prueba se mira una sola vez.
+- **La regla tampoco ve el futuro:** su umbral se recalcula en cada corte con lo que se
+  sabía en esa fecha.
+- **Nunca se mezclan filas al azar.** Con un negocio que cambia en el tiempo, mezclar al
+  azar le enseña el futuro al modelo y el resultado no se repite al usarlo.
+
+### Qué se comparó
+
+| | Precisión | Exhaustividad | F1 |
+|---|---|---|---|
+| Regla por recencia (línea base) | 0,168 | 0,530 | **0,255** |
+| Regresión logística | 0,140 | 0,783 | 0,238 |
+| XGBoost (elegido en validación) | 0,156 | 0,663 | **0,253** |
+
+Sobre 1.562 clientes en el corte de prueba, de los cuales volvieron 83. La diferencia de F1
+entre XGBoost y la regla, remuestreando los clientes mil veces, va de −0,034 a +0,032 al
+95%: **incluye el cero, así que no se puede decir que ninguno gane.**
+
+**El modelo no se integra.** La pantalla sigue con la regla, que además es más fácil de
+explicarle al dueño.
+
+### Por qué no le gana
+
+Lo que sigue se miró **después** de ver la prueba, así que explica el resultado pero no lo
+cambia.
+
+- **La tasa de retorno cae con el tiempo.** Es 9,6% en los cortes de entrenamiento y 5,3%
+  en el de prueba: es la caída de alcance descrita más arriba. Un umbral de probabilidad
+  elegido con la tasa de antes marca a demasiada gente después. Por eso los dos modelos
+  tienen buena exhaustividad y mala precisión.
+- **Ordenar mejor tampoco se sostiene.** Con el mismo número de contactos que marca la
+  regla, en la prueba la regresión logística acierta con 56 clientes y la regla con 44.
+  Pero en validación pasa al revés: la regla acierta con 54 y los modelos con 41 y 43. Una
+  ventaja que cambia de lado según el período es ruido, no una mejora.
+- **La recencia ya lleva casi toda la información.** Las variables que más pesan en
+  XGBoost —compras de los últimos 90 días, frecuencia, recencia— son las que la regla ya
+  mira. Con siete variables de comportamiento no hay mucho más que aprender.
+
+### Qué haría falta para que gane
+
+- **Más tiempo.** Con quince meses hay una sola temporada y la tasa de retorno no se ha
+  estabilizado. Cada mes nuevo de ventas es un corte más para entrenar.
+- **Variables que la regla no tiene**: qué productos compra, si compra por gramo o por lote,
+  el canal por el que llegó. Hoy la planilla del cliente no las trae.
+- **Recalibrar el umbral de probabilidad** con la tasa de retorno más reciente, y fijar esa
+  regla **antes** de evaluarla en un corte que todavía no se haya mirado.
+
 ## El asistente
 
 `apps/asistente/`. Responde preguntas del vendedor sobre su propia tienda.
@@ -258,4 +345,5 @@ lado, el resultado no significa nada.
 
 | Fecha | Modelo | Versión | Métrica | Resultado | Línea base | ¿Se integra? |
 |---|---|---|---|---|---|---|
-| | | | | | | |
+| 12-11-2026 | Segmentación · XGBoost | 1 | F1 de «vuelve», corte 15-07-2026 | 0,253 | 0,255 | No: diferencia entre −0,034 y +0,032 |
+| 12-11-2026 | Segmentación · regresión logística | 1 | F1 de «vuelve», corte 15-07-2026 | 0,238 | 0,255 | No |
