@@ -196,6 +196,78 @@ dueño no le escriba a ninguno.
 Sobre el historial del cliente: 88 habituales, 123 nuevos, 304 en riesgo y 1.201 perdidos.
 Esa proporción es consistente con la caída de alcance descrita más arriba.
 
+## Los modelos del pronóstico
+
+`apps/analitica/modelos_pronostico.py`, y se corre con:
+
+    docker compose exec api python manage.py entrenar_pronostico joyas-ye
+
+Imprime el informe y lo guarda en `data/modelos/`, que no se versiona.
+
+### Cómo se mide
+
+Fijado antes de ver resultados:
+
+- **Un mes adelante, mes a mes.** Para pronosticar un mes se usan solo los anteriores, igual
+  que en la pantalla. Se pronostica desde el séptimo mes, porque la línea base no proyecta
+  con menos de seis: 9 meses por producto, 27 pronósticos en total.
+- **Validación, febrero a junio de 2026** (15 pronósticos): ahí cada candidato elige sus
+  parámetros y se elige el candidato.
+- **Prueba, julio a octubre de 2026** (12 pronósticos): se mira una sola vez.
+- **La métrica que decide es el MAPE.** Es un porcentaje, así que junta productos de escalas
+  muy distintas: granel mujer vende diez veces lo que colgantes. MAE y RMSE van al lado, en
+  gramos.
+- Se integra solo si el elegido tiene menos MAPE que el promedio móvil **y** el intervalo de
+  confianza de la diferencia no incluye el cero.
+
+### Los candidatos
+
+- **Holt amortiguado.** Sigue el nivel y la tendencia, pero la tendencia se va apagando. Es
+  lo que corresponde cuando no se sabe si la caída va a seguir: ver «La caída de ventas no
+  está explicada».
+- **Tendencia lineal.** Una recta sobre el logaritmo de los últimos meses. En logaritmo, para
+  que la caída sea proporcional y nunca llegue a ventas negativas.
+- **XGBoost.** Un solo modelo para los tres productos, que aprende cuánto se aparta el mes
+  siguiente de su promedio móvil según la forma de los tres meses previos. Juntos y
+  normalizados porque, por separado, quince meses no alcanzan para nada.
+- **Repetir el último mes**, no como candidato sino como referencia: es lo más simple que
+  existe, y sirve para saber si la línea base misma es razonable.
+
+### Resultado
+
+| | MAPE validación | MAPE prueba | MAE prueba (g) | RMSE prueba (g) |
+|---|---|---|---|---|
+| Promedio móvil (línea base) | 43,8% | 64,8% | 703 | 822 |
+| **Holt amortiguado** (elegido) | **38,1%** | **55,2%** | 589 | 675 |
+| Tendencia lineal | 47,1% | 44,3% | 467 | 664 |
+| XGBoost | 38,9% | 24,8% | 264 | 312 |
+| Último mes (referencia) | 56,0% | 36,1% | 372 | 522 |
+
+Holt se eligió en validación con α 0,4, β 0,1 y φ 0,8. En la prueba le baja el MAPE al
+promedio móvil en 9,6 puntos, y la diferencia, remuestreando los doce pronósticos mil veces,
+va de −15,8 a −2,7 puntos al 95%: **no incluye el cero. Le gana a la línea base**, y le gana
+también en validación, así que no es un golpe de suerte de un período.
+
+**Todavía no está conectado a la pantalla.** La pantalla de pronóstico y la alerta de
+quiebre siguen calculando con el promedio móvil, y lo declaran en su campo `metodo`.
+
+### Lo que hay que saber antes de usarlo
+
+- **Todos sobreestiman.** Las ventas cayeron mes a mes de julio a octubre y cualquier método
+  que mire hacia atrás llega tarde. Holt llega menos tarde que el promedio móvil, que es por
+  lo que gana.
+- **Repetir el último mes saca mejor número en la prueba, y eso no lo hace mejor.** En una
+  caída pareja, el último mes es el que más se parece al siguiente. Pero en validación, con
+  meses que suben y bajan, fue el peor de todos (56,0%). Un método que solo funciona cuando la
+  serie va en una dirección no sirve para un negocio con temporada.
+- **XGBoost tiene el mejor número de la prueba y no es el elegido.** En validación quedó
+  segundo por ocho décimas. Cambiar la elección después de ver la prueba sería elegir con el
+  examen en la mano, y su número dejaría de valer.
+- **Doce pronósticos son pocos.** El intervalo es ancho por eso. Cada mes nuevo de ventas
+  agrega tres pronósticos a la próxima evaluación.
+- **La pregunta al cliente sigue abierta.** Si la caída es falta de registro y no una caída
+  real, todos estos modelos están aprendiendo una tendencia que no existe.
+
 ## El clasificador de la segmentación
 
 `apps/analitica/clasificador.py`, y se corre con:
@@ -347,3 +419,6 @@ lado, el resultado no significa nada.
 |---|---|---|---|---|---|---|
 | 12-11-2026 | Segmentación · XGBoost | 1 | F1 de «vuelve», corte 15-07-2026 | 0,253 | 0,255 | No: diferencia entre −0,034 y +0,032 |
 | 12-11-2026 | Segmentación · regresión logística | 1 | F1 de «vuelve», corte 15-07-2026 | 0,238 | 0,255 | No |
+| 12-11-2026 | Pronóstico · Holt amortiguado | 1 | MAPE, jul a oct 2026 | 55,2% | 64,8% | Le gana: diferencia entre −15,8 y −2,7 puntos |
+| 12-11-2026 | Pronóstico · tendencia lineal | 1 | MAPE, jul a oct 2026 | 44,3% | 64,8% | No elegido en validación |
+| 12-11-2026 | Pronóstico · XGBoost | 1 | MAPE, jul a oct 2026 | 24,8% | 64,8% | No elegido en validación |
