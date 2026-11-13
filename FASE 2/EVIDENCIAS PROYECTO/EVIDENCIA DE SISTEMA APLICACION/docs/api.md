@@ -176,9 +176,42 @@ hasta PostgreSQL y volvería como un 500 que no dice qué arreglar.
 
 ### Inventario
 
-Cuatro cifras: publicados, con una sola unidad, agotados y desactivados. Son **hechos**. La
-alerta por demanda proyectada que piden los documentos necesita el pronóstico, que todavía
-no existe, y un número sin respaldo en una pantalla de inventario es peor que no tenerlo.
+Cuatro cifras: publicados, con una sola unidad, agotados y desactivados. Son **hechos**, y
+por eso esta respuesta no trae la alerta por demanda proyectada: esa es una estimación y
+vive en `/panel/pronostico`, como `diasHastaQuiebre` de cada producto. Mezclarlas haría
+que el dueño no supiera cuál de los números se midió y cuál se calculó.
+
+### Ventas, pronóstico y segmentos
+
+Las tres respuestas alimentan pantallas con gráficos, y por eso traen **la serie completa**
+y no solo los totales. Qué significa cada indicador está en `ventas-y-pedidos.md` y
+`analitica.md`; acá va la forma.
+
+**`GET /panel/ventas`** trae, además de las cifras del mes, `serieMensual`: los últimos
+**doce meses** de pedidos confirmados y entregados, uno por fila.
+
+```jsonc
+"serieMensual": [
+  { "mes": "2025-12", "etiqueta": "dic 25", "pedidos": 323, "total": 14422468, "enCurso": false },
+  // …
+  { "mes": "2026-11", "etiqueta": "nov 26", "pedidos": 0, "total": 0, "enCurso": true }
+]
+```
+
+- **Los meses sin ventas vienen igual, en cero.** Si se omitieran, el gráfico uniría octubre
+  con diciembre como si fueran seguidos y una caída se vería como una línea plana.
+- **El mes en curso viene marcado con `enCurso`.** Va por la mitad, así que siempre suma
+  menos que un mes cerrado; la pantalla lo dibuja punteado para que no parezca un desplome.
+
+**`GET /panel/pronostico`** trae por producto su `serie` mensual de cantidades, la
+proyección, el `metodo` con que se calculó —`null` cuando no hay historial suficiente— y
+`diasHastaQuiebre`, que es `null` sin pronóstico o en productos que no controlan stock.
+
+**`GET /panel/segmentos`** trae el conteo de cada grupo, el umbral de días con que se
+decidió y la lista de clientes. La lista son **los doce que más gastaron de cada grupo**, en
+el orden de prioridad general, y no los cincuenta primeros: ordenados por prioridad, los
+cincuenta salían todos «en riesgo» y el dueño no tenía cómo mirar a sus habituales. El
+conteo sí es del total; la lista es para saber a quién escribirle, no para recorrer la base.
 
 ### Carga masiva
 
@@ -356,9 +389,17 @@ invitación a averiguar qué negocios ya pidieron entrar.
 
 ## Todavía sin endpoint
 
-Las pantallas existen y su cliente de API tiene los tipos finales, pero el backend falta:
-equipo, carrito, pedidos y todo lo de analítica. Mientras tanto esas pantallas dicen que
-no están conectadas en vez de mostrar números inventados.
+Carrito, pedidos, ventas, pronóstico, segmentos y asistente ya tienen backend. Quedan tres
+secciones del panel marcadas como «pronto» en `components/panel/secciones.tsx`:
+
+- **Precios.** Los endpoints de tramos existen y están documentados arriba; lo que falta es
+  la pantalla.
+- **Equipo.** Falta la invitación de vendedores, que además necesita el envío de correo que
+  la plataforma todavía no hace.
+- **Agenda del dueño.** Congelada mientras el cliente confirma si sigue en el alcance. El
+  lado público de la agenda funciona.
+
+Mientras tanto esas secciones lo dicen en vez de mostrar números inventados.
 
 ## Carrito, pedidos y ventas
 

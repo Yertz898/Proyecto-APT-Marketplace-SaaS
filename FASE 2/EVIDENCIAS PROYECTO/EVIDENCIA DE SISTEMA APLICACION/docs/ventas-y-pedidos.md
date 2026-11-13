@@ -91,6 +91,22 @@ El mismo cálculo sobre el mes calendario anterior. La variación es
 **Si el mes anterior fue cero, no hay variación**: se muestra el monto sin porcentaje.
 Mostrar «+100%» donde antes no había ventas es inventar una comparación.
 
+### Cómo viene el año
+
+El monto vendido de cada uno de los **últimos doce meses**, con el mismo criterio que
+«ventas del mes»: confirmados y entregados, cortado en hora de Chile. Sale de
+`serie_mensual` en `apps/analitica/ventas.py`.
+
+Doce meses porque un año cerrado deja ver si lo de este mes es temporada o es un cambio.
+Con seis, diciembre no tendría contra qué compararse.
+
+Dos decisiones que cambian cómo se lee:
+
+- **Los meses sin ventas aparecen en cero.** Saltarlos uniría octubre con diciembre como si
+  fueran seguidos, y una caída se vería como una línea plana.
+- **El mes en curso va, pero punteado.** Va por la mitad, así que siempre suma menos que un
+  mes cerrado; con línea llena parecería un desplome cada principio de mes.
+
 ### Lo que más te dejó
 
 Los cinco productos con mayor neto vendido en los **últimos 90 días**, ordenados por dinero

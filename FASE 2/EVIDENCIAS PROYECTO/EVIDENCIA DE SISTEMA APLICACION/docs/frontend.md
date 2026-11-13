@@ -197,6 +197,65 @@ contenido lo escribió una persona fuera del sistema.
 en vez de un «formato no válido» a secas. El formato de las plantillas está en
 [`api.md`](api.md).
 
+### Ventas, pronóstico y segmentos
+
+Tres pantallas que leen de la API y muestran cada cifra con su gráfico. Lo que significa
+cada número está en `ventas-y-pedidos.md` y `analitica.md`; acá va cómo se dibuja.
+
+| Pantalla | Archivo | Gráfico |
+|---|---|---|
+| Panel de ventas | `pantalla-ventas.tsx` | Línea de doce meses y barras de lo que más dejó |
+| Pronóstico | `pantalla-pronostico.tsx` | Una línea chica por producto, las tres a la misma escala |
+| Segmentos | `pantalla-segmentos.tsx` | Barra segmentada con la proporción de cada grupo |
+
+**Pronóstico y segmentos declaran su método.** Muestran con qué se calculó lo que se ve
+—hoy, las líneas base— porque mientras el dueño no pueda distinguir una medición de una
+estimación, no sabe cuánto confiar en el número.
+
+**En segmentos, el filtro acota la lista y no los recuentos.** Las tarjetas de arriba
+siempre muestran el total de cada grupo; los botones solo eligen a quién se lista abajo.
+
+### Los gráficos
+
+`components/panel/graficos.tsx` tiene todos: `LineaDeTiempo`, `BarrasRanqueadas` y
+`BarraSegmentada`, más el caparazón `Grafico` y la `Leyenda`. **Están dibujados a mano en
+SVG, sin librería de gráficos**, y no por ahorrar una dependencia: las reglas que siguen —un
+borde del color del fondo separando marcas que se tocan, el extremo del dato redondeado y la
+base cuadrada, un anillo alrededor de cada punto— son justo lo que una librería genérica
+hace difícil.
+
+Qué forma toma cada cosa, y por qué:
+
+- **Las ventas del año, una línea.** El mes en curso va con el tramo punteado y el punto
+  hueco: va por la mitad, y unirlo con línea llena lo haría parecer un desplome.
+- **Lo que más dejó, barras del mismo color.** El largo ya dice cuánto; pintarlas distinto
+  gastaría el color en repetir lo que la barra muestra.
+- **El pronóstico, un gráfico por producto y los tres a la misma escala.** En un solo dibujo
+  los marcadores de proyección se amontonaban en el mismo punto. Con cada uno a su escala,
+  el producto que vende la cuarta parte se dibujaría igual de alto que los otros.
+- **Los segmentos, una barra segmentada sin cifras.** Las tarjetas ya dan el número de cada
+  grupo; lo que la barra aporta es la proporción. «Perdido» va en gris y no en color: son
+  mil doscientos y se comerían la pantalla, cuando el grupo con el que se puede hacer algo
+  es «en riesgo».
+
+Tres reglas que no se negocian:
+
+- **El texto nunca usa el color de la serie.** Las marcas llevan el color; etiquetas,
+  valores y ejes usan los tonos de texto.
+- **No se etiqueta cada punto**, solo el extremo o el máximo.
+- **Todo gráfico trae su tabla**, detrás de «Ver los números». Es cómo se leen los valores
+  sin pasar el mouse, y por eso vive al lado del gráfico y no en otra pantalla.
+
+**La paleta se calculó, no se eligió.** `SERIE` son cuatro colores en orden fijo, validados
+sobre los dos fondos del panel: banda de luminosidad, piso de croma, separación bajo
+protanopia y deuteranopia, y contraste. El azul de la marca no sirve como color de gráfico
+—como barra se lee gris— y se corrió a un tono de su misma familia que sí pasa. Una quinta
+serie no recibe un color nuevo: se agrupa en «otros». `ATENUADO` es el gris de lo que está
+ahí pero no pide atención.
+
+**Los ejes van con coma decimal.** `11,3M` y no `11.3M`: en Chile el punto separa miles, y
+«11.3M» se lee como once millones trescientos mil.
+
 ## La vitrina
 
 El catálogo es **uno** —`/t/<slug>/productos`— con filtro por forma de venta. Antes eran dos
@@ -268,12 +327,24 @@ Las pruebas del proyecto son todas del backend. Decirlo acá es parte de la deud
 que importan —aislamiento, precios, permisos— viven en el backend y están cubiertas ahí, pero
 una pantalla puede romperse sin que ninguna prueba lo note.
 
-Un aviso que cuesta caro olvidar: el contenedor de `web` guarda `.next` en un volumen
-anónimo, así que un archivo nuevo puede no aparecer hasta
+Un aviso que cuesta caro olvidar: el contenedor de `web` monta `./frontend` desde Windows,
+y ese montaje no avisa cuando aparece un archivo nuevo. Editar uno existente recarga solo;
+**crear uno nuevo no**, y la ruta responde 404 o Turbopack dice `Module not found` con el
+archivo ahí. Se arregla en dos pasos, no en uno:
 
 ```bash
-docker compose up -d --force-recreate --renew-anon-volumes web
+docker compose stop web
 ```
+
+```bash
+docker compose up -d web
+```
+
+**`--force-recreate`, con o sin `--renew-anon-volumes`, no alcanza.** Arranca el servidor
+con el recorrido de rutas incompleto y `/t/<tienda>/productos/<codigo>`, que es la que más
+cae, queda en 404 hasta el siguiente reinicio. Después de levantarlo hay que esperar: el
+`Ready` aparece antes de que termine de recorrer `src/app`, y una petición temprana a una
+ruta profunda recibe un 404 que se queda pegado.
 
 ## Lo que hoy está desalineado
 
