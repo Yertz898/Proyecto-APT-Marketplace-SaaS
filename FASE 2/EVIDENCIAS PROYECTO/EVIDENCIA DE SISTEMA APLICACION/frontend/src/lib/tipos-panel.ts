@@ -341,4 +341,9 @@ export type RespuestaDelAsistente = {
   texto: string;
   /** A qué sección del panel lleva el detalle, si corresponde. */
   seccion: string | null;
+  /**
+   * Quién entendió la pregunta. El texto sale siempre de la base: esto solo
+   * dice si eligió la respuesta el modelo o la tabla de palabras clave.
+   */
+  clasificadoPor: "modelo" | "palabras clave";
 };

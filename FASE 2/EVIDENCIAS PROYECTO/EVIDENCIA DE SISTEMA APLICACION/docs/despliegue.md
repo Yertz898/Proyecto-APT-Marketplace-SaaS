@@ -51,6 +51,7 @@ R2_SECRET_ACCESS_KEY=...
 R2_BUCKET_NAME=...
 R2_ENDPOINT_URL=https://<id-de-cuenta>.r2.cloudflarestorage.com
 R2_PUBLIC_BASE_URL=https://fotos.tudominio.cl
+GEMINI_API_KEY=<opcional: sin ella el asistente usa palabras clave>
 ```
 
 `MEDIA_BASE_URL` no hace falta con R2 configurado: el almacenamiento ya entrega la

@@ -11,7 +11,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from apps.asistente import intenciones
-from apps.asistente.clasificador import LARGO_MAXIMO, clasificar
+from apps.asistente.clasificador import LARGO_MAXIMO, clasificar_con_origen
 from apps.core.permissions import TrabajaEnLaTienda
 
 
@@ -43,11 +43,16 @@ class Preguntar(generics.GenericAPIView):
         if not isinstance(pregunta, str) or not pregunta.strip():
             raise ValidationError({"pregunta": "Escribe una pregunta."})
 
-        respuesta = intenciones.responder(request.user.tienda, clasificar(pregunta))
+        intencion, origen = clasificar_con_origen(pregunta)
+        respuesta = intenciones.responder(request.user.tienda, intencion)
         return Response(
             {
                 "intencion": respuesta.intencion,
                 "texto": respuesta.texto,
                 "seccion": respuesta.seccion,
+                # Quién entendió la pregunta: «modelo» o «palabras clave». Lo
+                # que dice la respuesta sale siempre de la base, nunca del
+                # modelo; esto solo declara cómo se eligió qué responder.
+                "clasificadoPor": origen,
             }
         )

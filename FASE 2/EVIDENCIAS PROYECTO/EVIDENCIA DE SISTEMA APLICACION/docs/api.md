@@ -18,7 +18,7 @@ Hay dos formas y solo dos:
   nombran: no existe la petición que pida los datos de otra tienda.
 
 Un `tienda_id` en el cuerpo o en la query string no se confía nunca. Lo mismo vale para el
-asistente conversacional cuando exista: lo que pida queda acotado a la tienda del token.
+asistente conversacional: lo que pida queda acotado a la tienda del token.
 
 ## Errores
 
@@ -212,6 +212,24 @@ decidió y la lista de clientes. La lista son **los doce que más gastaron de ca
 el orden de prioridad general, y no los cincuenta primeros: ordenados por prioridad, los
 cincuenta salían todos «en riesgo» y el dueño no tenía cómo mirar a sus habituales. El
 conteo sí es del total; la lista es para saber a quién escribirle, no para recorrer la base.
+
+### Asistente
+
+`GET /panel/asistente` lista las preguntas que sabe contestar y el largo máximo.
+`POST /panel/asistente` recibe `{"pregunta": "..."}` y responde:
+
+```jsonc
+{
+  "intencion": "pronostico",
+  "texto": "Para el próximo mes espero …",
+  "seccion": "pronostico",       // a qué pantalla del panel ir por el detalle
+  "clasificadoPor": "modelo"     // o "palabras clave"
+}
+```
+
+`clasificadoPor` dice quién entendió la pregunta: Gemini, cuando hay `GEMINI_API_KEY` y
+respondió, o la tabla de palabras clave. El `texto` sale siempre de la base, nunca del
+modelo. Detalle en `analitica.md`.
 
 ### Carga masiva
 

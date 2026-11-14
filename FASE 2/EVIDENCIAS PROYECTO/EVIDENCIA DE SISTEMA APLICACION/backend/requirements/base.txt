@@ -20,6 +20,10 @@ django-storages~=1.14.6
 boto3~=1.40.0
 Pillow~=11.3.0
 
+# Asistente: el modelo que clasifica las preguntas. En base y no en analítica
+# porque el asistente corre en producción.
+google-genai~=3.3.0
+
 # Servidor de aplicación
 gunicorn~=23.0.0
 whitenoise~=6.11.0                # sirve los estáticos del admin sin un segundo servidor

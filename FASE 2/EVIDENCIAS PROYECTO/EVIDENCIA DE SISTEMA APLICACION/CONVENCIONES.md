@@ -267,7 +267,10 @@ Pendientes con el cliente:
 
 Pendientes del equipo:
 
-- Qué proveedor de modelo de lenguaje usa el asistente conversacional, y con qué presupuesto.
+- ~~Qué proveedor de modelo de lenguaje usa el asistente conversacional.~~ Decidido el
+  12-11-2026: Gemini en su plan gratuito, solo para clasificar la pregunta (ver
+  `docs/analitica.md`). Si el volumen supera el plan gratuito, hay que decidir el
+  presupuesto del plan pagado.
 - Cómo se cobra la suscripción: los precios de los planes están fijados (Básico
   $10.990, Premium $20.990 y Ultimate $35.990 al mes, netos), pero no está decidido por
   dónde se cobran ni si se modela en esta fase.

@@ -255,6 +255,14 @@ MEDIA_BASE_URL = env("MEDIA_BASE_URL", default="")
 # de llenarle el disco a la plataforma.
 TAMANO_MAXIMO_CARGA = env.int("TAMANO_MAXIMO_CARGA", default=20 * 1024 * 1024)
 
+# El modelo que clasifica las preguntas del asistente (apps/asistente/modelo.py).
+#
+# Opcional: sin clave, el asistente clasifica por palabras clave y funciona
+# igual. Plan gratuito de Gemini; solo se le envía la pregunta, nunca datos de
+# la tienda.
+GEMINI_API_KEY = env("GEMINI_API_KEY", default="")
+GEMINI_MODELO = env("GEMINI_MODELO", default="gemini-3.5-flash-lite")
+
 
 # ── Seguridad ───────────────────────────────────────────────────────────────
 # Se endurece sola cuando DEBUG está apagado, para que el ambiente de pruebas y

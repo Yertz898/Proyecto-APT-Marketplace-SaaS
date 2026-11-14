@@ -384,8 +384,7 @@ recuerda la pregunta anterior y no opina.
 
 ### Por qué el modelo de lenguaje no ve los datos
 
-Es la decisión que sostiene todo lo demás. El modelo —cuando se configure uno—
-hace **una sola cosa**: mirar la pregunta y devolver a cuál de esas ocho
+Es la decisión que sostiene todo lo demás. El modelo hace **una sola cosa**: mirar la pregunta y devolver a cuál de esas ocho
 intenciones se parece. Una etiqueta de una lista cerrada, nada más. La
 respuesta la arma el backend leyendo la base con el filtro de tienda de
 siempre.
@@ -398,14 +397,58 @@ Lo que eso compra:
   escribe una persona hasta la base de datos.
 - **No puede inventar cifras.** Salen de las mismas funciones que pintan el
   panel, así que el asistente y las pantallas no se pueden contradecir.
-- **Funciona sin clave de API.** Hoy la clasificación es por palabras clave:
-  entiende menos variantes de la misma pregunta, pero entiende. El modelo es
-  una mejora de la comprensión, no un requisito para que el asistente exista.
+- **Funciona sin clave de API.** Sin modelo, la clasificación es por palabras
+  clave: entiende menos variantes de la misma pregunta, pero entiende. El
+  modelo es una mejora de la comprensión, no un requisito para que el
+  asistente exista.
 
 La frontera está en `clasificador._es_valida`: cualquier respuesta de un
 clasificador externo que no sea una intención conocida se trata como «no
 entendí». La pregunta además se recorta a 500 caracteres y se limpia de todo
 lo que no sea letra, número o espacio **antes** de mirarla.
+
+### El modelo: Gemini, plan gratuito
+
+`apps/asistente/modelo.py`. Se activa con `GEMINI_API_KEY` en el `.env`; el modelo es
+`gemini-3.5-flash-lite` (`GEMINI_MODELO`), el más liviano de los estables, que en el plan
+gratuito no tiene costo.
+
+- **Primero el modelo, después las palabras clave.** Si el modelo no responde en cinco
+  segundos, si no hay conexión, si se topa el límite del plan gratuito o si devuelve algo
+  que no está en la lista, la pregunta se clasifica por palabras clave. El vendedor recibe
+  su respuesta igual y no ve ningún error.
+- **La respuesta está restringida dos veces.** Se le pide a Gemini un JSON con un campo cuyo
+  valor solo puede ser una de las nueve etiquetas, y lo que devuelve pasa igual por
+  `_es_valida`. No se le cree a ciegas: un cambio del lado de Google no puede abrir un
+  camino que acá está cerrado.
+- **Solo viaja la pregunta, y limpia.** En el plan gratuito, Google usa lo que recibe para
+  mejorar sus productos. Por eso no se le envía el nombre de la tienda, ni el de quien
+  pregunta, ni una cifra; y se pide `store=False` para que la conversación no quede
+  guardada. Si algún día hiciera falta mandar algo más, habría que pasar al plan pagado.
+- **El log no guarda la pregunta.** Cuando el modelo falla se anota el tipo de error, nunca
+  lo que escribió la persona.
+- **La API declara quién entendió.** La respuesta trae `clasificadoPor`: `"modelo"` o
+  `"palabras clave"`. Lo que dice la respuesta sale siempre de la base.
+
+### Cuánto entiende
+
+`apps/asistente/preguntas_de_prueba.json` tiene 64 preguntas, escritas **antes** de conectar
+el modelo para no acomodarlas a lo que responda: ocho intenciones con preguntas fáciles,
+paráfrasis sin las palabras de la tabla y faltas de ortografía, más ocho que no se deben
+entender, entre ellas dos intentos de inyección.
+
+    docker compose exec api python manage.py evaluar_asistente
+
+| Clasificación | Aciertos | Medido |
+|---|---|---|
+| Palabras clave | 34 de 64 (53%) | 12-11-2026 |
+| Gemini | pendiente: requiere la clave | — |
+
+Las palabras clave no se equivocan con ninguna de las ocho que debían quedar en «no
+entendí»: lo que fallan son las paráfrasis —«cuál es mi producto estrella», «quién me debe
+plata», «cómo se viene diciembre»—, que es justo lo que un modelo de lenguaje entiende sin
+que alguien escriba cada variante a mano. Una prueba impide que la tabla de palabras baje
+de 34.
 
 ### Lo que se niega a responder
 

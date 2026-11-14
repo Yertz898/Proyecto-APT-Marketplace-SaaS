@@ -12,15 +12,21 @@ palabras conocidas, lo peor que logra una instrucción inyectada es que el
 vendedor reciba la respuesta a otra pregunta **sobre su propia tienda**. No
 hay camino desde el texto hasta la base de datos.
 
-Hoy clasifica por palabras clave. Cuando haya un modelo configurado, su
-respuesta pasa por `_es_valida` antes de usarse: si contesta cualquier cosa
-que no esté en la lista, se trata como «no entendí».
+Con `GEMINI_API_KEY` configurada, primero pregunta al modelo (`modelo.py`). Su
+respuesta pasa por `_es_valida` antes de usarse, y si el modelo no responde o
+contesta algo fuera de la lista, se clasifica por palabras clave. Sin clave,
+solo palabras clave: el asistente funciona igual, entendiendo menos variantes.
 """
 
 import re
 import unicodedata
 
+from apps.asistente import modelo
 from apps.asistente.intenciones import RESPUESTAS
+
+#: Quién decidió la intención. Va en la respuesta de la API.
+POR_MODELO = "modelo"
+POR_PALABRAS_CLAVE = "palabras clave"
 
 #: Cuánto puede escribir el vendedor en una pregunta.
 #:
@@ -118,6 +124,27 @@ PALABRAS = {
 
 
 def clasificar(pregunta: str) -> str:
+    """La intención de la pregunta, por el modelo si hay y si no por palabras."""
+    return clasificar_con_origen(pregunta)[0]
+
+
+def clasificar_con_origen(pregunta: str) -> tuple[str, str]:
+    """
+    La intención y quién la decidió: el modelo o las palabras clave.
+
+    El modelo recibe la pregunta ya normalizada, nunca el texto tal cual lo
+    escribió la persona.
+    """
+    texto = normalizar(pregunta)
+    if not texto:
+        return "no_entendi", POR_PALABRAS_CLAVE
+    elegida = modelo.clasificar(texto)
+    if _es_valida(elegida):
+        return elegida, POR_MODELO
+    return por_palabras_clave(pregunta), POR_PALABRAS_CLAVE
+
+
+def por_palabras_clave(pregunta: str) -> str:
     """
     La intención que mejor calza con la pregunta, o «no_entendi».
 
@@ -169,8 +196,10 @@ def _es_valida(etiqueta) -> bool:
     """
     Si lo que devolvió un clasificador externo es una intención que existe.
 
-    Queda acá, sin usar todavía, porque es la condición que tiene que cumplir
-    cualquier modelo que se conecte después: la frontera entre «texto de un
-    desconocido» y «algo que este sistema ejecuta» es esta función.
+    Es la condición que cumple todo lo que devuelve el modelo antes de usarse:
+    la frontera entre «texto de un desconocido» y «algo que este sistema
+    ejecuta» es esta función. El esquema ya restringe la respuesta de Gemini,
+    pero no se le cree a ciegas: un cambio del lado de Google no puede abrir
+    un camino que acá está cerrado.
     """
     return isinstance(etiqueta, str) and etiqueta in RESPUESTAS
