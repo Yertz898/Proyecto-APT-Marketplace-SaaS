@@ -1,3 +1,5 @@
+import path from "node:path";
+
 import type { NextConfig } from "next";
 
 const enDesarrollo = process.env.NODE_ENV !== "production";
@@ -30,7 +32,20 @@ function patronDeImagenes() {
   };
 }
 
+/*
+ * La raíz del proyecto para Next es esta carpeta, no la del repositorio.
+ *
+ * El frontend vive en «FASE 2/EVIDENCIAS PROYECTO/…/frontend». Si Next empaqueta
+ * tomando como raíz el repositorio, esa ruta —con espacios— termina en el nombre
+ * de la función que Vercel crea para el servidor, y Vercel rechaza el build:
+ * los nombres no pueden tener espacios. Todo lo que el frontend necesita está
+ * dentro de esta carpeta, así que no se pierde nada al fijarla acá.
+ */
+const raizDelFrontend = path.join(__dirname);
+
 const nextConfig: NextConfig = {
+  outputFileTracingRoot: raizDelFrontend,
+  turbopack: { root: raizDelFrontend },
   images: {
     remotePatterns: [patronDeImagenes()],
 
