@@ -79,6 +79,11 @@ class NuevaTiendaSerializer(serializers.Serializer):
     duenoNombre = serializers.CharField(max_length=150)
     duenoEmail = serializers.EmailField()
     duenoPassword = serializers.CharField(write_only=True)
+    # La solicitud de acceso de la que sale esta tienda, si sale de una. Al
+    # crearla, la solicitud queda como activada en la misma transacción.
+    solicitud = serializers.PrimaryKeyRelatedField(
+        queryset=SolicitudDeAcceso.objects.all(), required=False, allow_null=True
+    )
 
     def validate_duenoEmail(self, valor):  # noqa: N802 — nombre del campo
         if Usuario.objects.filter(email__iexact=valor).exists():
@@ -124,6 +129,11 @@ class TiendasDePlataforma(generics.ListCreateAPIView):
             rol=Rol.DUENO_TIENDA,
             tienda=tienda,
         )
+        if v.get("solicitud"):
+            solicitud = v["solicitud"]
+            solicitud.estado = EstadoSolicitud.ACTIVADA
+            solicitud.save(update_fields=["estado"])
+
         tienda = _tiendas_con_conteos().get(pk=tienda.pk)
         return Response(
             TiendaDePlataformaSerializer(tienda).data, status=status.HTTP_201_CREATED

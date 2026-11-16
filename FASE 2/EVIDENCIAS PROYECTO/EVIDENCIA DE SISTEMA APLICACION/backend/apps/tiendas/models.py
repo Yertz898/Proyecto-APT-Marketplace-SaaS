@@ -141,6 +141,18 @@ class Tienda(models.Model):
     def __str__(self):
         return self.nombre
 
+    @property
+    def cerrada_por_la_plataforma(self) -> bool:
+        """
+        Cerrada por la administración, no por su dueño.
+
+        Las dos dejan la vitrina fuera del aire, pero no son lo mismo: quien
+        canceló su propio plan tiene que poder entrar a reanudarlo; una tienda
+        que cerró la administración queda bloqueada también para su equipo
+        hasta que la administración la reabra.
+        """
+        return not self.activa and self.cancelada_en is None
+
 
 class EstadoSolicitud(models.TextChoices):
     NUEVA = "nueva", "Nueva"

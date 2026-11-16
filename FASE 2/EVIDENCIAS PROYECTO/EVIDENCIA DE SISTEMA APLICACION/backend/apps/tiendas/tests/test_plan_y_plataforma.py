@@ -144,3 +144,84 @@ def test_el_registro_nunca_guarda_contrasenas(dueno_a):
     for registro in Registro.objects.all():
         assert "password" not in registro.detalle
         assert "Otra-Clave" not in str(registro.detalle)
+
+
+# ── Tienda desde una solicitud ──────────────────────────────────────────────
+
+
+def test_crear_la_tienda_desde_una_solicitud_la_marca_activada(admin_plataforma):
+    from apps.tiendas.models import EstadoSolicitud, SolicitudDeAcceso
+
+    solicitud = SolicitudDeAcceso.objects.create(
+        negocio="Bazar Sur", nombre="Rosa", email="rosa@ejemplo.cl", telefono="+569"
+    )
+
+    respuesta = como(admin_plataforma).post(
+        "/api/plataforma/tiendas",
+        {
+            "nombre": "Bazar Sur",
+            "slug": "bazar-sur",
+            "duenoNombre": "Rosa",
+            "duenoEmail": "rosa@ejemplo.cl",
+            "duenoPassword": "Clave-Segura-2026",
+            "solicitud": solicitud.pk,
+        },
+        format="json",
+    )
+
+    assert respuesta.status_code == 201
+    solicitud.refresh_from_db()
+    assert solicitud.estado == EstadoSolicitud.ACTIVADA
+
+
+# ── Tienda cerrada por la administración ────────────────────────────────────
+
+
+def _cerrar(tienda):
+    tienda.activa = False
+    tienda.save()
+
+
+def test_el_equipo_de_una_tienda_cerrada_no_inicia_sesion(client, dueno_a, tienda_a):
+    _cerrar(tienda_a)
+
+    respuesta = client.post(
+        "/api/auth/sesion",
+        {"email": dueno_a.email, "password": "clave-de-prueba"},
+        content_type="application/json",
+    )
+
+    assert respuesta.status_code == 403
+    assert "cerrada" in respuesta.json()["error"]["mensaje"]
+
+
+def test_un_token_vigente_deja_de_servir_al_cerrar_la_tienda(dueno_a, tienda_a):
+    cliente = como(dueno_a)
+    assert cliente.get("/api/panel/tienda").status_code == 200
+
+    _cerrar(tienda_a)
+
+    assert cliente.get("/api/panel/tienda").status_code == 403
+    assert cliente.get("/api/panel/productos").status_code == 403
+
+
+def test_quien_cancelo_su_plan_si_entra_para_reanudarlo(client, dueno_a, tienda_a):
+    como(dueno_a).post("/api/panel/plan/cancelar")
+
+    respuesta = client.post(
+        "/api/auth/sesion",
+        {"email": dueno_a.email, "password": "clave-de-prueba"},
+        content_type="application/json",
+    )
+
+    assert respuesta.status_code == 200
+    assert como(dueno_a).post("/api/panel/plan/reanudar").status_code == 200
+
+
+def test_reabrir_la_tienda_devuelve_el_acceso(admin_plataforma, dueno_a, tienda_a):
+    _cerrar(tienda_a)
+    como(admin_plataforma).patch(
+        f"/api/plataforma/tiendas/{tienda_a.slug}", {"activa": True}, format="json"
+    )
+
+    assert como(dueno_a).get("/api/panel/tienda").status_code == 200

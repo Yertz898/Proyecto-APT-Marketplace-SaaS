@@ -66,6 +66,15 @@ class TokenDeSesionSerializer(TokenObtainPairSerializer):
 
     def validate(self, attrs):
         datos = super().validate(attrs)
+        # El equipo de una tienda que cerró la administración no entra: la
+        # contraseña es correcta, pero la tienda no está habilitada.
+        tienda = self.user.tienda if self.user.tienda_id else None
+        if tienda and tienda.cerrada_por_la_plataforma:
+            from rest_framework.exceptions import PermissionDenied
+
+            from apps.core.permissions import MENSAJE_TIENDA_CERRADA
+
+            raise PermissionDenied(MENSAJE_TIENDA_CERRADA)
         datos["usuario"] = UsuarioSerializer(self.user).data
         return datos
 

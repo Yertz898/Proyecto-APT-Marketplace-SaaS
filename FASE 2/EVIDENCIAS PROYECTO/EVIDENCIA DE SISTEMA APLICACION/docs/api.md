@@ -434,6 +434,16 @@ inventario y sin duplicarse si se sube el mismo archivo dos veces.
 | `PATCH` | `/plataforma/solicitudes/<id>` | administrador: estado y notas |
 | `GET` | `/plataforma/registros` | administrador: registro de actividad, con `?tienda=`, `?accion=`, `?q=` y `?pagina=` |
 
+Al crear una tienda se puede mandar `solicitud` con el id de la solicitud de acceso de la
+que sale: en la misma transacción esa solicitud queda como activada. La pantalla lo hace
+con el botón «Crear tienda desde esta solicitud», que además llena el formulario.
+
+**Cerrar no es borrar.** No hay endpoint para eliminar una tienda. Cerrarla (`activa:
+false`) la saca de la vitrina y conserva todo. Si la cerró la administración, su equipo
+tampoco entra al panel —ni al iniciar sesión ni con un token vigente— hasta que se reabra.
+Si la cerró su dueño al cancelar el plan, el dueño sí entra, para poder reanudarlo
+(`Tienda.cerrada_por_la_plataforma` distingue los dos casos).
+
 `/solicitudes-de-acceso` tiene su propio límite por IP (`THROTTLE_SOLICITUDES`). No
 responde nada que la persona no haya escrito ella misma: un correo repetido devuelve un
 mensaje de recibo y no la invitación a averiguar qué negocios ya pidieron entrar.

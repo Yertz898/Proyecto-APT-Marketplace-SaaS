@@ -51,6 +51,8 @@ type Pestana = "tiendas" | "solicitudes" | "registro";
 export function PantallaPlataforma() {
   const [pestana, setPestana] = useState<Pestana>("tiendas");
   const [tiendaDelRegistro, setTiendaDelRegistro] = useState("");
+  // La solicitud que se está convirtiendo en tienda: llena el formulario.
+  const [desdeSolicitud, setDesdeSolicitud] = useState<SolicitudDeAcceso | null>(null);
 
   return (
     <>
@@ -85,13 +87,22 @@ export function PantallaPlataforma() {
 
       {pestana === "tiendas" && (
         <Tiendas
+          desdeSolicitud={desdeSolicitud}
+          onCreada={() => setDesdeSolicitud(null)}
           onVerRegistro={(slug) => {
             setTiendaDelRegistro(slug);
             setPestana("registro");
           }}
         />
       )}
-      {pestana === "solicitudes" && <Solicitudes />}
+      {pestana === "solicitudes" && (
+        <Solicitudes
+          onCrearTienda={(solicitud) => {
+            setDesdeSolicitud(solicitud);
+            setPestana("tiendas");
+          }}
+        />
+      )}
       {pestana === "registro" && <Registro tiendaInicial={tiendaDelRegistro} />}
     </>
   );
@@ -99,7 +110,15 @@ export function PantallaPlataforma() {
 
 // ── Tiendas ─────────────────────────────────────────────────────────────────
 
-function Tiendas({ onVerRegistro }: { onVerRegistro: (slug: string) => void }) {
+function Tiendas({
+  desdeSolicitud,
+  onCreada,
+  onVerRegistro,
+}: {
+  desdeSolicitud: SolicitudDeAcceso | null;
+  onCreada: () => void;
+  onVerRegistro: (slug: string) => void;
+}) {
   const [tiendas, setTiendas] = useState<TiendaDePlataforma[] | null>(null);
   const [fallo, setFallo] = useState<string | null>(null);
 
@@ -122,7 +141,14 @@ function Tiendas({ onVerRegistro }: { onVerRegistro: (slug: string) => void }) {
           <FilaDeTienda key={tienda.id} tienda={tienda} onCambio={reemplazar} onVerRegistro={onVerRegistro} />
         ))}
       </div>
-      <NuevaTiendaFormulario onCreada={(t) => setTiendas((actual) => [...(actual ?? []), t])} />
+      <NuevaTiendaFormulario
+        key={desdeSolicitud?.id ?? "nueva"}
+        desdeSolicitud={desdeSolicitud}
+        onCreada={(t) => {
+          setTiendas((actual) => [...(actual ?? []), t]);
+          onCreada();
+        }}
+      />
     </div>
   );
 }
@@ -253,8 +279,26 @@ function sugerirSlug(nombre: string): string {
     .slice(0, 60);
 }
 
-function NuevaTiendaFormulario({ onCreada }: { onCreada: (t: TiendaDePlataforma) => void }) {
-  const [datos, setDatos] = useState<NuevaTienda>(TIENDA_VACIA);
+/** Lo que se sabe de una solicitud, puesto en el formulario de tienda nueva. */
+function desde(solicitud: SolicitudDeAcceso): NuevaTienda {
+  return {
+    ...TIENDA_VACIA,
+    nombre: solicitud.negocio,
+    slug: sugerirSlug(solicitud.negocio),
+    duenoNombre: solicitud.nombre,
+    duenoEmail: solicitud.email,
+    solicitud: solicitud.id,
+  };
+}
+
+function NuevaTiendaFormulario({
+  desdeSolicitud,
+  onCreada,
+}: {
+  desdeSolicitud: SolicitudDeAcceso | null;
+  onCreada: (t: TiendaDePlataforma) => void;
+}) {
+  const [datos, setDatos] = useState<NuevaTienda>(desdeSolicitud ? desde(desdeSolicitud) : TIENDA_VACIA);
   const [slugTocado, setSlugTocado] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [errores, setErrores] = useState<Record<string, string | null>>({});
@@ -299,6 +343,12 @@ function NuevaTiendaFormulario({ onCreada }: { onCreada: (t: TiendaDePlataforma)
           <p className="font-jakarta text-[17px] font-bold">Nueva tienda</p>
           <p className="mt-1 text-[13px] text-pizarra">La tienda y la cuenta de su dueño, en un paso.</p>
         </div>
+        {datos.solicitud && (
+          <p className="rounded-[10px] bg-cielo px-3 py-2 text-[13px] text-acero">
+            Desde la solicitud de {datos.nombre}. Al crearla, la solicitud queda como activada.
+            Solo falta la contraseña inicial.
+          </p>
+        )}
         <Campo id="nt-nombre" etiqueta="Nombre de la tienda" value={datos.nombre} onChange={(e) => cambiar("nombre", e.target.value)} error={errores.nombre} />
         <Campo
           id="nt-slug"
@@ -377,7 +427,7 @@ const ESTADOS: { valor: SolicitudDeAcceso["estado"]; nombre: string }[] = [
   { valor: "descartada", nombre: "Descartada" },
 ];
 
-function Solicitudes() {
+function Solicitudes({ onCrearTienda }: { onCrearTienda: (s: SolicitudDeAcceso) => void }) {
   const [solicitudes, setSolicitudes] = useState<SolicitudDeAcceso[] | null>(null);
   const [fallo, setFallo] = useState<string | null>(null);
 
@@ -402,6 +452,11 @@ function Solicitudes() {
                 {solicitud.nombre} · {solicitud.email} · {solicitud.telefono} · {formatearFecha(solicitud.fecha)}
               </p>
               {solicitud.mensaje && <p className="mt-2 text-[14px] text-marino">«{solicitud.mensaje}»</p>}
+              {solicitud.estado !== "activada" && solicitud.estado !== "descartada" && (
+                <Boton className="mt-3 h-9 px-3 text-[13px]" onClick={() => onCrearTienda(solicitud)}>
+                  Crear tienda desde esta solicitud
+                </Boton>
+              )}
             </div>
             <select
               aria-label={`Estado de la solicitud de ${solicitud.negocio}`}

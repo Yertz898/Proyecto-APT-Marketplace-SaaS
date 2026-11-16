@@ -112,6 +112,8 @@ export type NuevaTienda = {
   duenoNombre: string;
   duenoEmail: string;
   duenoPassword: string;
+  /** La solicitud de acceso de la que sale, si sale de una: queda como activada. */
+  solicitud?: number | null;
 };
 
 export type SolicitudDeAcceso = {

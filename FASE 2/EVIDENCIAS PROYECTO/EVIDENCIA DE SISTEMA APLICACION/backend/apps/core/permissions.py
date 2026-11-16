@@ -23,6 +23,17 @@ class EsAdminPlataforma(BasePermission):
         )
 
 
+MENSAJE_TIENDA_CERRADA = (
+    "Tu tienda está cerrada por la administración de DealCommerce. "
+    "Escríbenos para reabrirla."
+)
+
+
+def _tienda_cerrada(usuario) -> bool:
+    """La tienda del usuario la cerró la administración (ver Tienda)."""
+    return bool(usuario.tienda_id and usuario.tienda.cerrada_por_la_plataforma)
+
+
 class TrabajaEnLaTienda(BasePermission):
     """Dueño o vendedor: administran los datos de su propia tienda."""
 
@@ -30,12 +41,17 @@ class TrabajaEnLaTienda(BasePermission):
 
     def has_permission(self, request, view):
         usuario = request.user
-        return bool(
+        if not (
             usuario
             and usuario.is_authenticated
             and usuario.trabaja_en_tienda
             and usuario.tienda_id
-        )
+        ):
+            return False
+        if _tienda_cerrada(usuario):
+            self.message = MENSAJE_TIENDA_CERRADA
+            return False
+        return True
 
 
 class EsDuenoDeTienda(BasePermission):
@@ -50,12 +66,17 @@ class EsDuenoDeTienda(BasePermission):
 
     def has_permission(self, request, view):
         usuario = request.user
-        return bool(
+        if not (
             usuario
             and usuario.is_authenticated
             and usuario.rol == Rol.DUENO_TIENDA
             and usuario.tienda_id
-        )
+        ):
+            return False
+        if _tienda_cerrada(usuario):
+            self.message = MENSAJE_TIENDA_CERRADA
+            return False
+        return True
 
 
 class EsComprador(BasePermission):
