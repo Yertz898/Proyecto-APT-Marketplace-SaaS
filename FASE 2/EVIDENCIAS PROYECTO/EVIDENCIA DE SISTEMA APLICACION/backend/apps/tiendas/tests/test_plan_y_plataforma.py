@@ -182,7 +182,7 @@ def _cerrar(tienda):
     tienda.save()
 
 
-def test_el_equipo_de_una_tienda_cerrada_no_inicia_sesion(client, dueno_a, tienda_a):
+def test_el_dueno_de_una_tienda_cerrada_entra_y_lo_sabe(client, dueno_a, tienda_a):
     _cerrar(tienda_a)
 
     respuesta = client.post(
@@ -191,8 +191,21 @@ def test_el_equipo_de_una_tienda_cerrada_no_inicia_sesion(client, dueno_a, tiend
         content_type="application/json",
     )
 
+    assert respuesta.status_code == 200
+    assert respuesta.json()["usuario"]["tienda"]["cerrada"] is True
+
+
+def test_un_vendedor_de_una_tienda_cerrada_no_entra(client, vendedor_b, tienda_b):
+    _cerrar(tienda_b)
+
+    respuesta = client.post(
+        "/api/auth/sesion",
+        {"email": vendedor_b.email, "password": "clave-de-prueba"},
+        content_type="application/json",
+    )
+
     assert respuesta.status_code == 403
-    assert "cerrada" in respuesta.json()["error"]["mensaje"]
+    assert respuesta.json()["error"]["codigo"] == "tienda_cerrada"
 
 
 def test_un_token_vigente_deja_de_servir_al_cerrar_la_tienda(dueno_a, tienda_a):
@@ -229,40 +242,25 @@ def test_reabrir_la_tienda_devuelve_el_acceso(admin_plataforma, dueno_a, tienda_
 
 # ── Mensajes de una tienda cerrada ──────────────────────────────────────────
 
-URL_MENSAJE = "/api/auth/mensaje-a-la-plataforma"
+URL_MENSAJE = "/api/panel/mensaje-a-la-plataforma"
 
 
-def _escribir(client, email, password="clave-de-prueba", mensaje="Quiero reabrir"):
-    return client.post(
-        URL_MENSAJE,
-        {"email": email, "password": password, "mensaje": mensaje},
-        content_type="application/json",
-    )
-
-
-def test_el_inicio_de_sesion_avisa_con_codigo_propio(client, dueno_a, tienda_a):
-    _cerrar(tienda_a)
-
-    respuesta = client.post(
-        "/api/auth/sesion",
-        {"email": dueno_a.email, "password": "clave-de-prueba"},
-        content_type="application/json",
-    )
-
-    assert respuesta.json()["error"]["codigo"] == "tienda_cerrada"
-
-
-def test_el_equipo_de_una_tienda_cerrada_escribe_y_el_admin_lo_lee(
-    client, dueno_a, tienda_a, admin_plataforma
+def test_el_dueno_escribe_y_los_datos_salen_de_su_cuenta(
+    dueno_a, tienda_a, admin_plataforma
 ):
     _cerrar(tienda_a)
 
-    assert _escribir(client, dueno_a.email).status_code == 201
+    respuesta = como(dueno_a).post(
+        URL_MENSAJE,
+        # Lo que se mande además del mensaje se ignora: los datos los pone la cuenta.
+        {"mensaje": "Quiero reabrir", "email": "otro@ejemplo.cl", "tienda": 999},
+        format="json",
+    )
+    assert respuesta.status_code == 201
 
-    respuesta = como(admin_plataforma).get("/api/plataforma/mensajes")
-    assert respuesta.status_code == 200
-    [mensaje] = respuesta.json()
+    [mensaje] = como(admin_plataforma).get("/api/plataforma/mensajes").json()
     assert mensaje["tiendaSlug"] == tienda_a.slug
+    assert mensaje["email"] == dueno_a.email
     assert mensaje["mensaje"] == "Quiero reabrir"
     assert mensaje["leido"] is False
 
@@ -272,22 +270,38 @@ def test_el_equipo_de_una_tienda_cerrada_escribe_y_el_admin_lo_lee(
     assert marcado.json()["leido"] is True
 
 
-def test_sin_la_contrasena_correcta_no_se_escribe(client, dueno_a, tienda_a):
-    from apps.tiendas.models import MensajeDeTienda
-
+def test_el_dueno_de_una_tienda_cerrada_no_usa_el_resto_del_panel(dueno_a, tienda_a):
     _cerrar(tienda_a)
 
-    respuesta = _escribir(client, dueno_a.email, password="otra")
-
-    # Sin autenticadores en la vista, DRF responde 403 y no 401; lo que importa
-    # es que no pasa y que el código dice por qué.
-    assert respuesta.status_code in (401, 403)
-    assert respuesta.json()["error"]["codigo"] == "credenciales_invalidas"
-    assert not MensajeDeTienda.objects.exists()
+    assert como(dueno_a).get("/api/panel/productos").status_code == 403
 
 
-def test_una_tienda_abierta_no_escribe_por_aca(client, dueno_a):
-    assert _escribir(client, dueno_a.email).status_code == 400
+def test_un_vendedor_no_escribe_por_aca(vendedor_b, tienda_b):
+    _cerrar(tienda_b)
+
+    assert (
+        como(vendedor_b)
+        .post(URL_MENSAJE, {"mensaje": "Hola hola"}, format="json")
+        .status_code
+        == 403
+    )
+
+
+def test_una_tienda_abierta_no_escribe_por_aca(dueno_a):
+    assert (
+        como(dueno_a)
+        .post(URL_MENSAJE, {"mensaje": "Hola hola"}, format="json")
+        .status_code
+        == 403
+    )
+
+
+def test_sin_sesion_no_se_escribe(client):
+    respuesta = client.post(
+        URL_MENSAJE, {"mensaje": "Hola hola"}, content_type="application/json"
+    )
+
+    assert respuesta.status_code == 401
 
 
 def test_solo_el_admin_lee_los_mensajes(dueno_b):

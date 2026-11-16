@@ -40,6 +40,7 @@ def test_entrega_los_dos_tokens_y_quien_inicio_sesion(client, dueno_a, tienda_a)
         "slug": tienda_a.slug,
         "nombre": tienda_a.nombre,
         "plan": tienda_a.plan,
+        "cerrada": False,
     }
 
 

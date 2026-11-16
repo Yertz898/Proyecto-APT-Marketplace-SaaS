@@ -57,6 +57,8 @@ export type TiendaDeLaSesion = {
   slug: string;
   nombre: string;
   plan: Plan;
+  /** La cerró la administración: el panel del dueño se reduce a escribirle. */
+  cerrada?: boolean;
 };
 
 /**

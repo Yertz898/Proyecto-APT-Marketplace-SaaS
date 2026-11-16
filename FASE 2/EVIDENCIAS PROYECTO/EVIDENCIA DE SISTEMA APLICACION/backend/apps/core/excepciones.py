@@ -24,13 +24,14 @@ class TiendaCerrada(exceptions.PermissionDenied):
     """
     La cuenta es válida, pero su tienda la cerró la administración.
 
-    Tiene código propio para que la pantalla de inicio de sesión ofrezca
-    escribirle a DealCommerce en vez de mostrar un «sin permiso» a secas.
+    Solo le pasa a los vendedores: el dueño sí entra, a una pantalla desde la
+    que puede escribirle a DealCommerce. Tiene código propio para que el
+    formulario lo distinga de un «sin permiso» a secas.
     """
 
     default_detail = (
         "Tu tienda está cerrada por la administración de DealCommerce. "
-        "Escríbenos para reabrirla."
+        "El dueño de la tienda puede escribirnos para reabrirla."
     )
 
 

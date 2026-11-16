@@ -439,17 +439,20 @@ que sale: en la misma transacción esa solicitud queda como activada. La pantall
 con el botón «Crear tienda desde esta solicitud», que además llena el formulario.
 
 **Cerrar no es borrar.** No hay endpoint para eliminar una tienda. Cerrarla (`activa:
-false`) la saca de la vitrina y conserva todo. Si la cerró la administración, su equipo
-tampoco entra al panel —ni al iniciar sesión ni con un token vigente— hasta que se reabra.
-Si la cerró su dueño al cancelar el plan, el dueño sí entra, para poder reanudarlo
-(`Tienda.cerrada_por_la_plataforma` distingue los dos casos).
+false`) la saca de la vitrina y conserva todo. Si la cerró su dueño al cancelar el plan,
+el dueño entra normalmente, para poder reanudarlo. Si la cerró la administración
+(`Tienda.cerrada_por_la_plataforma`):
 
-El inicio de sesión rechaza a ese equipo con el código `tienda_cerrada`, y la pantalla
-ofrece **Escribir a DealCommerce**. El mensaje va a `POST /auth/mensaje-a-la-plataforma`
-con el correo y la contraseña —no hay sesión que usar—, que el backend vuelve a verificar;
-solo lo acepta si la tienda de esa cuenta está cerrada por la administración, y lleva el
-límite de frecuencia del inicio de sesión. La administración lo lee en
-`GET /plataforma/mensajes` y lo marca con `PATCH /plataforma/mensajes/<id>` (`leido`).
+- **Los vendedores no inician sesión.** Reciben el código `tienda_cerrada` y el aviso de
+  que el dueño puede escribirle a DealCommerce.
+- **El dueño sí inicia sesión**, y la sesión trae `tienda.cerrada: true`. El panel se le
+  reduce a una pantalla, **Escribir a DealCommerce**, y cada endpoint del panel lo sigue
+  rechazando. Su mensaje va a `POST /panel/mensaje-a-la-plataforma` con su sesión y solo
+  el texto: la tienda, el nombre y el correo los pone el backend desde la cuenta.
+- La administración lo lee en `GET /plataforma/mensajes` y lo marca con
+  `PATCH /plataforma/mensajes/<id>` (`leido`).
+- Al abrir el panel se vuelve a pedir `/auth/yo`, así que cuando la tienda se reabre el
+  dueño recupera el panel sin volver a iniciar sesión.
 
 `/solicitudes-de-acceso` tiene su propio límite por IP (`THROTTLE_SOLICITUDES`). No
 responde nada que la persona no haya escrito ella misma: un correo repetido devuelve un

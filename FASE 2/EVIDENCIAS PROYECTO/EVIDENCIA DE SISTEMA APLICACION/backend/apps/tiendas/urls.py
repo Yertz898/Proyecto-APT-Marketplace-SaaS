@@ -45,7 +45,7 @@ urlpatterns = [
         name="plataforma-solicitud",
     ),
     path(
-        "auth/mensaje-a-la-plataforma",
+        "panel/mensaje-a-la-plataforma",
         EscribirALaPlataforma.as_view(),
         name="mensaje-a-la-plataforma",
     ),

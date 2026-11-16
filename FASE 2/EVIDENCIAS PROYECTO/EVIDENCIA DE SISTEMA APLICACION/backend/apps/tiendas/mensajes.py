@@ -1,62 +1,64 @@
 """
-Mensajes del equipo de una tienda cerrada a la administración.
+Mensajes del dueño de una tienda cerrada a la administración.
 
-Quien escribe no tiene sesión: su tienda está cerrada y el inicio de sesión lo
-rechaza. Por eso el mensaje se manda con el correo y la contraseña, que se
-vuelven a verificar acá. Sin eso, cualquiera podría escribir a nombre de
-cualquier tienda. Lleva el mismo límite de frecuencia que el inicio de sesión.
+Cuando la administración cierra una tienda, su dueño todavía puede iniciar
+sesión, pero el panel se le reduce a una pantalla: la que le permite escribirle
+a DealCommerce. El mensaje sale de su sesión. La tienda, el nombre y el correo
+los pone el backend desde la cuenta, y la persona solo escribe qué necesita.
 """
 
-from django.contrib.auth import authenticate
 from rest_framework import generics, serializers, status
-from rest_framework.exceptions import AuthenticationFailed
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import BasePermission
 from rest_framework.response import Response
-from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from apps.core.permissions import EsAdminPlataforma
 from apps.tiendas.models import MensajeDeTienda
+from apps.usuarios.models import Rol
+
+
+class EsDuenoDeTiendaCerrada(BasePermission):
+    """El dueño de una tienda que cerró la administración, y nadie más."""
+
+    message = "Solo el dueño de una tienda cerrada puede escribir por acá."
+
+    def has_permission(self, request, view):
+        usuario = request.user
+        return bool(
+            usuario
+            and usuario.is_authenticated
+            and usuario.rol == Rol.DUENO_TIENDA
+            and usuario.tienda_id
+            and usuario.tienda.cerrada_por_la_plataforma
+        )
 
 
 class MensajeNuevoSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-    password = serializers.CharField(write_only=True)
     mensaje = serializers.CharField(max_length=2000)
+
+    def validate_mensaje(self, valor):
+        valor = valor.strip()
+        if len(valor) < 5:
+            raise serializers.ValidationError("Cuéntanos un poco más.")
+        return valor
 
 
 class EscribirALaPlataforma(APIView):
-    """POST /auth/mensaje-a-la-plataforma: solo para el equipo de una tienda cerrada."""
+    """POST /panel/mensaje-a-la-plataforma: el dueño de una tienda cerrada escribe."""
 
-    permission_classes = [AllowAny]
-    authentication_classes = []
-    throttle_classes = [ScopedRateThrottle]
-    throttle_scope = "autenticacion"
+    permission_classes = [EsDuenoDeTiendaCerrada]
 
     def post(self, request):
         datos = MensajeNuevoSerializer(data=request.data)
         datos.is_valid(raise_exception=True)
-        v = datos.validated_data
 
-        usuario = authenticate(
-            request, email=v["email"].lower(), password=v["password"]
-        )
-        if usuario is None:
-            raise AuthenticationFailed()
-
-        tienda = usuario.tienda if usuario.tienda_id else None
-        if tienda is None or not tienda.cerrada_por_la_plataforma:
-            # Una tienda abierta escribe desde su panel, no desde acá.
-            raise serializers.ValidationError(
-                {"general": "Tu tienda no está cerrada: entra al panel normalmente."}
-            )
-
+        usuario = request.user
         MensajeDeTienda.objects.create(
-            tienda=tienda,
+            tienda=usuario.tienda,
             usuario=usuario,
             nombre=usuario.nombre,
             email=usuario.email,
-            mensaje=v["mensaje"].strip(),
+            mensaje=datos.validated_data["mensaje"],
         )
         return Response(
             {"mensaje": "Recibimos tu mensaje. Te vamos a escribir a tu correo."},

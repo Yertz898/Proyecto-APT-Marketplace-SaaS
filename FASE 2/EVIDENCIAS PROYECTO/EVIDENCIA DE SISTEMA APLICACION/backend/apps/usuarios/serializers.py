@@ -26,6 +26,10 @@ class TiendaDeLaSesionSerializer(serializers.Serializer):
     slug = serializers.SlugField(read_only=True)
     nombre = serializers.CharField(read_only=True)
     plan = serializers.CharField(read_only=True)
+    # La cerró la administración: el panel del dueño se reduce a escribirle.
+    cerrada = serializers.BooleanField(
+        source="cerrada_por_la_plataforma", read_only=True
+    )
 
 
 class UsuarioSerializer(serializers.ModelSerializer):
@@ -66,10 +70,15 @@ class TokenDeSesionSerializer(TokenObtainPairSerializer):
 
     def validate(self, attrs):
         datos = super().validate(attrs)
-        # El equipo de una tienda que cerró la administración no entra: la
-        # contraseña es correcta, pero la tienda no está habilitada.
+        # Los vendedores de una tienda que cerró la administración no entran.
+        # El dueño sí: su panel se reduce a la pantalla desde la que le escribe
+        # a DealCommerce, y todo lo demás lo sigue rechazando cada endpoint.
         tienda = self.user.tienda if self.user.tienda_id else None
-        if tienda and tienda.cerrada_por_la_plataforma:
+        if (
+            tienda
+            and tienda.cerrada_por_la_plataforma
+            and self.user.rol != Rol.DUENO_TIENDA
+        ):
             from apps.core.excepciones import TiendaCerrada
 
             raise TiendaCerrada()

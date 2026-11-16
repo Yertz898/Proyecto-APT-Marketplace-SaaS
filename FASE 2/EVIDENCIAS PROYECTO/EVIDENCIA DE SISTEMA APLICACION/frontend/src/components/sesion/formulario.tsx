@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { Campo, type TemaDeFormulario } from "@/components/campo";
-import { EscribirADealCommerce } from "@/components/sesion/escribir-a-dealcommerce";
 import { ErrorDeApi } from "@/lib/api/errores";
 import { iniciarSesion, registrarComprador } from "@/lib/api/sesion";
 import type { Sesion } from "@/lib/sesion";
@@ -119,10 +118,6 @@ export function FormularioDeSesion({
         </p>
       )}
 
-      {/* La tienda la cerró la administración: la única salida es escribirle. */}
-      {error?.codigo === "tienda_cerrada" && (
-        <EscribirADealCommerce email={email} password={password} tema={tema} />
-      )}
 
       {creando && (
         <Campo

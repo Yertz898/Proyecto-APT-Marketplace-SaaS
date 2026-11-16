@@ -163,20 +163,26 @@ export const borrarTramo = (id: number) => pedir<void>(`/panel/tramos/${id}`, "D
 // ── Mensajes de tiendas cerradas ────────────────────────────────────────────
 
 /**
- * El equipo de una tienda cerrada le escribe a la administración.
+ * El dueño de una tienda cerrada le escribe a la administración.
  *
- * Va sin sesión —la tienda cerrada no deja iniciarla— y con el correo y la
- * contraseña, que el backend vuelve a verificar. Devuelve el texto de recibo.
+ * Va con su sesión: la tienda, el nombre y el correo los pone el backend desde
+ * la cuenta, y acá solo viaja lo que la persona escribió. Devuelve el recibo.
  */
-export async function escribirALaPlataforma(email: string, password: string, mensaje: string): Promise<string> {
-  const respuesta = await pedirConSesion("/auth/mensaje-a-la-plataforma", {
-    method: "POST",
-    body: JSON.stringify({ email, password, mensaje }),
-  });
-  if (!respuesta.ok) {
-    throw await leerError(respuesta);
-  }
-  return ((await respuesta.json()) as { mensaje: string }).mensaje;
+export async function escribirALaPlataforma(mensaje: string): Promise<string> {
+  const respuesta = await pedir<{ mensaje: string }>("/panel/mensaje-a-la-plataforma", "POST", { mensaje });
+  return respuesta.mensaje;
+}
+
+/**
+ * Vuelve a pedir quién es la sesión y la guarda.
+ *
+ * Sirve para enterarse de que la administración cerró o reabrió la tienda sin
+ * tener que cerrar la sesión y volver a entrar.
+ */
+export async function refrescarUsuario(): Promise<void> {
+  const usuario = await pedir<UsuarioSesion>("/auth/yo");
+  const sesion = instantanea();
+  if (sesion) guardarSesion({ ...sesion, usuario });
 }
 
 export type MensajeDeTienda = {

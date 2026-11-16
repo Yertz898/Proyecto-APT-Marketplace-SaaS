@@ -5,10 +5,12 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
 
 import { esAdminDePlataforma, trabajaEnTienda, useSesion } from "@/components/sesion/usar-sesion";
+import { refrescarUsuario } from "@/lib/api/gestion";
 import { cerrarSesion } from "@/lib/api/sesion";
 
 import { BloqueadaPorPlan, Cargando, SinPermiso } from "./piezas";
 import { planAlcanza, rolAlcanza, seccionDe } from "./secciones";
+import { TiendaCerrada } from "./tienda-cerrada";
 
 /*
  * Puerta del panel.
@@ -34,6 +36,17 @@ export function GuardiaDelPanel({ children }: { children: ReactNode }) {
     }
   }, [hayQueEntrar, router, ruta]);
 
+  // Al abrir el panel se vuelve a preguntar por la cuenta: si la administración
+  // cerró o reabrió la tienda, el panel se entera sin tener que volver a entrar.
+  const conTienda = trabajaEnTienda(sesion);
+  useEffect(() => {
+    if (conTienda) {
+      refrescarUsuario().catch(() => {
+        // Sin conexión se sigue con lo que hay; el backend decide igual.
+      });
+    }
+  }, [conTienda]);
+
   // Antes de que el navegador lea el almacenamiento, "sin sesión" no quiere
   // decir que no haya: quiere decir que todavía no se sabe.
   if (!hidratado || hayQueEntrar) {
@@ -42,6 +55,11 @@ export function GuardiaDelPanel({ children }: { children: ReactNode }) {
 
   if (!trabajaEnTienda(sesion)) {
     return <CuentaSinPanel esDePlataforma={esAdminDePlataforma(sesion)} />;
+  }
+
+  // La tienda la cerró la administración: el dueño solo puede escribirle.
+  if (sesion?.usuario.tienda?.cerrada) {
+    return <TiendaCerrada usuario={sesion.usuario} />;
   }
 
   const seccion = seccionDe(ruta);
