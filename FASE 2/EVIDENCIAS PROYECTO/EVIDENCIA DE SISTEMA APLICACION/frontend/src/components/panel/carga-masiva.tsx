@@ -46,6 +46,8 @@ export function CargaMasiva({ tipo }: { tipo: TipoCarga }) {
   const [archivo, setArchivo] = useState<File | null>(null);
   const [rechazo, setRechazo] = useState<string | null>(null);
   const [estado, setEstado] = useState<Estado>({ paso: "elegir" });
+  // Va aparte del paso para que el resumen siga a la vista mientras se aplica.
+  const [aplicando, setAplicando] = useState(false);
 
   useEffect(() => {
     obtenerLimitesDeCarga().then(setLimites);
@@ -87,12 +89,17 @@ export function CargaMasiva({ tipo }: { tipo: TipoCarga }) {
   }
 
   async function confirmar(cargaId: string, desactivarAusentes: boolean) {
+    if (aplicando) return;
+
+    setAplicando(true);
     try {
       await confirmarCarga(cargaId, desactivarAusentes);
       setArchivo(null);
       setEstado({ paso: "aplicada" });
     } catch (error) {
       setEstado({ paso: "error", mensaje: mensajeDeError(error) });
+    } finally {
+      setAplicando(false);
     }
   }
 
@@ -156,6 +163,7 @@ export function CargaMasiva({ tipo }: { tipo: TipoCarga }) {
           type="file"
           accept={extensiones.join(",")}
           aria-label="Archivo a cargar"
+          disabled={aplicando}
           onChange={(evento) => elegirArchivo(evento.target.files?.[0] ?? null)}
           className="mt-4 block w-full cursor-pointer rounded-[12px] border border-dashed border-arena-honda bg-hueso p-4 text-[13px] text-pizarra file:mr-4 file:cursor-pointer file:rounded-[10px] file:border-0 file:bg-acero file:px-4 file:py-2 file:text-[13px] file:font-semibold file:text-white"
         />
@@ -174,7 +182,7 @@ export function CargaMasiva({ tipo }: { tipo: TipoCarga }) {
 
         <button
           type="button"
-          disabled={!archivo || estado.paso === "validando"}
+          disabled={!archivo || estado.paso === "validando" || aplicando}
           onClick={revisar}
           className="mt-4 h-11 cursor-pointer rounded-[12px] bg-acero px-6 text-sm font-semibold text-white transition-colors hover:bg-acero-hondo disabled:cursor-not-allowed disabled:opacity-50"
         >
@@ -197,6 +205,7 @@ export function CargaMasiva({ tipo }: { tipo: TipoCarga }) {
       {estado.paso === "revisar" && (
         <ResumenDeCarga
           resumen={estado.resumen}
+          aplicando={aplicando}
           onConfirmar={(desactivarAusentes) => confirmar(estado.resumen.cargaId, desactivarAusentes)}
           onCancelar={() => cancelar(estado.resumen.cargaId)}
         />
@@ -205,6 +214,7 @@ export function CargaMasiva({ tipo }: { tipo: TipoCarga }) {
       {estado.paso === "revisarFotos" && (
         <ResumenDeFotos
           resumen={estado.resumen}
+          aplicando={aplicando}
           onConfirmar={() => confirmar(estado.resumen.cargaId, false)}
           onCancelar={() => cancelar(estado.resumen.cargaId)}
         />

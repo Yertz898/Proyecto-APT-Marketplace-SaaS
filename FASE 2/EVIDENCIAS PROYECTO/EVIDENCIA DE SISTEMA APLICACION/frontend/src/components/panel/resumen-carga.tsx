@@ -14,16 +14,18 @@ import type { ResumenCarga, ResumenFotos } from "@/lib/tipos-panel";
 
 const CLASES_TARJETA = "rounded-[12px] border border-arena bg-hueso p-4";
 const CLASES_BOTON_PRINCIPAL =
-  "h-11 cursor-pointer rounded-[12px] bg-acero px-6 text-sm font-semibold text-white transition-colors hover:bg-acero-hondo";
+  "h-11 cursor-pointer rounded-[12px] bg-acero px-6 text-sm font-semibold text-white transition-colors hover:bg-acero-hondo disabled:cursor-not-allowed disabled:opacity-50";
 const CLASES_BOTON_SECUNDARIO =
-  "h-11 cursor-pointer rounded-[12px] border border-niebla bg-transparent px-6 text-sm font-semibold text-acero transition-colors hover:bg-cielo";
+  "h-11 cursor-pointer rounded-[12px] border border-niebla bg-transparent px-6 text-sm font-semibold text-acero transition-colors hover:bg-cielo disabled:cursor-not-allowed disabled:opacity-50";
 
 export function ResumenDeCarga({
   resumen,
+  aplicando,
   onConfirmar,
   onCancelar,
 }: {
   resumen: ResumenCarga;
+  aplicando: boolean;
   onConfirmar: (desactivarAusentes: boolean) => void;
   onCancelar: () => void;
 }) {
@@ -75,24 +77,23 @@ export function ResumenDeCarga({
         </label>
       )}
 
-      <div className="mt-6 flex flex-wrap gap-3">
-        <button type="button" onClick={() => onConfirmar(desactivarAusentes)} className={CLASES_BOTON_PRINCIPAL}>
-          Confirmar y aplicar
-        </button>
-        <button type="button" onClick={onCancelar} className={CLASES_BOTON_SECUNDARIO}>
-          Cancelar
-        </button>
-      </div>
+      <BotonesDeConfirmacion
+        aplicando={aplicando}
+        onConfirmar={() => onConfirmar(desactivarAusentes)}
+        onCancelar={onCancelar}
+      />
     </section>
   );
 }
 
 export function ResumenDeFotos({
   resumen,
+  aplicando,
   onConfirmar,
   onCancelar,
 }: {
   resumen: ResumenFotos;
+  aplicando: boolean;
   onConfirmar: () => void;
   onCancelar: () => void;
 }) {
@@ -128,15 +129,42 @@ export function ResumenDeFotos({
         codigos={resumen.fotosSinProducto}
       />
 
-      <div className="mt-6 flex flex-wrap gap-3">
-        <button type="button" onClick={onConfirmar} className={CLASES_BOTON_PRINCIPAL}>
-          Confirmar y aplicar
+      <BotonesDeConfirmacion aplicando={aplicando} onConfirmar={onConfirmar} onCancelar={onCancelar} />
+    </section>
+  );
+}
+
+/*
+ * Aplicar puede tardar: con fotos, el servidor vuelve a abrir el .zip y sube
+ * cada imagen al almacenamiento. Sin un aviso la pantalla parece no reaccionar,
+ * y un segundo clic manda otra confirmación que el backend rechaza porque la
+ * carga ya se aplicó. Por eso los dos botones se bloquean mientras trabaja.
+ */
+function BotonesDeConfirmacion({
+  aplicando,
+  onConfirmar,
+  onCancelar,
+}: {
+  aplicando: boolean;
+  onConfirmar: () => void;
+  onCancelar: () => void;
+}) {
+  return (
+    <div className="mt-6">
+      <div className="flex flex-wrap gap-3">
+        <button type="button" disabled={aplicando} onClick={onConfirmar} className={CLASES_BOTON_PRINCIPAL}>
+          {aplicando ? "Aplicando…" : "Confirmar y aplicar"}
         </button>
-        <button type="button" onClick={onCancelar} className={CLASES_BOTON_SECUNDARIO}>
+        <button type="button" disabled={aplicando} onClick={onCancelar} className={CLASES_BOTON_SECUNDARIO}>
           Cancelar
         </button>
       </div>
-    </section>
+      {aplicando && (
+        <p role="status" className="mt-3 text-[13px] text-pizarra">
+          Aplicando la carga. Puede tardar unos segundos; no cierres esta página.
+        </p>
+      )}
+    </div>
   );
 }
 
