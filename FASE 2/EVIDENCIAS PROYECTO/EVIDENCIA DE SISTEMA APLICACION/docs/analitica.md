@@ -11,8 +11,9 @@ válido y no lo es.
 
 El pronóstico es **por producto cuando hay historial suficiente y por categoría cuando no**.
 En Joyas_ye es por categoría: sus lotes se venden una sola vez, así que no forman una serie
-de tiempo. Los datos de entrenamiento son sintéticos, calibrados con los montos reales de
-venta que entregó el cliente.
+de tiempo. Los datos de entrenamiento son las ventas reales del cliente, leídas de su
+planilla, con los nombres seudonimizados y las fechas adelantadas un año (ver «De dónde
+salen los datos»).
 
 Reglas que no se negocian:
 
