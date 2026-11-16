@@ -1,5 +1,7 @@
 """Serializadores de la tienda."""
 
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.core.validators import URLValidator
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
@@ -24,10 +26,20 @@ class TiendaPublicaSerializer(serializers.ModelSerializer):
     banner = serializers.SerializerMethodField()
     colores = serializers.SerializerMethodField()
     redes = serializers.SerializerMethodField()
+    pie = serializers.SerializerMethodField()
 
     class Meta:
         model = Tienda
-        fields = ["slug", "nombre", "logo", "banner", "colores", "redes", "plantilla"]
+        fields = [
+            "slug",
+            "nombre",
+            "logo",
+            "banner",
+            "colores",
+            "redes",
+            "pie",
+            "plantilla",
+        ]
 
     def get_logo(self, tienda):
         return imagen(tienda.logo, tienda.nombre)
@@ -50,6 +62,16 @@ class TiendaPublicaSerializer(serializers.ModelSerializer):
         return {
             "whatsapp": tienda.whatsapp or None,
             "instagram": tienda.instagram or None,
+        }
+
+    def get_pie(self, tienda):
+        return {
+            "descripcion": tienda.pie_descripcion,
+            "correo": tienda.pie_correo,
+            "telefono": tienda.pie_telefono,
+            "direccion": tienda.pie_direccion,
+            "horario": tienda.pie_horario,
+            "redes": list(tienda.redes_sociales or []),
         }
 
 
@@ -87,7 +109,66 @@ class SolicitudDeAccesoSerializer(serializers.ModelSerializer):
 #: El resto de la marca —banner, colores, tipografía y redes— viene con Premium.
 #: La decisión es del backend, igual que con los roles: la interfaz dibuja el
 #: candado, pero un candado de interfaz no protege nada.
-CAMPOS_DEL_PLAN_BASICO = {"nombre", "logo", "plantilla"}
+#: El pie de página viene con todos los planes: es información de contacto,
+#: no marca.
+CAMPOS_DEL_PIE = {
+    "pie_descripcion",
+    "pie_correo",
+    "pie_telefono",
+    "pie_direccion",
+    "pie_horario",
+    "redes_sociales",
+}
+CAMPOS_DEL_PLAN_BASICO = {"nombre", "logo", "plantilla"} | CAMPOS_DEL_PIE
+
+#: Cuántos enlaces a redes acepta el pie.
+MAXIMO_DE_REDES = 8
+
+
+class ListaDeRedes(serializers.Field):
+    """
+    Los enlaces a redes sociales del pie.
+
+    El perfil se guarda como multipart (lleva el logo y el banner), y en un
+    formulario una lista viaja como texto JSON: se aceptan las dos formas. Cada
+    enlace tiene que ser https, porque termina en el href de la vitrina.
+    """
+
+    def to_representation(self, valor):
+        return list(valor or [])
+
+    def to_internal_value(self, datos):
+        import json
+
+        if isinstance(datos, str):
+            try:
+                datos = json.loads(datos) if datos.strip() else []
+            except ValueError:
+                raise serializers.ValidationError(
+                    "No es una lista de enlaces."
+                ) from None
+        if not isinstance(datos, list):
+            raise serializers.ValidationError("No es una lista de enlaces.")
+
+        validador = URLValidator(schemes=["https"])
+        enlaces = []
+        for crudo in datos:
+            enlace = str(crudo).strip()
+            if not enlace:
+                continue
+            try:
+                validador(enlace)
+            except DjangoValidationError:
+                raise serializers.ValidationError(
+                    f"«{enlace[:60]}» no es un enlace válido: tiene que empezar con https://."
+                ) from None
+            if enlace not in enlaces:
+                enlaces.append(enlace)
+        if len(enlaces) > MAXIMO_DE_REDES:
+            raise serializers.ValidationError(
+                f"Puedes poner hasta {MAXIMO_DE_REDES} redes sociales."
+            )
+        return enlaces
 
 
 def _color(campo):
@@ -140,6 +221,22 @@ class PerfilDeTiendaSerializer(serializers.ModelSerializer):
     colorPrimarioHover = _color("color_primario_hover")
     colorAcento = _color("color_acento")
     colorDestacado = _color("color_destacado")
+    pieDescripcion = serializers.CharField(
+        source="pie_descripcion", required=False, allow_blank=True, max_length=300
+    )
+    pieCorreo = serializers.EmailField(
+        source="pie_correo", required=False, allow_blank=True
+    )
+    pieTelefono = serializers.CharField(
+        source="pie_telefono", required=False, allow_blank=True, max_length=30
+    )
+    pieDireccion = serializers.CharField(
+        source="pie_direccion", required=False, allow_blank=True, max_length=200
+    )
+    pieHorario = serializers.CharField(
+        source="pie_horario", required=False, allow_blank=True, max_length=120
+    )
+    redesSociales = ListaDeRedes(source="redes_sociales", required=False)
 
     class Meta:
         model = Tienda
@@ -158,6 +255,12 @@ class PerfilDeTiendaSerializer(serializers.ModelSerializer):
             "tipografia",
             "whatsapp",
             "instagram",
+            "pieDescripcion",
+            "pieCorreo",
+            "pieTelefono",
+            "pieDireccion",
+            "pieHorario",
+            "redesSociales",
             "tipografiasDisponibles",
             "plantilla",
             "plantillasDisponibles",

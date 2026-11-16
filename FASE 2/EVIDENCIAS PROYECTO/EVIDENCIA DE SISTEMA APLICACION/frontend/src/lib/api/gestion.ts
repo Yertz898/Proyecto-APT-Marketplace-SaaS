@@ -142,24 +142,6 @@ export function obtenerRegistros(filtros: {
   return pedir<PaginaDeRegistros>(`/plataforma/registros?${consulta}`);
 }
 
-// ── Precios por volumen ─────────────────────────────────────────────────────
-
-export type TramoDelPanel = {
-  id: number;
-  /** Viene como texto decimal: "12.00". */
-  umbral: string;
-  unidadUmbral: "cantidad" | "monto" | "peso";
-  precioNeto: number;
-};
-
-export const obtenerTramos = (codigo: string) =>
-  pedir<TramoDelPanel[]>(`/panel/productos/${encodeURIComponent(codigo)}/tramos`);
-
-export const crearTramo = (codigo: string, tramo: Omit<TramoDelPanel, "id">) =>
-  pedir<TramoDelPanel>(`/panel/productos/${encodeURIComponent(codigo)}/tramos`, "POST", tramo);
-
-export const borrarTramo = (id: number) => pedir<void>(`/panel/tramos/${id}`, "DELETE");
-
 // ── Mensajes de tiendas cerradas ────────────────────────────────────────────
 
 /**

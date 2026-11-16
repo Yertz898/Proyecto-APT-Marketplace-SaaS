@@ -12,6 +12,7 @@ import { esHexadecimal, paletaParaFondoClaro } from "@/lib/color";
 import type { Paleta } from "@/lib/color";
 import type { CambiosDelPerfil, PerfilDeTienda } from "@/lib/tipos-panel";
 
+import { EditorDelPie } from "./editor-pie";
 import { Cabecera, Cargando, Error as Aviso, Tarjeta } from "./piezas";
 import { SelectorDeColor } from "./selector-de-color";
 
@@ -120,7 +121,17 @@ function Formulario({
     setGuardando(true);
     setError(null);
 
-    const cambios: CambiosDelPerfil = { nombre: borrador.nombre, plantilla: borrador.plantilla };
+    // El pie viene con todos los planes, igual que el nombre y la plantilla.
+    const cambios: CambiosDelPerfil = {
+      nombre: borrador.nombre,
+      plantilla: borrador.plantilla,
+      pieDescripcion: borrador.pieDescripcion ?? "",
+      pieCorreo: borrador.pieCorreo ?? "",
+      pieTelefono: borrador.pieTelefono ?? "",
+      pieDireccion: borrador.pieDireccion ?? "",
+      pieHorario: borrador.pieHorario ?? "",
+      redesSociales: borrador.redesSociales ?? [],
+    };
     if (logo) cambios.logo = logo;
 
     if (marcaAbierta) {
@@ -130,7 +141,6 @@ function Formulario({
       }
       cambios.tipografia = borrador.tipografia;
       cambios.whatsapp = borrador.whatsapp;
-      cambios.instagram = borrador.instagram;
     }
 
     try {
@@ -320,11 +330,14 @@ function Formulario({
           </Tarjeta>
 
           <Tarjeta>
-            <Titulo>Contacto</Titulo>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <Titulo>WhatsApp para los pedidos</Titulo>
+            <p className="mt-1 text-[13px] text-pizarra">
+              Al confirmar un pedido, el comprador recibe un enlace a este número para coordinar el pago.
+            </p>
+            <div className="mt-4 max-w-[420px]">
               <Campo
                 id="whatsapp"
-                etiqueta="WhatsApp"
+                etiqueta="Enlace de WhatsApp"
                 tema="claro"
                 requerido={false}
                 placeholder="https://wa.me/56912345678"
@@ -332,18 +345,10 @@ function Formulario({
                 onCambio={(valor) => cambiar("whatsapp", valor)}
                 error={error?.de("whatsapp")}
               />
-              <Campo
-                id="instagram"
-                etiqueta="Instagram"
-                tema="claro"
-                requerido={false}
-                placeholder="https://instagram.com/tu-tienda"
-                valor={borrador.instagram}
-                onCambio={(valor) => cambiar("instagram", valor)}
-                error={error?.de("instagram")}
-              />
             </div>
           </Tarjeta>
+
+          <EditorDelPie borrador={borrador} cambiar={cambiar} deshabilitado={!puedeEditar} error={error} />
         </div>
 
         <VistaPrevia perfil={borrador} logo={logo} />

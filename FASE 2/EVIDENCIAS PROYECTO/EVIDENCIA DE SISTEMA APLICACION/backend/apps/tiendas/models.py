@@ -131,6 +131,19 @@ class Tienda(models.Model):
     whatsapp = models.URLField("enlace de WhatsApp", blank=True)
     instagram = models.URLField("enlace de Instagram", blank=True)
 
+    # El pie de página de la vitrina. Lo edita el dueño desde «Tienda y marca»;
+    # lo que deja en blanco simplemente no se muestra.
+    pie_descripcion = models.CharField("sobre la tienda", max_length=300, blank=True)
+    pie_correo = models.EmailField("correo de contacto", blank=True)
+    pie_telefono = models.CharField("teléfono de contacto", max_length=30, blank=True)
+    pie_direccion = models.CharField("dirección", max_length=200, blank=True)
+    pie_horario = models.CharField("horario de atención", max_length=120, blank=True)
+
+    # Enlaces a perfiles en redes sociales, en el orden en que se muestran. Se
+    # guarda solo la dirección: de qué red es lo deduce la vitrina por el
+    # dominio, para dibujar su ícono.
+    redes_sociales = models.JSONField("redes sociales", default=list, blank=True)
+
     fecha_creacion = models.DateTimeField("fecha de creación", auto_now_add=True)
 
     class Meta:

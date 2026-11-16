@@ -30,9 +30,10 @@ export async function obtenerPerfil(): Promise<PerfilDeTienda> {
 export async function guardarPerfil(cambios: CambiosDelPerfil): Promise<PerfilDeTienda> {
   const cuerpo = new FormData();
   for (const [campo, valor] of Object.entries(cambios)) {
-    if (valor !== undefined) {
-      cuerpo.append(campo, valor);
-    }
+    if (valor === undefined) continue;
+    // Un formulario no lleva listas: las redes viajan como texto JSON y el
+    // backend las vuelve a leer como lista.
+    cuerpo.append(campo, Array.isArray(valor) ? JSON.stringify(valor) : valor);
   }
 
   const respuesta = await pedirConSesion(RUTA, { method: "PATCH", body: cuerpo });

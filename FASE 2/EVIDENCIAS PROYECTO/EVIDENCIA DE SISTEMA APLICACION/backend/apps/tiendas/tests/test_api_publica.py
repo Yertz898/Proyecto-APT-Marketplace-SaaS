@@ -27,6 +27,14 @@ def test_devuelve_la_identidad_de_la_tienda(client, tienda_a):
         "banner": None,
         "colores": None,
         "redes": {"whatsapp": None, "instagram": None},
+        "pie": {
+            "descripcion": "",
+            "correo": "",
+            "telefono": "",
+            "direccion": "",
+            "horario": "",
+            "redes": [],
+        },
         "plantilla": "clasica",
     }
 

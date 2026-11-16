@@ -41,6 +41,16 @@ export type IdentidadTienda = {
     whatsapp: string | null;
     instagram: string | null;
   };
+  /** El pie de página que edita el dueño. Lo que viene vacío no se muestra. */
+  pie?: {
+    descripcion: string;
+    correo: string;
+    telefono: string;
+    direccion: string;
+    horario: string;
+    /** Enlaces a perfiles; la red se deduce del dominio (lib/redes.ts). */
+    redes: string[];
+  };
   /** Cómo se arma la portada. Una tienda vieja sin el campo usa la clásica. */
   plantilla?: "clasica" | "moderna" | "minimal";
 };

@@ -91,6 +91,12 @@ export type PerfilDeTienda = {
   tipografia: string;
   whatsapp: string;
   instagram: string;
+  pieDescripcion: string;
+  pieCorreo: string;
+  pieTelefono: string;
+  pieDireccion: string;
+  pieHorario: string;
+  redesSociales: string[];
   tipografiasDisponibles: TipografiaDisponible[];
   /** Cómo se arma la portada de la vitrina: clasica, moderna o minimal. */
   plantilla: string;
@@ -110,6 +116,12 @@ export type CambiosDelPerfil = Partial<{
   plantilla: string;
   whatsapp: string;
   instagram: string;
+  pieDescripcion: string;
+  pieCorreo: string;
+  pieTelefono: string;
+  pieDireccion: string;
+  pieHorario: string;
+  redesSociales: string[];
   logo: File;
   banner: File;
 }>;

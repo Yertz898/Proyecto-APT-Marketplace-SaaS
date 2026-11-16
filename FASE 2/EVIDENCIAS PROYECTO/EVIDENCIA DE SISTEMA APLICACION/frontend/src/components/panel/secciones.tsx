@@ -108,20 +108,6 @@ export const SECCIONES: Seccion[] = [
     ),
   },
   {
-    href: "/panel/precios",
-    etiqueta: "Precios",
-    descripcion: "Los tramos de precio por volumen de cada producto.",
-    grupo: "Catálogo",
-    estado: "real",
-    plan: "basico",
-    vendedor: "completo",
-    icono: (
-      <Icono>
-        <path d="M3 20h4v-5h5v-5h5V5h4" />
-      </Icono>
-    ),
-  },
-  {
     href: "/panel/cargas",
     etiqueta: "Carga masiva",
     descripcion: "Sube tu catálogo desde una planilla.",

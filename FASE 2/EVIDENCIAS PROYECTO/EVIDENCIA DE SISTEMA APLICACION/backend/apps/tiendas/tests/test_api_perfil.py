@@ -306,3 +306,68 @@ def test_la_vitrina_publica_refleja_el_cambio_solo_en_su_tienda(
 
     assert publica_a["nombre"] == "Marca de A"
     assert publica_b["nombre"] == "Tienda B"
+
+
+# ── Pie de página ────────────────────────────────────────────────────────────
+
+
+def _como(usuario):
+    from rest_framework.test import APIClient
+    from rest_framework_simplejwt.tokens import AccessToken
+
+    cliente = APIClient()
+    cliente.credentials(HTTP_AUTHORIZATION=f"Bearer {AccessToken.for_user(usuario)}")
+    return cliente
+
+
+def test_el_dueno_edita_el_pie_con_cualquier_plan(dueno_a, tienda_a, client):
+    import json
+
+    respuesta = _como(dueno_a).patch(
+        "/api/panel/tienda",
+        {
+            "pieDescripcion": "Joyas de plata al por mayor",
+            "pieCorreo": "hola@tienda.cl",
+            "redesSociales": json.dumps(
+                ["https://instagram.com/tienda", "https://www.tiktok.com/@tienda"]
+            ),
+        },
+        format="multipart",
+    )
+
+    assert respuesta.status_code == 200, respuesta.json()
+    publica = client.get(f"/api/t/{tienda_a.slug}/tienda").json()
+    assert publica["pie"]["descripcion"] == "Joyas de plata al por mayor"
+    assert publica["pie"]["redes"] == [
+        "https://instagram.com/tienda",
+        "https://www.tiktok.com/@tienda",
+    ]
+
+
+def test_una_red_que_no_es_https_se_rechaza(dueno_a):
+    respuesta = _como(dueno_a).patch(
+        "/api/panel/tienda",
+        {"redesSociales": ["javascript:alert(1)"]},
+        format="json",
+    )
+
+    assert respuesta.status_code == 400
+
+
+def test_las_redes_repetidas_se_guardan_una_vez(dueno_a, tienda_a):
+    _como(dueno_a).patch(
+        "/api/panel/tienda",
+        {"redesSociales": ["https://instagram.com/a", "https://instagram.com/a"]},
+        format="json",
+    )
+
+    tienda_a.refresh_from_db()
+    assert tienda_a.redes_sociales == ["https://instagram.com/a"]
+
+
+def test_un_vendedor_no_edita_el_pie(vendedor_b):
+    respuesta = _como(vendedor_b).patch(
+        "/api/panel/tienda", {"pieCorreo": "x@tienda.cl"}, format="json"
+    )
+
+    assert respuesta.status_code == 403
