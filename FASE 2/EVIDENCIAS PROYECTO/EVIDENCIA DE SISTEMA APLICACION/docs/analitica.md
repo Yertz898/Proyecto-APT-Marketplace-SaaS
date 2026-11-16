@@ -442,7 +442,13 @@ entender, entre ellas dos intentos de inyección.
 | Clasificación | Aciertos | Medido |
 |---|---|---|
 | Palabras clave | 34 de 64 (53%) | 12-11-2026 |
-| Gemini | pendiente: requiere la clave | — |
+| Gemini (`gemini-3.5-flash-lite`) | 60 de 64 (94%) | 15-11-2026 |
+
+Gemini no clasificó como consulta ninguna de las ocho que debían quedar en «no entendí»,
+incluidos los dos intentos de inyección. Sus cuatro fallos son del lado prudente: preguntas
+válidas que dejó en «no entendí» —«quién me debe plata», «a quién tengo que escribirle para
+cobrar», «qué le tengo que pedir al proveedor» y «¿cuántos clientes nuevos tengo?»—. Ninguna
+recibió una respuesta equivocada.
 
 Las palabras clave no se equivocan con ninguna de las ocho que debían quedar en «no
 entendí»: lo que fallan son las paráfrasis —«cuál es mi producto estrella», «quién me debe
