@@ -5,7 +5,7 @@ from rest_framework.validators import UniqueValidator
 
 from apps.core.medios import imagen
 from apps.core.validadores import validar_imagen
-from apps.tiendas.models import Plan, SolicitudDeAcceso, Tienda, Tipografia
+from apps.tiendas.models import Plan, Plantilla, SolicitudDeAcceso, Tienda, Tipografia
 from apps.tiendas.validadores import validar_color_hexadecimal
 
 
@@ -27,7 +27,7 @@ class TiendaPublicaSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Tienda
-        fields = ["slug", "nombre", "logo", "banner", "colores", "redes"]
+        fields = ["slug", "nombre", "logo", "banner", "colores", "redes", "plantilla"]
 
     def get_logo(self, tienda):
         return imagen(tienda.logo, tienda.nombre)
@@ -87,7 +87,7 @@ class SolicitudDeAccesoSerializer(serializers.ModelSerializer):
 #: El resto de la marca —banner, colores, tipografía y redes— viene con Premium.
 #: La decisión es del backend, igual que con los roles: la interfaz dibuja el
 #: candado, pero un candado de interfaz no protege nada.
-CAMPOS_DEL_PLAN_BASICO = {"nombre", "logo"}
+CAMPOS_DEL_PLAN_BASICO = {"nombre", "logo", "plantilla"}
 
 
 def _color(campo):
@@ -116,6 +116,7 @@ class PerfilDeTiendaSerializer(serializers.ModelSerializer):
     logoActual = serializers.SerializerMethodField()
     bannerActual = serializers.SerializerMethodField()
     tipografiasDisponibles = serializers.SerializerMethodField()
+    plantillasDisponibles = serializers.SerializerMethodField()
     puedeEditarLaMarca = serializers.SerializerMethodField()
 
     logo = serializers.ImageField(
@@ -158,6 +159,8 @@ class PerfilDeTiendaSerializer(serializers.ModelSerializer):
             "whatsapp",
             "instagram",
             "tipografiasDisponibles",
+            "plantilla",
+            "plantillasDisponibles",
             "puedeEditarLaMarca",
         ]
         read_only_fields = ["slug", "plan"]
@@ -172,6 +175,9 @@ class PerfilDeTiendaSerializer(serializers.ModelSerializer):
         # La lista viaja con el perfil para que el panel no la repita: si mañana
         # se agrega una fuente, el selector la muestra sin tocar el frontend.
         return [{"valor": v, "nombre": n} for v, n in Tipografia.choices]
+
+    def get_plantillasDisponibles(self, tienda):
+        return [{"valor": v, "nombre": n} for v, n in Plantilla.choices]
 
     def get_puedeEditarLaMarca(self, tienda):
         return tienda.plan != Plan.BASICO

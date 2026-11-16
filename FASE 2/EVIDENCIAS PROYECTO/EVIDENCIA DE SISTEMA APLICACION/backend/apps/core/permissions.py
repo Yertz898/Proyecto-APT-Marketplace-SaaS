@@ -68,3 +68,28 @@ class EsComprador(BasePermission):
         return bool(
             usuario and usuario.is_authenticated and usuario.rol == Rol.COMPRADOR
         )
+
+
+_ESCALERA_DE_PLANES = ["basico", "premium", "ultimate"]
+
+
+def plan_alcanza(plan: str, minimo: str) -> bool:
+    return _ESCALERA_DE_PLANES.index(plan) >= _ESCALERA_DE_PLANES.index(minimo)
+
+
+def PlanMinimo(minimo: str):  # noqa: N802 — se usa como una clase de permiso
+    """
+    Exige que la tienda del usuario tenga al menos este plan.
+
+    El panel dibuja el candado, pero esconder una sección no protege nada: el
+    plan se vuelve a revisar acá en cada petición.
+    """
+
+    class _PlanMinimo(BasePermission):
+        message = "Tu plan no incluye esta sección."
+
+        def has_permission(self, request, view):
+            tienda = getattr(request.user, "tienda", None)
+            return bool(tienda and plan_alcanza(tienda.plan, minimo))
+
+    return _PlanMinimo

@@ -68,6 +68,7 @@ LOCAL_APPS = [
     "apps.agenda",
     "apps.analitica",
     "apps.asistente",
+    "apps.auditoria",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -85,6 +86,9 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    # Deja la petición al alcance de las señales que anotan cada cambio en el
+    # registro de actividad (apps/auditoria).
+    "apps.auditoria.contexto.MiddlewareDeAuditoria",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]

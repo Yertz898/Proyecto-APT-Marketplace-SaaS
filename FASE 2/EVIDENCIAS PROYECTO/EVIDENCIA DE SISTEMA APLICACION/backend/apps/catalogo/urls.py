@@ -7,6 +7,7 @@ from apps.catalogo.views import (
     CategoriaDelPanel,
     CategoriasDelPanel,
     CotizarProducto,
+    Destacados,
     DetalleDeProducto,
     FormasDeVenta,
     InventarioDelPanel,
@@ -46,6 +47,11 @@ urlpatterns = [
         "t/<slug:slug>/productos",
         ListaDeProductos.as_view(),
         name="catalogo-productos",
+    ),
+    path(
+        "t/<slug:slug>/destacados",
+        Destacados.as_view(),
+        name="catalogo-destacados",
     ),
     path(
         "t/<slug:slug>/productos/<str:codigo>",

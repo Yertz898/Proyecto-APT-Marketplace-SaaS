@@ -22,6 +22,7 @@ from apps.ingesta import fotos as fotos_zip
 from apps.ingesta import planillas, plantillas
 from apps.ingesta import productos as carga_productos
 from apps.ingesta import tramos as carga_tramos
+from apps.ingesta import ventas as carga_ventas
 from apps.ingesta.models import Carga, EstadoCarga, TipoCarga
 from apps.ingesta.serializers import CargaDelHistorialSerializer
 
@@ -30,6 +31,14 @@ EXTENSIONES = {
     TipoCarga.PRODUCTOS: [".xlsx", ".csv"],
     TipoCarga.TRAMOS: [".xlsx", ".csv"],
     TipoCarga.FOTOS: [".zip"],
+    TipoCarga.VENTAS: [".xlsx", ".csv"],
+}
+
+#: Quién revisa y aplica cada tipo de planilla.
+REVISORES = {
+    TipoCarga.PRODUCTOS: carga_productos,
+    TipoCarga.TRAMOS: carga_tramos,
+    TipoCarga.VENTAS: carga_ventas,
 }
 
 
@@ -99,10 +108,7 @@ class ValidarCarga(MixinTiendaDelUsuario, generics.GenericAPIView):
                 resumen = fotos_zip.revisar(tienda, archivo)
             else:
                 filas = planillas.leer(archivo)
-                revisor = (
-                    carga_productos if tipo == TipoCarga.PRODUCTOS else carga_tramos
-                )
-                resumen = revisor.revisar(tienda, filas)
+                resumen = REVISORES[tipo].revisar(tienda, filas)
         except planillas.ArchivoInvalido as error:
             raise ValidationError({"archivo": str(error)}) from error
 
@@ -190,9 +196,7 @@ class ConfirmarCarga(MixinTiendaDelUsuario, generics.GenericAPIView):
         carga = self.get_object()
 
         if not carga.pendiente:
-            raise ValidationError(
-                {"carga": "Esta carga ya se aplicó o se descartó."}
-            )
+            raise ValidationError({"carga": "Esta carga ya se aplicó o se descartó."})
 
         desactivar = bool(request.data.get("desactivarAusentes"))
         tienda = request.user.tienda
@@ -207,6 +211,9 @@ class ConfirmarCarga(MixinTiendaDelUsuario, generics.GenericAPIView):
                 creadas, actualizadas = carga_productos.aplicar(
                     tienda, resumen, desactivar
                 )
+            elif carga.tipo == TipoCarga.VENTAS:
+                resumen = carga_ventas.revisar(tienda, planillas.leer(archivo))
+                creadas, actualizadas = carga_ventas.aplicar(tienda, resumen)
             else:
                 resumen = carga_tramos.revisar(tienda, planillas.leer(archivo))
                 creadas, actualizadas = carga_tramos.aplicar(tienda, resumen)

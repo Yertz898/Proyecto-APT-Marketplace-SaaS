@@ -22,9 +22,13 @@ from apps.precios.models import TramoPrecio, UnidadUmbral
 
 pytestmark = pytest.mark.django_db
 
+# Los pedidos de estas pruebas se hacen sin cuenta, así que llevan lo que se le
+# pide a un visitante: RUT y correo además del nombre y el teléfono.
 CONTACTO = {
     "nombre_contacto": "Yerko Pérez",
     "telefono_contacto": "+56 9 1234 5678",
+    "rut_contacto": "11.111.111-1",
+    "email_contacto": "yerko@example.com",
 }
 
 

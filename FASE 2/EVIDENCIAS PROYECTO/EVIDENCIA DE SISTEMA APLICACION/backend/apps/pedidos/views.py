@@ -191,7 +191,7 @@ class ConfirmarPedidoView(APIView):
     def post(self, request, slug):
         tienda = get_object_or_404(Tienda, slug=slug)
 
-        datos = CheckoutSerializer(data=request.data)
+        datos = CheckoutSerializer(data=request.data, context={"request": request})
         datos.is_valid(raise_exception=True)
         contacto = datos.validated_data
 
@@ -216,6 +216,7 @@ class ConfirmarPedidoView(APIView):
             nombre_contacto=contacto["nombre_contacto"],
             telefono_contacto=contacto["telefono_contacto"],
             email_contacto=contacto["email_contacto"],
+            rut_contacto=contacto["rut_contacto"],
             direccion_entrega=contacto["direccion_entrega"],
             notas=contacto["notas"],
             total_neto=cifras["neto"],

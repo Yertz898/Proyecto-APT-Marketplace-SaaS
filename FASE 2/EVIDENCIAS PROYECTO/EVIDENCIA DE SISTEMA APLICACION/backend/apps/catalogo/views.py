@@ -107,6 +107,58 @@ class ListaDeProductos(CatalogoMixin, generics.ListAPIView):
         return productos
 
 
+class Destacados(CatalogoMixin, APIView):
+    """
+    Lo que la portada de la tienda muestra en sus carruseles.
+
+    Los más vendidos salen de los pedidos de los últimos 90 días que no se
+    anularon. Una tienda nueva, sin ventas todavía, recibe la lista vacía y la
+    portada simplemente no dibuja ese carrusel: no se inventa un ranking.
+    """
+
+    DIAS = 90
+    CUANTOS = 10
+
+    def get(self, request, slug):
+        from datetime import timedelta
+
+        from django.db.models import Q, Sum
+        from django.utils import timezone
+
+        from apps.pedidos.models import Pedido
+
+        productos = self.get_queryset()
+        desde = timezone.now() - timedelta(days=self.DIAS)
+
+        # El filtro va dentro de la suma y no en un .exclude(): excluir por una
+        # relación de muchos dejaría fuera a todo producto que tuvo alguna vez
+        # un pedido anulado, aunque tenga cien ventas buenas.
+        vendidas = Q(lineas_pedido__pedido__fecha_creacion__gte=desde) & ~Q(
+            lineas_pedido__pedido__estado=Pedido.Estado.CANCELADO
+        )
+        ranking = (
+            productos.annotate(
+                vendido=Sum("lineas_pedido__subtotal_neto", filter=vendidas)
+            )
+            .filter(vendido__gt=0)
+            .order_by("-vendido")[: self.CUANTOS]
+        )
+        nuevos = productos.order_by("-fecha_creacion")[: self.CUANTOS]
+
+        contexto = self.get_serializer_context()
+        return Response(
+            {
+                "masVendidos": ProductoSerializer(
+                    ranking, many=True, context=contexto
+                ).data,
+                "nuevos": ProductoSerializer(nuevos, many=True, context=contexto).data,
+            }
+        )
+
+    def get_serializer_context(self):
+        return {"request": self.request, "view": self}
+
+
 class DetalleDeProducto(CatalogoMixin, generics.RetrieveAPIView):
     serializer_class = ProductoSerializer
     lookup_field = "codigo"
@@ -207,7 +259,10 @@ class CatalogoDelPanel(MixinTiendaDelUsuario, generics.ListCreateAPIView):
 
     def get_queryset(self):
         productos = (
-            super().get_queryset().select_related("categoria").prefetch_related("tramos")
+            super()
+            .get_queryset()
+            .select_related("categoria")
+            .prefetch_related("tramos")
         )
 
         forma = self.request.query_params.get("forma")

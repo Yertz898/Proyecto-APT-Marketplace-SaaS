@@ -31,6 +31,7 @@ class TipoCarga(models.TextChoices):
     PRODUCTOS = "productos", "Catálogo de productos"
     TRAMOS = "tramos", "Precios por volumen"
     FOTOS = "fotos", "Fotos de productos"
+    VENTAS = "ventas", "Ventas anteriores"
 
 
 class EstadoCarga(models.TextChoices):
@@ -63,8 +64,7 @@ class Carga(ModeloDeTienda):
         "nombre con que lo subieron",
         max_length=255,
         help_text=(
-            "El nombre del sistema es otro; este es para que la persona lo "
-            "reconozca."
+            "El nombre del sistema es otro; este es para que la persona lo reconozca."
         ),
     )
 

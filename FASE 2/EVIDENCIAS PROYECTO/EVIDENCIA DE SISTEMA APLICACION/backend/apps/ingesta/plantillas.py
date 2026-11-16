@@ -15,7 +15,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 
 from apps.catalogo.models import FormaVenta, UnidadMedida
-from apps.ingesta import productos, tramos
+from apps.ingesta import productos, tramos, ventas
 from apps.ingesta.models import TipoCarga
 from apps.precios.models import UnidadUmbral
 
@@ -36,6 +36,11 @@ AYUDA = {
     "codigo_producto": "Obligatorio. El código del producto que ya cargaste.",
     "umbral": "Desde cuánto aplica este precio.",
     "unidad_umbral": " | ".join(v for v, _ in UnidadUmbral.choices),
+    "fecha": "Obligatorio. dd-mm-aaaa. No puede ser futura.",
+    "cantidad": "Obligatorio. Unidades, lotes o gramos.",
+    "precio_unitario_neto": "Obligatorio. Lo que cobraste por unidad, sin IVA.",
+    "cliente": "Obligatorio. Nombre del cliente.",
+    "pedido": "Opcional. Las filas con el mismo valor van en un solo pedido.",
 }
 
 EJEMPLOS = {
@@ -53,11 +58,20 @@ EJEMPLOS = {
         "",
     ],
     TipoCarga.TRAMOS: ["EJEMPLO-01", "12", "cantidad", "4490"],
+    TipoCarga.VENTAS: [
+        "15-03-2026",
+        "EJEMPLO-01",
+        "2",
+        "4990",
+        "María Pérez",
+        "B-1024",
+    ],
 }
 
 COLUMNAS = {
     TipoCarga.PRODUCTOS: productos.COLUMNAS,
     TipoCarga.TRAMOS: tramos.COLUMNAS,
+    TipoCarga.VENTAS: ventas.COLUMNAS + ventas.OPCIONALES,
 }
 
 
@@ -87,9 +101,9 @@ def construir(tipo: str) -> bytes:
     hoja.append(["← Borra la fila de ayuda y la de ejemplo antes de cargar."])
 
     for indice, columna in enumerate(columnas, start=1):
-        hoja.column_dimensions[hoja.cell(row=1, column=indice).column_letter].width = (
-            max(len(columna) + 4, 18)
-        )
+        hoja.column_dimensions[
+            hoja.cell(row=1, column=indice).column_letter
+        ].width = max(len(columna) + 4, 18)
 
     memoria = io.BytesIO()
     libro.save(memoria)

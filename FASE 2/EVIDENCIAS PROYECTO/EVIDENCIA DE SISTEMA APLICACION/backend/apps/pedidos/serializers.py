@@ -40,7 +40,41 @@ class CheckoutSerializer(serializers.Serializer):
         max_length=255, required=False, allow_blank=True, default=""
     )
     notas = serializers.CharField(required=False, allow_blank=True, default="")
+    rut_contacto = serializers.CharField(
+        max_length=12, required=False, allow_blank=True, default=""
+    )
     lineas = LineaDelCarritoSerializer(many=True, allow_empty=False)
+
+    def validate(self, datos):
+        """
+        Quien compra sin cuenta deja su RUT, su nombre y su correo.
+
+        Con cuenta, esos datos ya están en ella. Sin cuenta, son lo único que
+        identifica al comprador ante la tienda: el RUT para la boleta y el
+        correo para avisarle. Por eso se exigen acá y no en el navegador, que
+        solo ayuda a llenarlos.
+        """
+        from apps.usuarios.validadores import normalizar_rut, validar_rut
+
+        peticion = self.context.get("request")
+        con_cuenta = bool(peticion and peticion.user.is_authenticated)
+        errores = {}
+
+        if datos.get("rut_contacto"):
+            try:
+                validar_rut(datos["rut_contacto"])
+                datos["rut_contacto"] = normalizar_rut(datos["rut_contacto"])
+            except Exception:  # noqa: BLE001 — el validador lanza el error de Django
+                errores["rut_contacto"] = "El RUT no es válido."
+        elif not con_cuenta:
+            errores["rut_contacto"] = "Para comprar sin cuenta necesitamos tu RUT."
+
+        if not con_cuenta and not datos.get("email_contacto"):
+            errores["email_contacto"] = "Para comprar sin cuenta necesitamos tu correo."
+
+        if errores:
+            raise serializers.ValidationError(errores)
+        return datos
 
 
 class LineaPedidoDetalleSerializer(serializers.ModelSerializer):

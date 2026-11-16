@@ -49,6 +49,10 @@ class Pedido(ModeloDeTienda):
     telefono_contacto = models.CharField(
         max_length=30, verbose_name=_("Teléfono / WhatsApp")
     )
+    # Solo se pide a quien compra sin cuenta: con cuenta, el RUT ya está en ella.
+    rut_contacto = models.CharField(
+        max_length=12, blank=True, default="", verbose_name=_("RUT del comprador")
+    )
     email_contacto = models.EmailField(
         blank=True, default="", verbose_name=_("Correo electrónico")
     )

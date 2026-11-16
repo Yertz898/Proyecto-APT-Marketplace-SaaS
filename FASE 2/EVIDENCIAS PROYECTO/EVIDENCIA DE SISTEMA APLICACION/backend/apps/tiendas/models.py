@@ -41,6 +41,19 @@ class Tipografia(models.TextChoices):
     CORMORANT = "cormorant", "Cormorant Garamond"
 
 
+class Plantilla(models.TextChoices):
+    """
+    Cómo se arma la vitrina de la tienda.
+
+    Tres diseños fijos en vez de un editor libre, por lo mismo que la lista
+    cerrada de tipografías: la tienda elige, no escribe HTML ni CSS.
+    """
+
+    CLASICA = "clasica", "Clásica"
+    MODERNA = "moderna", "Moderna"
+    MINIMAL = "minimal", "Minimal"
+
+
 class Tienda(models.Model):
     # El slug es la identidad pública: la tienda va en la ruta /t/<slug>/.
     slug = models.SlugField("identificador público", max_length=60, unique=True)
@@ -100,6 +113,19 @@ class Tienda(models.Model):
 
     plan = models.CharField(
         "plan", max_length=10, choices=Plan.choices, default=Plan.BASICO
+    )
+
+    plantilla = models.CharField(
+        "plantilla de la vitrina",
+        max_length=10,
+        choices=Plantilla.choices,
+        default=Plantilla.CLASICA,
+    )
+
+    # Cuándo el dueño canceló la suscripción. Cancelar cierra la vitrina al
+    # público; los datos se conservan por si vuelve.
+    cancelada_en = models.DateTimeField(
+        "suscripción cancelada el", null=True, blank=True
     )
 
     whatsapp = models.URLField("enlace de WhatsApp", blank=True)
