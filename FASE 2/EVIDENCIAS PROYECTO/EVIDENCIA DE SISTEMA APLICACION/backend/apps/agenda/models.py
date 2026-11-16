@@ -298,14 +298,21 @@ TRANSICIONES: dict[str, set[str]] = {
     EstadoVisita.CANCELADA: set(),
 }
 
-#: Estados que mantienen ocupado el asiento del bloque. Una visita rechazada o
-#: cancelada libera su cupo.
+#: Estados que ocupan el asiento del bloque: solo lo que la tienda confirmó.
+#:
+#: Una solicitud todavía no toma la hora. La hora desaparece de la agenda
+#: recién cuando el vendedor la confirma, y confirmar revisa que siga libre:
+#: así dos personas pueden pedir la misma hora, pero nunca quedar las dos
+#: confirmadas en un cupo que es para una. Una visita rechazada o cancelada
+#: libera lo que tenía.
 ESTADOS_QUE_OCUPAN = (
-    EstadoVisita.SOLICITADA,
     EstadoVisita.CONFIRMADA,
     EstadoVisita.ASISTIDA,
     EstadoVisita.NO_ASISTIO,
 )
+
+#: Estados de una visita que sigue en pie, confirmada o por confirmar.
+ESTADOS_VIGENTES = (EstadoVisita.SOLICITADA, EstadoVisita.CONFIRMADA)
 
 
 class Visita(ModeloDeTienda):

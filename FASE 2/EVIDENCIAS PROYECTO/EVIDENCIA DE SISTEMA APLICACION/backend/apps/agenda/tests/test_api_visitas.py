@@ -272,3 +272,50 @@ def test_la_visita_queda_en_la_tienda_de_la_ruta_y_no_en_la_del_cuerpo(
     )
 
     assert Visita.objects.get().tienda == tienda_a
+
+
+@pytest.mark.parametrize(
+    "telefono",
+    ["12345678", "+56912345", "+5691234567890", "+56812345678", "+569abcdefgh"],
+)
+def test_el_telefono_tiene_que_ser_un_celular_chileno(telefono, detalles_de_error):
+    assert "telefonoContacto" in _errores_de_la_solicitud(
+        {"telefonoContacto": telefono}, detalles_de_error
+    )
+
+
+@pytest.mark.parametrize("nombre", ["Camila 2", "R2D2", "12345"])
+def test_el_nombre_no_lleva_numeros(nombre, detalles_de_error):
+    assert "nombreContacto" in _errores_de_la_solicitud(
+        {"nombreContacto": nombre}, detalles_de_error
+    )
+
+
+def test_el_telefono_se_guarda_junto():
+    from apps.agenda.serializers import SolicitudDeVisitaSerializer
+
+    datos = SolicitudDeVisitaSerializer(
+        data={
+            "inicio": "2030-01-07T10:00:00-03:00",
+            "nombreContacto": "María José O'Higgins",
+            "correoContacto": "mj@ejemplo.cl",
+            "telefonoContacto": "+56 9 1234-5678",
+        }
+    )
+    assert datos.is_valid(), datos.errors
+    assert datos.validated_data["telefono_contacto"] == "+56912345678"
+
+
+def _errores_de_la_solicitud(cambios, detalles_de_error):
+    from apps.agenda.serializers import SolicitudDeVisitaSerializer
+
+    datos = {
+        "inicio": "2030-01-07T10:00:00-03:00",
+        "nombreContacto": "Camila Rojas",
+        "correoContacto": "camila@ejemplo.cl",
+        "telefonoContacto": "+56912345678",
+        **cambios,
+    }
+    serializador = SolicitudDeVisitaSerializer(data=datos)
+    assert not serializador.is_valid()
+    return serializador.errors

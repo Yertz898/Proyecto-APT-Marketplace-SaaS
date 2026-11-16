@@ -7,13 +7,16 @@ token, y la sección pide el plan Premium.
 """
 
 from django.core.exceptions import ValidationError as ErrorDeDjango
+from django.db import IntegrityError, transaction
 from django.utils import timezone
 from rest_framework import generics, serializers
 from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.agenda.disponibilidad import asiento_libre, capacidad_de_la_hora
 from apps.agenda.models import (
+    ESTADOS_QUE_OCUPAN,
     BloqueHorario,
     ConfiguracionAgenda,
     DiaBloqueado,
@@ -202,6 +205,7 @@ class VisitaDelPanelSerializer(serializers.ModelSerializer):
     telefonoContacto = serializers.CharField(source="telefono_contacto")
     motivoRechazo = serializers.CharField(source="motivo_rechazo")
     siguientes = serializers.SerializerMethodField()
+    horaTomada = serializers.SerializerMethodField()
 
     class Meta:
         model = Visita
@@ -217,12 +221,34 @@ class VisitaDelPanelSerializer(serializers.ModelSerializer):
             "motivo",
             "motivoRechazo",
             "siguientes",
+            "horaTomada",
         ]
 
     def get_siguientes(self, visita):
         from apps.agenda.models import TRANSICIONES
 
         return sorted(TRANSICIONES[visita.estado])
+
+    def get_horaTomada(self, visita):  # noqa: N802 — nombre del campo
+        """
+        Una solicitud cuya hora ya llenó otra visita confirmada.
+
+        El panel la marca para que el vendedor sepa que no puede confirmarla y
+        le toca rechazarla o proponerle otra hora.
+        """
+        if visita.estado != EstadoVisita.SOLICITADA:
+            return False
+        configuracion = ConfiguracionAgenda.objects.filter(
+            tienda_id=visita.tienda_id
+        ).first()
+        if configuracion is None:
+            return False
+        confirmadas = Visita.objects.filter(
+            tienda_id=visita.tienda_id,
+            inicio=visita.inicio,
+            estado__in=ESTADOS_QUE_OCUPAN,
+        ).count()
+        return confirmadas >= capacidad_de_la_hora(configuracion, visita.inicio)
 
 
 class VisitasDeLaTienda(MixinTiendaDelUsuario, generics.ListAPIView):
@@ -266,12 +292,49 @@ class EstadoDeVisita(APIView):
 
         datos = CambioDeEstadoSerializer(data=request.data)
         datos.is_valid(raise_exception=True)
+        nuevo = datos.validated_data["estado"]
+
         try:
-            visita.cambiar_estado(
-                datos.validated_data["estado"],
-                motivo_rechazo=datos.validated_data.get("motivoRechazo", ""),
-            )
+            with transaction.atomic():
+                visita.cambiar_estado(
+                    nuevo, motivo_rechazo=datos.validated_data.get("motivoRechazo", "")
+                )
+                if nuevo == EstadoVisita.CONFIRMADA:
+                    visita.posicion = self._asiento(visita)
+                visita.save()
         except ErrorDeDjango as error:
             raise _como_error_de_api(error) from None
-        visita.save()
+        except IntegrityError:
+            # Dos confirmaciones al mismo tiempo por el último cupo: el índice
+            # único del asiento deja pasar a una sola.
+            raise serializers.ValidationError(
+                {"estado": "Esa hora se acaba de tomar. Rechaza esta o propón otra."}
+            ) from None
         return Response(VisitaDelPanelSerializer(visita).data)
+
+    def _asiento(self, visita) -> int:
+        """
+        El cupo que toma la visita al confirmarse, o un error si ya no queda.
+
+        Es acá, y no al pedirla, donde la hora pasa a estar tomada.
+        """
+        configuracion, _ = ConfiguracionAgenda.objects.get_or_create(
+            tienda_id=visita.tienda_id
+        )
+        # Bloquear las visitas de esa hora serializa a dos vendedores que
+        # confirman a la vez.
+        list(
+            Visita.objects.select_for_update()
+            .filter(tienda_id=visita.tienda_id, inicio=visita.inicio)
+            .values_list("pk", flat=True)
+        )
+        capacidad = capacidad_de_la_hora(configuracion, visita.inicio)
+        asiento = asiento_libre(visita.tienda_id, visita.inicio, capacidad)
+        if asiento is None:
+            raise serializers.ValidationError(
+                {
+                    "estado": "Esa hora ya está tomada por otra visita confirmada. "
+                    "Rechaza esta o propón otra hora."
+                }
+            )
+        return asiento

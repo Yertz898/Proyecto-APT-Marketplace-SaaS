@@ -1,8 +1,15 @@
 """Serializadores de la agenda."""
 
+import re
+
 from rest_framework import serializers
 
 from apps.agenda.models import Visita
+
+#: Letras de cualquier idioma, espacios, apóstrofo, punto y guion.
+NOMBRE = re.compile(r"[^\W\d_]+(?:[ '.\-][^\W\d_]+)*\.?")
+#: Celular chileno con su prefijo: +569 y ocho dígitos.
+CELULAR = re.compile(r"\+569\d{8}")
 
 
 class HoraDisponibleSerializer(serializers.Serializer):
@@ -39,6 +46,27 @@ class SolicitudDeVisitaSerializer(serializers.Serializer):
     correoContacto = serializers.EmailField(source="correo_contacto")
     telefonoContacto = serializers.CharField(source="telefono_contacto", max_length=30)
     motivo = serializers.CharField(required=False, allow_blank=True, max_length=2000)
+
+    def validate_nombreContacto(self, valor):  # noqa: N802 — nombre del campo
+        """Un nombre: letras, espacios, apóstrofo y guion. Sin números."""
+        valor = " ".join(valor.split())
+        if not NOMBRE.fullmatch(valor):
+            raise serializers.ValidationError("Escribe tu nombre solo con letras.")
+        return valor
+
+    def validate_telefonoContacto(self, valor):  # noqa: N802 — nombre del campo
+        """
+        Un celular chileno: +569 y ocho dígitos.
+
+        Se aceptan espacios y guiones al escribirlo, pero se guarda junto, que
+        es como lo entiende WhatsApp.
+        """
+        numero = re.sub(r"[\s-]", "", valor)
+        if not CELULAR.fullmatch(numero):
+            raise serializers.ValidationError(
+                "El teléfono tiene que ser un celular: +569 y 8 dígitos."
+            )
+        return numero
 
 
 class VisitaSerializer(serializers.ModelSerializer):

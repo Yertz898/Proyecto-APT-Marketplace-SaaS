@@ -12,7 +12,9 @@ from zoneinfo import ZoneInfo
 import pytest
 
 from apps.agenda.disponibilidad import asiento_libre, horas_disponibles, momento_local
-from apps.agenda.models import BloqueHorario, DiaBloqueado, DiaSemana
+from apps.agenda.models import BloqueHorario, DiaBloqueado, DiaSemana, EstadoVisita
+
+CONFIRMADA = EstadoVisita.CONFIRMADA
 
 pytestmark = pytest.mark.django_db
 
@@ -172,7 +174,9 @@ def test_no_se_ofrecen_horas_mas_alla_de_la_ventana_maxima(tienda_a, configuraci
 def test_una_hora_llena_no_se_ofrece(tienda_a, configuracion_a, crear_visita):
     bloque(tienda_a, inicio=time(10, 0), fin=time(10, 30))
     inicio = momento_local(LUNES, time(10, 0))
-    crear_visita(tienda_a, inicio=inicio, fin=inicio + timedelta(minutes=30))
+    crear_visita(
+        tienda_a, estado=CONFIRMADA, inicio=inicio, fin=inicio + timedelta(minutes=30)
+    )
 
     assert horas_del_lunes(configuracion_a) == []
 
@@ -182,7 +186,9 @@ def test_una_hora_con_capacidad_de_sobra_informa_los_cupos_libres(
 ):
     bloque(tienda_a, inicio=time(10, 0), fin=time(10, 30), visitas_simultaneas=3)
     inicio = momento_local(LUNES, time(10, 0))
-    crear_visita(tienda_a, inicio=inicio, fin=inicio + timedelta(minutes=30))
+    crear_visita(
+        tienda_a, estado=CONFIRMADA, inicio=inicio, fin=inicio + timedelta(minutes=30)
+    )
 
     horas = horas_del_lunes(configuracion_a)
 
@@ -229,7 +235,11 @@ def test_el_primer_asiento_libre_es_el_cero(tienda_a):
 def test_el_asiento_libre_salta_los_tomados(tienda_a, crear_visita):
     inicio = momento_local(LUNES, time(10, 0))
     crear_visita(
-        tienda_a, inicio=inicio, fin=inicio + timedelta(minutes=30), posicion=0
+        tienda_a,
+        estado=CONFIRMADA,
+        inicio=inicio,
+        fin=inicio + timedelta(minutes=30),
+        posicion=0,
     )
 
     assert asiento_libre(tienda_a.id, inicio, capacidad=2) == 1
@@ -238,7 +248,11 @@ def test_el_asiento_libre_salta_los_tomados(tienda_a, crear_visita):
 def test_sin_asientos_libres_devuelve_nada(tienda_a, crear_visita):
     inicio = momento_local(LUNES, time(10, 0))
     crear_visita(
-        tienda_a, inicio=inicio, fin=inicio + timedelta(minutes=30), posicion=0
+        tienda_a,
+        estado=CONFIRMADA,
+        inicio=inicio,
+        fin=inicio + timedelta(minutes=30),
+        posicion=0,
     )
 
     assert asiento_libre(tienda_a.id, inicio, capacidad=1) is None
@@ -253,7 +267,9 @@ def test_las_visitas_de_otra_tienda_no_ocupan_cupo(
 ):
     bloque(tienda_a, inicio=time(10, 0), fin=time(10, 30))
     inicio = momento_local(LUNES, time(10, 0))
-    crear_visita(tienda_b, inicio=inicio, fin=inicio + timedelta(minutes=30))
+    crear_visita(
+        tienda_b, estado=CONFIRMADA, inicio=inicio, fin=inicio + timedelta(minutes=30)
+    )
 
     horas = horas_del_lunes(configuracion_a)
 
@@ -266,5 +282,24 @@ def test_los_bloques_de_otra_tienda_no_generan_horas(
     tienda_a, tienda_b, configuracion_a
 ):
     bloque(tienda_b)
+
+    assert horas_del_lunes(configuracion_a) == []
+
+
+def test_una_solicitud_sin_confirmar_no_toma_la_hora(
+    tienda_a, configuracion_a, crear_visita
+):
+    """
+    La hora se sigue ofreciendo mientras el vendedor no confirme: una solicitud
+    no ocupa cupo. Desaparece recién al confirmarla.
+    """
+    bloque(tienda_a, inicio=time(10, 0), fin=time(10, 30))
+    inicio = momento_local(LUNES, time(10, 0))
+    visita = crear_visita(tienda_a, inicio=inicio, fin=inicio + timedelta(minutes=30))
+
+    assert len(horas_del_lunes(configuracion_a)) == 1
+
+    visita.cambiar_estado(CONFIRMADA)
+    visita.save()
 
     assert horas_del_lunes(configuracion_a) == []

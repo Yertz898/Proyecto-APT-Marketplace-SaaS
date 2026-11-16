@@ -83,6 +83,8 @@ export type VisitaDelPanel = {
   motivoRechazo: string;
   /** A qué estados puede pasar desde el actual. */
   siguientes: EstadoDeVisita[];
+  /** Solicitud cuya hora ya tomó otra visita confirmada: no se puede confirmar. */
+  horaTomada: boolean;
 };
 
 // ── Plataforma ──────────────────────────────────────────────────────────────

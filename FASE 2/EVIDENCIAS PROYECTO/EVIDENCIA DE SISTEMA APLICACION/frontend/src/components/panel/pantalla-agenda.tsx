@@ -160,6 +160,12 @@ function TarjetaDeVisita({ visita, onCambio }: { visita: VisitaDelPanel; onCambi
         </div>
         <span className="rounded-full bg-hueso px-3 py-1 text-[12px] font-semibold text-acero">{visita.estadoNombre}</span>
       </div>
+      {visita.horaTomada && (
+        <p className="mt-3 rounded-[10px] border border-ambar bg-trigo px-3 py-2 text-[13px] text-marino">
+          Esa hora ya la tomó otra visita que confirmaste. Rechaza esta solicitud o escríbele para
+          proponerle otra hora.
+        </p>
+      )}
       {visita.siguientes.length > 0 && (
         <div className="mt-4 flex flex-wrap gap-2">
           {visita.siguientes.map((estado) => (

@@ -139,3 +139,33 @@ def test_cierra_un_dia_una_sola_vez(premium, dueno_a):
         == 400
     )
     assert len(cliente.get("/api/panel/agenda/dias-cerrados").json()) == 1
+
+
+def test_confirmar_una_hora_ya_tomada_se_rechaza(premium, dueno_a, tienda_a, comprador):
+    primera = _visita(tienda_a, comprador)
+    segunda = Visita.objects.create(
+        tienda=tienda_a,
+        inicio=primera.inicio,
+        fin=primera.fin,
+        nombre_contacto="Otra",
+        correo_contacto="otra@ejemplo.cl",
+        telefono_contacto="+56922222222",
+        comprador=comprador,
+    )
+    cliente = como(dueno_a)
+    url = "/api/panel/agenda/visitas/{}/estado"
+
+    confirmada = cliente.post(
+        url.format(primera.pk), {"estado": EstadoVisita.CONFIRMADA}, format="json"
+    )
+    assert confirmada.status_code == 200
+
+    visitas = {v["id"]: v for v in cliente.get("/api/panel/agenda/visitas").json()}
+    assert visitas[segunda.pk]["horaTomada"] is True
+
+    choque = cliente.post(
+        url.format(segunda.pk), {"estado": EstadoVisita.CONFIRMADA}, format="json"
+    )
+    assert choque.status_code == 400
+    segunda.refresh_from_db()
+    assert segunda.estado == EstadoVisita.SOLICITADA

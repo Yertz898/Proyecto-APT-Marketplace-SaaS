@@ -11,7 +11,7 @@ from rest_framework.views import APIView
 
 from apps.agenda.disponibilidad import asiento_libre, horas_disponibles, ventana_de
 from apps.agenda.models import (
-    ESTADOS_QUE_OCUPAN,
+    ESTADOS_VIGENTES,
     BloqueHorario,
     ConfiguracionAgenda,
     EstadoVisita,
@@ -170,7 +170,7 @@ class PedirVisita(APIView):
             tienda=tienda,
             comprador=request.user,
             inicio=inicio,
-            estado__in=ESTADOS_QUE_OCUPAN,
+            estado__in=ESTADOS_VIGENTES,
         ).exists():
             raise ValidationError({"inicio": "Ya tienes una visita pedida a esa hora."})
 
@@ -179,12 +179,19 @@ class PedirVisita(APIView):
             # cupos. El asiento numerado y su índice único son la segunda
             # defensa: aunque esto fallara, la base no deja pasarse del cupo.
             bloque = BloqueHorario.objects.select_for_update().get(pk=hora.bloque_id)
+            confirma_sola = bloque.confirma_solo(configuracion)
 
-            asiento = asiento_libre(tienda.pk, inicio, bloque.capacidad(configuracion))
-            if asiento is None:
-                raise ValidationError(
-                    {"inicio": "Esa hora se acaba de ocupar. Elige otra."}
+            # Solo una visita confirmada toma asiento. Una solicitud espera a
+            # que el vendedor la confirme, y es ahí donde se le busca cupo.
+            asiento = 0
+            if confirma_sola:
+                asiento = asiento_libre(
+                    tienda.pk, inicio, bloque.capacidad(configuracion)
                 )
+                if asiento is None:
+                    raise ValidationError(
+                        {"inicio": "Esa hora se acaba de ocupar. Elige otra."}
+                    )
 
             visita = Visita.objects.create(
                 tienda=tienda,
@@ -194,7 +201,7 @@ class PedirVisita(APIView):
                 posicion=asiento,
                 estado=(
                     EstadoVisita.CONFIRMADA
-                    if bloque.confirma_solo(configuracion)
+                    if confirma_sola
                     else EstadoVisita.SOLICITADA
                 ),
                 **datos,

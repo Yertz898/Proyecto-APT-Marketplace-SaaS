@@ -192,6 +192,24 @@ def horas_disponibles(
     return disponibles
 
 
+def capacidad_de_la_hora(configuracion, inicio: datetime) -> int:
+    """
+    Cuántas visitas caben a esa hora, según el bloque que la ofrece.
+
+    Si el bloque ya no existe (la tienda cambió su horario después de que la
+    pidieran) vale la capacidad general de la tienda.
+    """
+    local = timezone.localtime(inicio)
+    for bloque in BloqueHorario.objects.de_tienda(configuracion.tienda_id):
+        if (
+            bloque.aplica_en(local.date())
+            and bloque.hora_inicio <= local.time()
+            and local.time() < bloque.hora_fin
+        ):
+            return bloque.capacidad(configuracion)
+    return configuracion.visitas_por_bloque
+
+
 def asiento_libre(tienda_id: int, inicio: datetime, capacidad: int) -> int | None:
     """
     Primer asiento sin tomar en esa hora, o None si está llena.

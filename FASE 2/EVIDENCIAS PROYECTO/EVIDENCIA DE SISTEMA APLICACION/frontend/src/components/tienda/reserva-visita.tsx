@@ -102,6 +102,7 @@ function Formulario({
 
   const [nombre, setNombre] = useState(nombreDeLaCuenta);
   const [correo, setCorreo] = useState(correoDeLaCuenta);
+  // Solo los 8 dígitos: el +569 va fijo delante y se agrega al enviar.
   const [telefono, setTelefono] = useState("");
   const [motivo, setMotivo] = useState("");
 
@@ -119,7 +120,7 @@ function Formulario({
         inicio: hora.inicio,
         nombreContacto: nombre,
         correoContacto: correo,
-        telefonoContacto: telefono,
+        telefonoContacto: `+569${telefono}`,
         motivo: motivo || undefined,
       });
 
@@ -157,7 +158,9 @@ function Formulario({
         id="nombre-contacto"
         etiqueta="Nombre"
         valor={nombre}
-        onCambio={setNombre}
+        // Un nombre no lleva números: lo que no sea letra, espacio, apóstrofo,
+        // punto o guion no llega al campo.
+        onCambio={(valor) => /^[\p{L} '.-]*$/u.test(valor) && setNombre(valor)}
         error={error?.de("nombreContacto")}
         autoComplete="name"
       />
@@ -172,15 +175,36 @@ function Formulario({
         autoComplete="email"
       />
 
-      <Campo
-        id="telefono-contacto"
-        etiqueta="Teléfono"
-        tipo="tel"
-        valor={telefono}
-        onCambio={setTelefono}
-        error={error?.de("telefonoContacto")}
-        autoComplete="tel"
-      />
+      <div>
+        <label htmlFor="telefono-contacto" className="text-[13px] font-semibold text-texto">
+          Teléfono
+        </label>
+        <div className="mt-2 flex h-12 items-center overflow-hidden rounded-xl border border-lila/20 bg-superficie focus-within:border-lila">
+          <span className="flex h-full items-center border-r border-lila/20 px-3 text-sm font-semibold text-texto-suave">
+            +569
+          </span>
+          <input
+            id="telefono-contacto"
+            type="tel"
+            inputMode="numeric"
+            autoComplete="tel-local"
+            placeholder="12345678"
+            maxLength={8}
+            value={telefono}
+            onChange={(evento) => {
+              const digitos = evento.target.value.replace(/\D/g, "").slice(0, 8);
+              setTelefono(digitos);
+            }}
+            aria-invalid={Boolean(error?.de("telefonoContacto"))}
+            className="h-full flex-1 bg-transparent px-3 text-base tracking-[0.08em] text-texto outline-none"
+          />
+        </div>
+        {error?.de("telefonoContacto") ? (
+          <p className="mt-1.5 text-xs text-oro">{error.de("telefonoContacto")}</p>
+        ) : (
+          <p className="mt-1.5 text-xs text-texto-suave">Los 8 dígitos de tu celular.</p>
+        )}
+      </div>
 
       <div>
         <label htmlFor="motivo" className="text-[13px] font-semibold text-texto">
@@ -198,7 +222,7 @@ function Formulario({
 
       <button
         type="submit"
-        disabled={enviando}
+        disabled={telefono.length !== 8 || enviando}
         className="h-12 cursor-pointer rounded-full bg-violeta text-sm font-semibold text-white transition-colors hover:bg-violeta-hover disabled:cursor-not-allowed disabled:opacity-50"
       >
         {enviando ? "Pidiendo la hora…" : "Pedir la hora"}

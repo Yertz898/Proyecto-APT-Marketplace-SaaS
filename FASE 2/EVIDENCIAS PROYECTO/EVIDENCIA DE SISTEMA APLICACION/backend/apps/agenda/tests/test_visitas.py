@@ -83,9 +83,19 @@ def test_no_se_puede_reprogramar_una_visita_cancelada(visita_a):
 # ── Capacidad del bloque ────────────────────────────────────────────────────
 
 
-def test_dos_visitas_no_pueden_tomar_el_mismo_asiento(tienda_a, visita_a, crear_visita):
+def test_dos_visitas_confirmadas_no_pueden_tomar_el_mismo_asiento(
+    tienda_a, crear_visita
+):
+    crear_visita(tienda_a, estado=EstadoVisita.CONFIRMADA)
     with pytest.raises(IntegrityError):
-        crear_visita(tienda_a, posicion=visita_a.posicion)
+        crear_visita(tienda_a, estado=EstadoVisita.CONFIRMADA)
+
+
+def test_dos_solicitudes_pueden_pedir_la_misma_hora(tienda_a, crear_visita):
+    crear_visita(tienda_a)
+    crear_visita(tienda_a)
+
+    assert Visita.objects.de_tienda(tienda_a).count() == 2
 
 
 def test_el_segundo_asiento_del_mismo_bloque_si_se_puede_tomar(
@@ -97,11 +107,14 @@ def test_el_segundo_asiento_del_mismo_bloque_si_se_puede_tomar(
     assert Visita.objects.de_tienda(tienda_a).count() == 2
 
 
-def test_una_visita_cancelada_libera_su_asiento(tienda_a, visita_a, crear_visita):
-    visita_a.cambiar_estado(EstadoVisita.CANCELADA)
-    visita_a.save()
+def test_una_visita_cancelada_libera_su_asiento(tienda_a, crear_visita):
+    confirmada = crear_visita(tienda_a, estado=EstadoVisita.CONFIRMADA)
+    confirmada.cambiar_estado(EstadoVisita.CANCELADA)
+    confirmada.save()
 
-    reemplazo = crear_visita(tienda_a, posicion=visita_a.posicion)
+    reemplazo = crear_visita(
+        tienda_a, posicion=confirmada.posicion, estado=EstadoVisita.CONFIRMADA
+    )
 
     assert reemplazo.ocupa_cupo
 
