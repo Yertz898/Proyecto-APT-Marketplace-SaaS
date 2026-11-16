@@ -120,7 +120,7 @@ function Formulario({
     setGuardando(true);
     setError(null);
 
-    const cambios: CambiosDelPerfil = { nombre: borrador.nombre };
+    const cambios: CambiosDelPerfil = { nombre: borrador.nombre, plantilla: borrador.plantilla };
     if (logo) cambios.logo = logo;
 
     if (marcaAbierta) {
@@ -264,6 +264,35 @@ function Formulario({
           </Tarjeta>
 
           <Tarjeta>
+            <Titulo>Plantilla de la vitrina</Titulo>
+            <p className="mt-1 text-[13px] text-pizarra">
+              Cómo se arma la portada de tu tienda. Viene con todos los planes.
+            </p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              {borrador.plantillasDisponibles.map((plantilla) => (
+                <button
+                  key={plantilla.valor}
+                  type="button"
+                  disabled={!puedeEditar}
+                  onClick={() => cambiar("plantilla", plantilla.valor)}
+                  aria-pressed={borrador.plantilla === plantilla.valor}
+                  className={
+                    borrador.plantilla === plantilla.valor
+                      ? "cursor-pointer rounded-[12px] border border-acero bg-cielo p-3 text-left disabled:cursor-not-allowed"
+                      : "cursor-pointer rounded-[12px] border border-arena p-3 text-left hover:bg-hueso disabled:cursor-not-allowed disabled:opacity-60"
+                  }
+                >
+                  <MiniaturaDePlantilla plantilla={plantilla.valor} />
+                  <span className="mt-2 block text-[14px] font-semibold text-marino">{plantilla.nombre}</span>
+                  <span className="block text-[12px] leading-[1.4] text-pizarra">
+                    {DESCRIPCION_DE_PLANTILLA[plantilla.valor] ?? ""}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </Tarjeta>
+
+          <Tarjeta>
             <Titulo>Tipografía</Titulo>
             <p className="mt-1 text-[13px] text-pizarra">
               De esta lista y no otra. Una fuente escrita a mano correría en la página de las demás
@@ -344,6 +373,51 @@ function Formulario({
         </div>
       )}
     </form>
+  );
+}
+
+const DESCRIPCION_DE_PLANTILLA: Record<string, string> = {
+  clasica: "Banner a todo lo ancho y carruseles. Elegante, para joyería y moda.",
+  moderna: "Portada partida con tus más vendidos en grilla. Directa y vistosa.",
+  minimal: "Mucho espacio en blanco y fotos grandes. Sobria.",
+};
+
+/** Un dibujo esquemático de cada plantilla, para elegir sin tener que adivinar. */
+function MiniaturaDePlantilla({ plantilla }: { plantilla: string }) {
+  const bloque = "rounded-[3px] bg-niebla";
+  return (
+    <span aria-hidden="true" className="flex h-[74px] flex-col gap-1 rounded-[8px] bg-white p-1.5">
+      {plantilla === "moderna" ? (
+        <>
+          <span className="flex h-[30px] gap-1">
+            <span className={`${bloque} flex-1 bg-acero/70`} />
+            <span className={`${bloque} flex-1`} />
+          </span>
+          <span className="grid flex-1 grid-cols-4 gap-1">
+            {[0, 1, 2, 3].map((i) => (
+              <span key={i} className={bloque} />
+            ))}
+          </span>
+        </>
+      ) : plantilla === "minimal" ? (
+        <>
+          <span className="mx-auto mt-1 h-[6px] w-1/2 rounded-full bg-niebla" />
+          <span className="grid flex-1 grid-cols-2 gap-2 px-2 pt-1">
+            <span className={bloque} />
+            <span className={bloque} />
+          </span>
+        </>
+      ) : (
+        <>
+          <span className={`${bloque} h-[28px] bg-acero/70`} />
+          <span className="flex flex-1 gap-1">
+            {[0, 1, 2, 3, 4].map((i) => (
+              <span key={i} className={`${bloque} flex-1`} />
+            ))}
+          </span>
+        </>
+      )}
+    </span>
   );
 }
 

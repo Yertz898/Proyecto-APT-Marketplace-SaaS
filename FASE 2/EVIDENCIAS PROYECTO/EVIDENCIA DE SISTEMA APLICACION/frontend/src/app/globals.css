@@ -193,3 +193,28 @@ html:has([data-tema="claro"]) body {
     line-height: normal;
   }
 }
+
+/*
+ * Las plantillas de la vitrina.
+ *
+ * Cambian el carácter de la tienda sin tocar sus colores: la clásica usa la
+ * serif elegante, la moderna una sans gruesa con esquinas más rectas, y la
+ * minimal una sans liviana sin bordes en las tarjetas. Cuelgan de
+ * `[data-plantilla]`, que pone el layout de la tienda.
+ */
+[data-plantilla="moderna"] .font-serif {
+  font-family: var(--font-jakarta);
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+[data-plantilla="moderna"] .rounded-\[18px\] {
+  border-radius: 10px;
+}
+[data-plantilla="minimal"] .font-serif {
+  font-family: var(--font-inter);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+[data-plantilla="minimal"] .border-lila\/12 {
+  border-color: transparent;
+}

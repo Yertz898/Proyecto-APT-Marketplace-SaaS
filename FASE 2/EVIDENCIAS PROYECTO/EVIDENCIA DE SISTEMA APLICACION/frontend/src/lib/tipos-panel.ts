@@ -8,7 +8,7 @@
 import type { FormaVenta, Imagen, Pesos, Plan, UnidadMedida } from "@/lib/tipos";
 
 /** Cada tipo de carga tiene su plantilla, su validación y su pantalla. */
-export type TipoCarga = "productos" | "tramos" | "fotos";
+export type TipoCarga = "productos" | "tramos" | "fotos" | "ventas";
 
 export type LimitesCarga = {
   /** Extensiones que acepta el backend, p. ej. [".xlsx", ".csv"]. */
@@ -92,6 +92,9 @@ export type PerfilDeTienda = {
   whatsapp: string;
   instagram: string;
   tipografiasDisponibles: TipografiaDisponible[];
+  /** Cómo se arma la portada de la vitrina: clasica, moderna o minimal. */
+  plantilla: string;
+  plantillasDisponibles: TipografiaDisponible[];
   /** Lo decide el plan, y lo decide el backend. El candado de la interfaz solo lo refleja. */
   puedeEditarLaMarca: boolean;
 };
@@ -104,6 +107,7 @@ export type CambiosDelPerfil = Partial<{
   colorAcento: string;
   colorDestacado: string;
   tipografia: string;
+  plantilla: string;
   whatsapp: string;
   instagram: string;
   logo: File;

@@ -72,6 +72,18 @@ export async function obtenerProductos(
   );
 }
 
+/** Lo que muestra la portada en sus carruseles. Vacío si la tienda todavía no vende. */
+export async function obtenerDestacados(
+  slug: string,
+): Promise<{ masVendidos: Producto[]; nuevos: Producto[] }> {
+  return (
+    (await pedir<{ masVendidos: Producto[]; nuevos: Producto[] }>(`/t/${slug}/destacados`)) ?? {
+      masVendidos: [],
+      nuevos: [],
+    }
+  );
+}
+
 export async function obtenerProducto(
   slug: string,
   codigo: string,

@@ -40,6 +40,7 @@ export default async function LayoutTienda({ children, params }: LayoutProps<"/t
 
       <div
         data-identidad
+        data-plantilla={tienda.plantilla ?? "clasica"}
         style={variablesDeIdentidad(tienda.colores)}
         className="flex min-h-full flex-1 flex-col"
       >

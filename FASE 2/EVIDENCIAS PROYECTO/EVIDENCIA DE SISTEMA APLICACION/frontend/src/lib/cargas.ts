@@ -43,6 +43,13 @@ export const TIPOS_DE_CARGA = {
     columnas: [],
     extensiones: [".zip"],
   },
+  ventas: {
+    titulo: "Ventas anteriores",
+    descripcion:
+      "Lo que vendiste antes de usar DealCommerce, para que el panel de ventas y el pronóstico partan con historia. Una fila por producto vendido; las filas con el mismo valor en la columna pedido van juntas. No descuenta inventario, y si subes el mismo archivo dos veces no se duplica.",
+    columnas: ["fecha", "codigo_producto", "cantidad", "precio_unitario_neto", "cliente", "pedido"],
+    extensiones: [".xlsx", ".csv"],
+  },
 } as const satisfies Record<
   TipoCarga,
   { titulo: string; descripcion: string; columnas: readonly string[]; extensiones: readonly string[] }

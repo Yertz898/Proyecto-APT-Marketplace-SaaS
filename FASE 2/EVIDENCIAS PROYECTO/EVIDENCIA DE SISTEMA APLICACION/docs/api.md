@@ -395,29 +395,64 @@ conectado al bucket, o su subdominio `r2.dev`—. Subir sigue yendo por el endpo
 las llaves; solo leer cambia de camino. Si falta esa variable con R2 configurado, Django **no
 arranca**: vale más un error al partir que una vitrina de imágenes rotas en producción.
 
+### Cuenta, equipo, plan y agenda
+
+| Método | Ruta | Quién | Qué hace |
+|---|---|---|---|
+| `PATCH` | `/auth/yo` | cualquiera con sesión | cambia el nombre propio |
+| `POST` | `/auth/contrasena` | cualquiera con sesión | cambia la contraseña; pide la actual |
+| `GET`, `POST` | `/panel/equipo` | dueño, plan Premium | lista el equipo y crea vendedores |
+| `PATCH` | `/panel/equipo/<id>` | dueño, plan Premium | renombra o desactiva a un vendedor |
+| `POST` | `/panel/equipo/<id>/contrasena` | dueño, plan Premium | le pone otra contraseña a un vendedor |
+| `GET`, `PATCH` | `/panel/plan` | dueño | ve y cambia el plan |
+| `POST` | `/panel/plan/cancelar` | dueño | cancela: la vitrina se cierra, los datos quedan |
+| `POST` | `/panel/plan/reanudar` | dueño | reabre una suscripción cancelada |
+| `GET`, `PATCH` | `/panel/agenda/configuracion` | dueño o vendedor, Premium | reglas de la agenda |
+| `GET`, `POST` | `/panel/agenda/bloques` | ídem | tramos de atención; rechaza los que se cruzan |
+| `PATCH`, `DELETE` | `/panel/agenda/bloques/<id>` | ídem | un tramo |
+| `GET`, `POST` | `/panel/agenda/dias-cerrados` | ídem | feriados y días sin atención |
+| `DELETE` | `/panel/agenda/dias-cerrados/<id>` | ídem | reabre un día |
+| `GET` | `/panel/agenda/visitas` | ídem | visitas desde hoy (`?todas=1` para todas) |
+| `POST` | `/panel/agenda/visitas/<id>/estado` | ídem | confirmar, rechazar, asistió, no asistió |
+
+El plan se revisa en el backend (`PlanMinimo` en `apps/core/permissions.py`); el candado del
+panel solo lo refleja. No hay cobro en línea: cada cambio de plan queda en el registro de
+actividad, que es lo que la administración usa para facturar.
+
+La carga masiva suma el tipo `ventas` (`/panel/cargas/ventas/validar`): ventas anteriores a
+la plataforma, que entran como pedidos entregados con su fecha real, sin tocar el
+inventario y sin duplicarse si se sube el mismo archivo dos veces.
+
 ## Plataforma
 
 | Método | Ruta | Quién |
 |---|---|---|
 | `POST` | `/solicitudes-de-acceso` | cualquiera, desde la portada |
+| `GET`, `POST` | `/plataforma/tiendas` | administrador: todas las tiendas, y alta de tienda con su dueño |
+| `GET`, `PATCH` | `/plataforma/tiendas/<slug>` | administrador: nombre, plan, plantilla y si está abierta |
+| `GET` | `/plataforma/solicitudes` | administrador |
+| `PATCH` | `/plataforma/solicitudes/<id>` | administrador: estado y notas |
+| `GET` | `/plataforma/registros` | administrador: registro de actividad, con `?tienda=`, `?accion=`, `?q=` y `?pagina=` |
 
-Tiene su propio límite por IP (`THROTTLE_SOLICITUDES`). No responde nada que la persona no
-haya escrito ella misma: un correo repetido devuelve un mensaje de recibo y no la
-invitación a averiguar qué negocios ya pidieron entrar.
+`/solicitudes-de-acceso` tiene su propio límite por IP (`THROTTLE_SOLICITUDES`). No
+responde nada que la persona no haya escrito ella misma: un correo repetido devuelve un
+mensaje de recibo y no la invitación a averiguar qué negocios ya pidieron entrar.
 
-## Todavía sin endpoint
+### Registro de actividad
 
-Carrito, pedidos, ventas, pronóstico, segmentos y asistente ya tienen backend. Quedan tres
-secciones del panel marcadas como «pronto» en `components/panel/secciones.tsx`:
+`apps/auditoria` anota sola cada alta, cambio y baja hecha desde la API en las apps de la
+tienda (catálogo, precios, pedidos, agenda, tiendas, usuarios, cargas), campo por campo, con
+quién, cuándo y desde qué IP. También los inicios de sesión de dueños, vendedores y
+administradores, los cambios de plan y de contraseña. Nunca guarda contraseñas. Lo que corre
+por comando (datos de demostración, migraciones) no se anota.
 
-- **Precios.** Los endpoints de tramos existen y están documentados arriba; lo que falta es
-  la pantalla.
-- **Equipo.** Falta la invitación de vendedores, que además necesita el envío de correo que
-  la plataforma todavía no hace.
-- **Agenda del dueño.** Congelada mientras el cliente confirma si sigue en el alcance. El
-  lado público de la agenda funciona.
+## Vitrina pública: portada y compra
 
-Mientras tanto esas secciones lo dicen en vez de mostrar números inventados.
+- `GET /t/<slug>/destacados` devuelve `masVendidos` (últimos 90 días, sin pedidos anulados)
+  y `nuevos`. Sin ventas, `masVendidos` viene vacío y la portada no dibuja ese carrusel.
+- `GET /t/<slug>/tienda` incluye `plantilla`: `clasica`, `moderna` o `minimal`.
+- `POST /t/<slug>/pedidos` sin sesión exige `rut_contacto` válido y `email_contacto`: es la
+  compra como visitante. Con sesión no se piden.
 
 ## Carrito, pedidos y ventas
 

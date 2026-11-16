@@ -1,3 +1,5 @@
+import { leerError } from "@/lib/api/errores";
+import { pedirConSesion } from "@/lib/api/sesion";
 import type {
   CarritoCotizado,
   DatosDeContacto,
@@ -29,17 +31,16 @@ export async function confirmarPedido(
   lineas: LineaCarrito[],
   contacto: DatosDeContacto,
 ): Promise<PedidoConfirmado> {
-  const respuesta = await fetch(`${API_URL}/t/${slug}/pedidos/`, {
+  // Va con la sesión si la hay: así el pedido queda a nombre del comprador y
+  // el backend no le pide el RUT, que ya está en su cuenta. Sin sesión es una
+  // compra como visitante, y el backend exige RUT, nombre y correo.
+  const respuesta = await pedirConSesion(`/t/${slug}/pedidos/`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
     body: JSON.stringify({ ...contacto, lineas }),
   });
 
   if (!respuesta.ok) {
-    const errorData = await respuesta.json().catch(() => null);
-    throw new Error(errorData?.error || errorData?.detail || "No se pudo confirmar el pedido.");
+    throw await leerError(respuesta);
   }
 
   return respuesta.json();

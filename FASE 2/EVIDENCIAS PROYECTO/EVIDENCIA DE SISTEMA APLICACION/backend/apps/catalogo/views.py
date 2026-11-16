@@ -107,7 +107,7 @@ class ListaDeProductos(CatalogoMixin, generics.ListAPIView):
         return productos
 
 
-class Destacados(CatalogoMixin, APIView):
+class Destacados(CatalogoMixin, generics.GenericAPIView):
     """
     Lo que la portada de la tienda muestra en sus carruseles.
 

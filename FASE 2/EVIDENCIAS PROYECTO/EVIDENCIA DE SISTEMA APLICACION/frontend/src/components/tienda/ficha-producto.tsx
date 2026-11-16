@@ -32,6 +32,8 @@ export function FichaProducto({ producto }: { producto: Producto }) {
   const [agregado, setAgregado] = useState(false);
 
   const numero = leerCantidad(cantidad);
+  // Por peso se puede pedir 12,5 g; una unidad o un lote no se parten.
+  const admiteDecimales = producto.formaVenta === "peso";
   const agotado = producto.disponibilidad.tipo === "agotado";
 
   async function calcular() {
@@ -62,13 +64,18 @@ export function FichaProducto({ producto }: { producto: Producto }) {
     <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
       <div>
         {producto.foto && (
-          <Image
-            src={producto.foto.url}
-            alt={producto.foto.alt}
-            width={760}
-            height={500}
-            className="mb-6 w-full rounded-[18px] object-cover"
-          />
+          // Alto acotado a la pantalla: la foto entera se ve sin tener que
+          // bajar, y sin recortarla, porque en una joya el detalle importa.
+          <div className="mb-6 flex justify-center rounded-[18px] bg-superficie">
+            <Image
+              src={producto.foto.url}
+              alt={producto.foto.alt}
+              width={760}
+              height={500}
+              sizes="(min-width: 1024px) 640px, 100vw"
+              className="h-auto max-h-[min(55vh,440px)] w-auto max-w-full rounded-[18px] object-contain"
+            />
+          </div>
         )}
 
         <div className="flex items-start justify-between gap-4">
@@ -136,11 +143,13 @@ export function FichaProducto({ producto }: { producto: Producto }) {
         <input
           id="cantidad"
           type="text"
-          inputMode="decimal"
+          inputMode={admiteDecimales ? "decimal" : "numeric"}
           value={cantidad}
           disabled={agotado}
           onChange={(evento) => {
-            setCantidad(evento.target.value);
+            const limpio = soloCantidad(evento.target.value, admiteDecimales);
+            if (limpio === null) return;
+            setCantidad(limpio);
             setCotizacion(null);
             setAgregado(false);
           }}
@@ -220,6 +229,16 @@ function Fila({
       <dd className={destacado ? "font-semibold text-texto" : "text-texto"}>{valor}</dd>
     </div>
   );
+}
+
+/**
+ * Deja pasar solo lo que puede ser una cantidad: dígitos y, si la unidad lo
+ * admite, una coma o un punto decimal con hasta dos decimales. Lo demás no
+ * llega al campo, así que no hay letras que rechazar después.
+ */
+function soloCantidad(texto: string, admiteDecimales: boolean): string | null {
+  const patron = admiteDecimales ? /^\d{0,7}([.,]\d{0,2})?$/ : /^\d{0,7}$/;
+  return patron.test(texto) ? texto : null;
 }
 
 /** Acepta coma decimal, que es como se escribe un decimal en Chile. */

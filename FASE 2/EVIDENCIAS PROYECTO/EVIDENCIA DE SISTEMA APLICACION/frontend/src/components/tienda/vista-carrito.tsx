@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { useSesion } from "@/components/sesion/usar-sesion";
 import { confirmarPedido, cotizarCarrito } from "@/lib/api/carrito";
+import { ErrorDeApi } from "@/lib/api/errores";
 import { formatearPesos } from "@/lib/formato";
 import type {
   CarritoCotizado,
@@ -15,8 +17,32 @@ import type {
 import { useCarrito } from "./carrito";
 import { EnlaceExterno } from "./enlace-externo";
 
+/** Formato y dígito verificador de un RUT chileno. El backend lo vuelve a revisar. */
+function rutValido(rut: string): boolean {
+  const limpio = rut.replace(/[.\s]/g, "").toUpperCase();
+  const partes = /^(\d{7,8})-?([\dK])$/.exec(limpio);
+  if (!partes) return false;
+  let suma = 0;
+  let factor = 2;
+  for (const digito of partes[1].split("").reverse()) {
+    suma += Number(digito) * factor;
+    factor = factor === 7 ? 2 : factor + 1;
+  }
+  const resto = 11 - (suma % 11);
+  const esperado = resto === 11 ? "0" : resto === 10 ? "K" : String(resto);
+  return esperado === partes[2];
+}
+
+const CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export function VistaCarrito({ slugTienda }: { slugTienda: string }) {
   const { lineas, quitar, vaciar } = useCarrito();
+  const { sesion, hidratado } = useSesion();
+  // Se compra con cuenta o como visitante: la tienda tiene que saber quién
+  // pidió. Con sesión se usa la cuenta; sin ella, la persona elige.
+  const [comoVisitante, setComoVisitante] = useState(false);
+  const conCuenta = Boolean(sesion);
+  const volver = encodeURIComponent(`/t/${slugTienda}/carrito`);
   const [cotizacion, setCotizacion] = useState<CarritoCotizado | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pedido, setPedido] = useState<PedidoConfirmado | null>(null);
@@ -28,12 +54,26 @@ export function VistaCarrito({ slugTienda }: { slugTienda: string }) {
   const [contacto, setContacto] = useState<DatosDeContacto>({
     nombre_contacto: "",
     telefono_contacto: "",
+    email_contacto: "",
+    rut_contacto: "",
     direccion_entrega: "",
     notas: "",
   });
 
+  // Con cuenta, el nombre y el correo salen de ella si la persona no los
+  // cambió: no tiene sentido pedirle lo que ya sabemos.
+  const nombre = contacto.nombre_contacto || (conCuenta ? (sesion?.usuario.nombre ?? "") : "");
+  const correo = contacto.email_contacto || (conCuenta ? (sesion?.usuario.email ?? "") : "");
+  const rut = contacto.rut_contacto ?? "";
+
+  const rutMalo = !conCuenta && rut.trim() !== "" && !rutValido(rut);
+  const correoMalo = !conCuenta && correo.trim() !== "" && !CORREO.test(correo.trim());
+
   const faltanDatos =
-    contacto.nombre_contacto.trim() === "" || contacto.telefono_contacto.trim() === "";
+    nombre.trim() === "" ||
+    contacto.telefono_contacto.trim() === "" ||
+    (!conCuenta && (!rutValido(rut) || !CORREO.test(correo.trim())));
+  const eligiendo = hidratado && !conCuenta && !comoVisitante;
 
   function escribir(campo: keyof DatosDeContacto, valor: string) {
     setContacto((previo) => ({ ...previo, [campo]: valor }));
@@ -66,11 +106,19 @@ export function VistaCarrito({ slugTienda }: { slugTienda: string }) {
   async function confirmar() {
     setConfirmando(true);
     try {
-      setPedido(await confirmarPedido(slugTienda, lineas, contacto));
+      setPedido(
+        await confirmarPedido(slugTienda, lineas, {
+          ...contacto,
+          nombre_contacto: nombre.trim(),
+          email_contacto: correo.trim(),
+          rut_contacto: conCuenta ? "" : rut,
+        }),
+      );
       setError(null);
       vaciar();
     } catch (problema) {
-      setError(problema instanceof Error ? problema.message : "No se pudo confirmar el pedido.");
+      const detalle = problema instanceof ErrorDeApi ? Object.values(problema.detalles)[0]?.[0] : null;
+      setError(detalle ?? (problema instanceof Error ? problema.message : "No se pudo confirmar el pedido."));
     } finally {
       setConfirmando(false);
     }
@@ -141,20 +189,70 @@ export function VistaCarrito({ slugTienda }: { slugTienda: string }) {
       </ul>
 
       <aside className="flex flex-col gap-5">
+        {eligiendo ? (
+          <section className="rounded-2xl border border-lila/16 p-5">
+            <h2 className="text-[13px] font-semibold text-texto">¿Cómo quieres comprar?</h2>
+            <p className="mt-1.5 text-xs leading-[1.5] text-texto-suave">
+              Con una cuenta ves tus pedidos y no repites tus datos la próxima vez.
+            </p>
+            <div className="mt-4 flex flex-col gap-2.5">
+              <Link
+                href={`/t/${slugTienda}/entrar?volver=${volver}`}
+                className="flex h-11 items-center justify-center rounded-full bg-violeta text-sm font-semibold text-white hover:bg-violeta-hover hover:no-underline"
+              >
+                Iniciar sesión
+              </Link>
+              <Link
+                href={`/t/${slugTienda}/crear-cuenta?volver=${volver}`}
+                className="flex h-11 items-center justify-center rounded-full border border-lila/40 text-sm font-semibold text-texto hover:bg-violeta/15 hover:no-underline"
+              >
+                Crear una cuenta
+              </Link>
+              <button
+                type="button"
+                onClick={() => setComoVisitante(true)}
+                className="h-11 cursor-pointer rounded-full text-sm font-semibold text-lila hover:underline"
+              >
+                Comprar como visitante
+              </button>
+            </div>
+          </section>
+        ) : (
         <section className="rounded-2xl border border-lila/16 p-5">
-          <h2 className="text-[13px] font-semibold text-texto">Tus datos</h2>
+          <h2 className="text-[13px] font-semibold text-texto">
+            {conCuenta ? `Comprando como ${sesion?.usuario.nombre}` : "Tus datos (visitante)"}
+          </h2>
           <p className="mt-1.5 text-xs leading-[1.5] text-texto-suave">
             Para coordinar el pago y la entrega. No se cobra en línea.
           </p>
 
           <div className="mt-4 flex flex-col gap-3">
+            {!conCuenta && (
+              <Campo
+                id="rut-contacto"
+                etiqueta="RUT"
+                valor={rut}
+                onCambio={(valor) => /^[\dkK.\-]{0,12}$/.test(valor) && escribir("rut_contacto", valor)}
+                error={rutMalo ? "Revisa el RUT: el dígito verificador no calza." : null}
+              />
+            )}
             <Campo
               id="nombre-contacto"
               etiqueta="Nombre"
-              valor={contacto.nombre_contacto}
+              valor={nombre}
               onCambio={(valor) => escribir("nombre_contacto", valor)}
               autoComplete="name"
             />
+            {!conCuenta && (
+              <Campo
+                id="correo-contacto"
+                etiqueta="Correo electrónico"
+                valor={correo}
+                onCambio={(valor) => escribir("email_contacto", valor)}
+                autoComplete="email"
+                error={correoMalo ? "Revisa el correo." : null}
+              />
+            )}
             <Campo
               id="telefono-contacto"
               etiqueta="WhatsApp"
@@ -177,7 +275,17 @@ export function VistaCarrito({ slugTienda }: { slugTienda: string }) {
               onCambio={(valor) => escribir("notas", valor)}
             />
           </div>
+          {!conCuenta && (
+            <button
+              type="button"
+              onClick={() => setComoVisitante(false)}
+              className="mt-3 cursor-pointer text-xs text-lila hover:underline"
+            >
+              Prefiero iniciar sesión
+            </button>
+          )}
         </section>
+        )}
 
         <section className="rounded-2xl border border-lila/16 p-5">
         <h2 className="text-[13px] font-semibold text-texto">Resumen</h2>
@@ -209,7 +317,7 @@ export function VistaCarrito({ slugTienda }: { slugTienda: string }) {
         <button
           type="button"
           disabled={
-            confirmando || faltanDatos || cotizacion === null || cotizacion.rechazo !== null
+            confirmando || eligiendo || faltanDatos || cotizacion === null || cotizacion.rechazo !== null
           }
           onClick={confirmar}
           className="mt-5 h-12 w-full cursor-pointer rounded-full bg-violeta text-sm font-semibold text-white transition-colors hover:bg-violeta-hover disabled:cursor-not-allowed disabled:opacity-50"
@@ -218,8 +326,12 @@ export function VistaCarrito({ slugTienda }: { slugTienda: string }) {
         </button>
 
         <p className="mt-3 text-center text-xs text-texto-suave">
-          {faltanDatos
-            ? "Completa tu nombre y tu WhatsApp para confirmar."
+          {eligiendo
+            ? "Elige cómo quieres comprar para seguir."
+            : faltanDatos
+            ? conCuenta
+              ? "Completa tu nombre y tu WhatsApp para confirmar."
+              : "Completa tu RUT, nombre, correo y WhatsApp para confirmar."
             : "No se cobra en línea: el pago se coordina al confirmar."}
         </p>
         </section>
@@ -243,6 +355,7 @@ function Campo({
   onCambio,
   autoComplete,
   inputMode,
+  error,
 }: {
   id: string;
   etiqueta: string;
@@ -250,6 +363,7 @@ function Campo({
   onCambio: (valor: string) => void;
   autoComplete?: string;
   inputMode?: "tel" | "text";
+  error?: string | null;
 }) {
   return (
     <div className="flex flex-col gap-1.5">
@@ -263,8 +377,10 @@ function Campo({
         autoComplete={autoComplete}
         inputMode={inputMode}
         onChange={(evento) => onCambio(evento.target.value)}
+        aria-invalid={Boolean(error)}
         className="h-11 rounded-xl border border-lila/20 bg-transparent px-3 text-sm text-texto outline-none transition-colors focus-visible:border-lila"
       />
+      {error && <p className="text-xs text-oro">{error}</p>}
     </div>
   );
 }

@@ -1,12 +1,12 @@
-import { Cabecera, SinConectar } from "@/components/panel/piezas";
+import { PantallaEquipo } from "@/components/panel/pantalla-equipo";
 
+/*
+ * La pantalla es de cliente porque se dibuja con la sesión del navegador, y un
+ * componente de cliente no puede exportar metadata. Por eso la ruta se queda
+ * acá, en servidor, y solo delega: así la pestaña tiene nombre.
+ */
 export const metadata = { title: "Equipo" };
 
 export default function PaginaEquipo() {
-  return (
-    <>
-      <Cabecera titulo="Equipo" descripcion="Quién más atiende tu tienda." />
-      <SinConectar seccion="La gestión del equipo" />
-    </>
-  );
+  return <PantallaEquipo />;
 }

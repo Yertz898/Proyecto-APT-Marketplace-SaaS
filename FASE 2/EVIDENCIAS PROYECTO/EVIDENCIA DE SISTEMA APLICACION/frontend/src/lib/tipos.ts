@@ -41,6 +41,8 @@ export type IdentidadTienda = {
     whatsapp: string | null;
     instagram: string | null;
   };
+  /** Cómo se arma la portada. Una tienda vieja sin el campo usa la clásica. */
+  plantilla?: "clasica" | "moderna" | "minimal";
 };
 
 // ── Sesión ──────────────────────────────────────────────────────────────────
@@ -239,6 +241,8 @@ export type DatosDeContacto = {
   nombre_contacto: string;
   telefono_contacto: string;
   email_contacto?: string;
+  /** Solo para quien compra sin cuenta. */
+  rut_contacto?: string;
   direccion_entrega?: string;
   notas?: string;
 };
