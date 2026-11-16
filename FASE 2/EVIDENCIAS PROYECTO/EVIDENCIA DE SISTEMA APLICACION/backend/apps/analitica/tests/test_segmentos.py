@@ -102,9 +102,10 @@ def test_quien_paso_el_umbral_esta_en_riesgo(tienda_a, producto_a, crear_pedido)
     cliente = de(segmentos.segmentar(tienda_a), "Se enfría")
 
     assert cliente.segmento == Segmento.EN_RIESGO
-    # Un día de holgura: Chile cambia la hora y ciento veinte días atrás
-    # puede cruzar ese cambio, con lo que el calendario corre un día.
-    assert 119 <= cliente.recencia <= 120
+    # Un día de holgura a cada lado: Chile cambia la hora y ciento veinte días
+    # atrás puede cruzar ese cambio; y pasada la medianoche de Chile, el pedido
+    # creado «hace 120 días» en UTC cae en otro día del calendario local.
+    assert 119 <= cliente.recencia <= 121
 
 
 def test_quien_paso_el_doble_del_umbral_ya_se_fue(tienda_a, producto_a, crear_pedido):

@@ -444,6 +444,13 @@ tampoco entra al panel —ni al iniciar sesión ni con un token vigente— hasta
 Si la cerró su dueño al cancelar el plan, el dueño sí entra, para poder reanudarlo
 (`Tienda.cerrada_por_la_plataforma` distingue los dos casos).
 
+El inicio de sesión rechaza a ese equipo con el código `tienda_cerrada`, y la pantalla
+ofrece **Escribir a DealCommerce**. El mensaje va a `POST /auth/mensaje-a-la-plataforma`
+con el correo y la contraseña —no hay sesión que usar—, que el backend vuelve a verificar;
+solo lo acepta si la tienda de esa cuenta está cerrada por la administración, y lleva el
+límite de frecuencia del inicio de sesión. La administración lo lee en
+`GET /plataforma/mensajes` y lo marca con `PATCH /plataforma/mensajes/<id>` (`leido`).
+
 `/solicitudes-de-acceso` tiene su propio límite por IP (`THROTTLE_SOLICITUDES`). No
 responde nada que la persona no haya escrito ella misma: un correo repetido devuelve un
 mensaje de recibo y no la invitación a averiguar qué negocios ya pidieron entrar.

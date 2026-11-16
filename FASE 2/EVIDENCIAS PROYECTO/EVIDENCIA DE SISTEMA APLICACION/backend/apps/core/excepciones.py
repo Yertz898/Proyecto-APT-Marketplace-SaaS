@@ -19,6 +19,21 @@ from django.http import Http404
 from rest_framework import exceptions
 from rest_framework.views import exception_handler
 
+
+class TiendaCerrada(exceptions.PermissionDenied):
+    """
+    La cuenta es válida, pero su tienda la cerró la administración.
+
+    Tiene código propio para que la pantalla de inicio de sesión ofrezca
+    escribirle a DealCommerce en vez de mostrar un «sin permiso» a secas.
+    """
+
+    default_detail = (
+        "Tu tienda está cerrada por la administración de DealCommerce. "
+        "Escríbenos para reabrirla."
+    )
+
+
 #: Código y mensaje por tipo de excepción. El mensaje es el que se muestra
 #: cuando la vista no escribió uno propio.
 POR_EXCEPCION = {
@@ -28,6 +43,7 @@ POR_EXCEPCION = {
         "credenciales_invalidas",
         "El correo o la contraseña no coinciden.",
     ),
+    TiendaCerrada: ("tienda_cerrada", TiendaCerrada.default_detail),
     exceptions.PermissionDenied: (
         "sin_permiso",
         "Tu cuenta no puede hacer esto.",

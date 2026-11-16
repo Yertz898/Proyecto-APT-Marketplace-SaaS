@@ -2,6 +2,11 @@
 
 from django.urls import path
 
+from apps.tiendas.mensajes import (
+    EscribirALaPlataforma,
+    MensajeDePlataforma,
+    MensajesDePlataforma,
+)
 from apps.tiendas.plan import CancelarPlan, PlanDeLaTienda, ReanudarPlan
 from apps.tiendas.plataforma import (
     RegistrosDePlataforma,
@@ -38,6 +43,21 @@ urlpatterns = [
         "plataforma/solicitudes/<int:pk>",
         SolicitudDePlataforma.as_view(),
         name="plataforma-solicitud",
+    ),
+    path(
+        "auth/mensaje-a-la-plataforma",
+        EscribirALaPlataforma.as_view(),
+        name="mensaje-a-la-plataforma",
+    ),
+    path(
+        "plataforma/mensajes",
+        MensajesDePlataforma.as_view(),
+        name="plataforma-mensajes",
+    ),
+    path(
+        "plataforma/mensajes/<int:pk>",
+        MensajeDePlataforma.as_view(),
+        name="plataforma-mensaje",
     ),
     path(
         "plataforma/registros",

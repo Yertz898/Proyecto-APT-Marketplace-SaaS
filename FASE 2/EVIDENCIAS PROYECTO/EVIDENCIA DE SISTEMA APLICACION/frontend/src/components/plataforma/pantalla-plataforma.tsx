@@ -10,9 +10,12 @@ import {
   cambiarSolicitud,
   cambiarTienda,
   crearTienda,
+  marcarMensaje,
+  obtenerMensajes,
   obtenerRegistros,
   obtenerSolicitudes,
   obtenerTiendas,
+  type MensajeDeTienda,
 } from "@/lib/api/gestion";
 import { formatearFecha } from "@/lib/formato";
 import type { Plan } from "@/lib/tipos";
@@ -46,13 +49,22 @@ const PLANTILLAS: { valor: Plantilla; nombre: string }[] = [
   { valor: "minimal", nombre: "Minimal" },
 ];
 
-type Pestana = "tiendas" | "solicitudes" | "registro";
+type Pestana = "tiendas" | "mensajes" | "solicitudes" | "registro";
 
 export function PantallaPlataforma() {
   const [pestana, setPestana] = useState<Pestana>("tiendas");
   const [tiendaDelRegistro, setTiendaDelRegistro] = useState("");
   // La solicitud que se está convirtiendo en tienda: llena el formulario.
   const [desdeSolicitud, setDesdeSolicitud] = useState<SolicitudDeAcceso | null>(null);
+  // Cuántos mensajes de tiendas cerradas falta leer, para el número de la pestaña.
+  const [sinLeer, setSinLeer] = useState(0);
+
+  useEffect(() => {
+    obtenerMensajes().then(
+      (mensajes) => setSinLeer(mensajes.filter((m) => !m.leido).length),
+      () => setSinLeer(0),
+    );
+  }, []);
 
   return (
     <>
@@ -65,6 +77,7 @@ export function PantallaPlataforma() {
         {(
           [
             ["tiendas", "Tiendas"],
+            ["mensajes", sinLeer > 0 ? `Mensajes (${sinLeer})` : "Mensajes"],
             ["solicitudes", "Solicitudes"],
             ["registro", "Registro de actividad"],
           ] as const
@@ -95,6 +108,7 @@ export function PantallaPlataforma() {
           }}
         />
       )}
+      {pestana === "mensajes" && <Mensajes onSinLeer={setSinLeer} />}
       {pestana === "solicitudes" && (
         <Solicitudes
           onCrearTienda={(solicitud) => {
@@ -415,6 +429,75 @@ function NuevaTiendaFormulario({
         {aviso && <Aviso tipo={aviso.tipo}>{aviso.texto}</Aviso>}
       </form>
     </Tarjeta>
+  );
+}
+
+// ── Mensajes ────────────────────────────────────────────────────────────────
+
+/** Lo que escribe el equipo de una tienda cerrada desde la pantalla de inicio de sesión. */
+function Mensajes({ onSinLeer }: { onSinLeer: (n: number) => void }) {
+  const [mensajes, setMensajes] = useState<MensajeDeTienda[] | null>(null);
+  const [fallo, setFallo] = useState<string | null>(null);
+
+  useEffect(() => {
+    obtenerMensajes().then(setMensajes, (error) => setFallo(mensajeDe(error)));
+  }, []);
+
+  async function alternar(mensaje: MensajeDeTienda) {
+    try {
+      const actualizado = await marcarMensaje(mensaje.id, !mensaje.leido);
+      const lista = (mensajes ?? []).map((m) => (m.id === actualizado.id ? actualizado : m));
+      setMensajes(lista);
+      onSinLeer(lista.filter((m) => !m.leido).length);
+    } catch (error) {
+      setFallo(mensajeDe(error));
+    }
+  }
+
+  if (fallo) return <Error mensaje={fallo} />;
+  if (!mensajes) return <Cargando />;
+  if (mensajes.length === 0) {
+    return (
+      <Vacio
+        titulo="No hay mensajes"
+        detalle="Cuando el equipo de una tienda cerrada te escriba desde el inicio de sesión, aparece acá."
+      />
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      {mensajes.map((mensaje) => (
+        <Tarjeta key={mensaje.id} className={cn("p-5", !mensaje.leido && "border-acero")}>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="font-jakarta text-[16px] font-bold">
+                {mensaje.tienda}
+                {!mensaje.leido && (
+                  <span className="ml-2 rounded-full bg-acero px-2 py-0.5 text-[11px] font-semibold text-white">Nuevo</span>
+                )}
+              </p>
+              <p className="text-[13px] text-pizarra">
+                {mensaje.nombre} · {mensaje.email} ·{" "}
+                {new Date(mensaje.fecha).toLocaleString("es-CL", { dateStyle: "short", timeStyle: "short" })}
+              </p>
+              <p className="mt-3 text-[14px] leading-[1.55] whitespace-pre-line text-marino">{mensaje.mensaje}</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <a
+                href={`mailto:${mensaje.email}?subject=${encodeURIComponent(`Tu tienda ${mensaje.tienda} en DealCommerce`)}`}
+                className="flex h-9 items-center rounded-[10px] bg-acero px-3 text-[13px] font-semibold text-white no-underline hover:bg-acero-hondo hover:no-underline"
+              >
+                Responder por correo
+              </a>
+              <Boton variante="secundario" className="h-9 px-3 text-[13px]" onClick={() => alternar(mensaje)}>
+                {mensaje.leido ? "Marcar no leído" : "Marcar leído"}
+              </Boton>
+            </div>
+          </div>
+        </Tarjeta>
+      ))}
+    </div>
   );
 }
 

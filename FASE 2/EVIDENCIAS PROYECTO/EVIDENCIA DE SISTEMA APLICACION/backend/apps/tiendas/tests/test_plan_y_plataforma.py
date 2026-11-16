@@ -225,3 +225,70 @@ def test_reabrir_la_tienda_devuelve_el_acceso(admin_plataforma, dueno_a, tienda_
     )
 
     assert como(dueno_a).get("/api/panel/tienda").status_code == 200
+
+
+# ── Mensajes de una tienda cerrada ──────────────────────────────────────────
+
+URL_MENSAJE = "/api/auth/mensaje-a-la-plataforma"
+
+
+def _escribir(client, email, password="clave-de-prueba", mensaje="Quiero reabrir"):
+    return client.post(
+        URL_MENSAJE,
+        {"email": email, "password": password, "mensaje": mensaje},
+        content_type="application/json",
+    )
+
+
+def test_el_inicio_de_sesion_avisa_con_codigo_propio(client, dueno_a, tienda_a):
+    _cerrar(tienda_a)
+
+    respuesta = client.post(
+        "/api/auth/sesion",
+        {"email": dueno_a.email, "password": "clave-de-prueba"},
+        content_type="application/json",
+    )
+
+    assert respuesta.json()["error"]["codigo"] == "tienda_cerrada"
+
+
+def test_el_equipo_de_una_tienda_cerrada_escribe_y_el_admin_lo_lee(
+    client, dueno_a, tienda_a, admin_plataforma
+):
+    _cerrar(tienda_a)
+
+    assert _escribir(client, dueno_a.email).status_code == 201
+
+    respuesta = como(admin_plataforma).get("/api/plataforma/mensajes")
+    assert respuesta.status_code == 200
+    [mensaje] = respuesta.json()
+    assert mensaje["tiendaSlug"] == tienda_a.slug
+    assert mensaje["mensaje"] == "Quiero reabrir"
+    assert mensaje["leido"] is False
+
+    marcado = como(admin_plataforma).patch(
+        f"/api/plataforma/mensajes/{mensaje['id']}", {"leido": True}, format="json"
+    )
+    assert marcado.json()["leido"] is True
+
+
+def test_sin_la_contrasena_correcta_no_se_escribe(client, dueno_a, tienda_a):
+    from apps.tiendas.models import MensajeDeTienda
+
+    _cerrar(tienda_a)
+
+    respuesta = _escribir(client, dueno_a.email, password="otra")
+
+    # Sin autenticadores en la vista, DRF responde 403 y no 401; lo que importa
+    # es que no pasa y que el código dice por qué.
+    assert respuesta.status_code in (401, 403)
+    assert respuesta.json()["error"]["codigo"] == "credenciales_invalidas"
+    assert not MensajeDeTienda.objects.exists()
+
+
+def test_una_tienda_abierta_no_escribe_por_aca(client, dueno_a):
+    assert _escribir(client, dueno_a.email).status_code == 400
+
+
+def test_solo_el_admin_lee_los_mensajes(dueno_b):
+    assert como(dueno_b).get("/api/plataforma/mensajes").status_code == 403

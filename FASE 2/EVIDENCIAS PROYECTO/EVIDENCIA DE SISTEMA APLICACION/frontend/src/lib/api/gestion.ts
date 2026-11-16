@@ -159,3 +159,38 @@ export const crearTramo = (codigo: string, tramo: Omit<TramoDelPanel, "id">) =>
   pedir<TramoDelPanel>(`/panel/productos/${encodeURIComponent(codigo)}/tramos`, "POST", tramo);
 
 export const borrarTramo = (id: number) => pedir<void>(`/panel/tramos/${id}`, "DELETE");
+
+// ── Mensajes de tiendas cerradas ────────────────────────────────────────────
+
+/**
+ * El equipo de una tienda cerrada le escribe a la administración.
+ *
+ * Va sin sesión —la tienda cerrada no deja iniciarla— y con el correo y la
+ * contraseña, que el backend vuelve a verificar. Devuelve el texto de recibo.
+ */
+export async function escribirALaPlataforma(email: string, password: string, mensaje: string): Promise<string> {
+  const respuesta = await pedirConSesion("/auth/mensaje-a-la-plataforma", {
+    method: "POST",
+    body: JSON.stringify({ email, password, mensaje }),
+  });
+  if (!respuesta.ok) {
+    throw await leerError(respuesta);
+  }
+  return ((await respuesta.json()) as { mensaje: string }).mensaje;
+}
+
+export type MensajeDeTienda = {
+  id: number;
+  tienda: string;
+  tiendaSlug: string;
+  nombre: string;
+  email: string;
+  mensaje: string;
+  leido: boolean;
+  fecha: string;
+};
+
+export const obtenerMensajes = () => pedir<MensajeDeTienda[]>("/plataforma/mensajes");
+
+export const marcarMensaje = (id: number, leido: boolean) =>
+  pedir<MensajeDeTienda>(`/plataforma/mensajes/${id}`, "PATCH", { leido });

@@ -154,6 +154,40 @@ class Tienda(models.Model):
         return not self.activa and self.cancelada_en is None
 
 
+class MensajeDeTienda(models.Model):
+    """
+    Lo que escribe el equipo de una tienda cerrada a la administración.
+
+    Es la única forma que tiene de comunicarse: no puede entrar al panel. Lo
+    lee la administración en /plataforma.
+    """
+
+    tienda = models.ForeignKey(
+        Tienda, verbose_name="tienda", on_delete=models.CASCADE, related_name="mensajes"
+    )
+    usuario = models.ForeignKey(
+        "usuarios.Usuario",
+        verbose_name="quién escribe",
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="mensajes_a_la_plataforma",
+    )
+    # Copiados: el mensaje se tiene que poder leer aunque la cuenta cambie.
+    nombre = models.CharField("nombre", max_length=150)
+    email = models.EmailField("correo")
+    mensaje = models.TextField("mensaje", max_length=2000)
+    leido = models.BooleanField("leído", default=False)
+    fecha = models.DateTimeField("fecha", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "mensaje de una tienda"
+        verbose_name_plural = "mensajes de tiendas"
+        ordering = ["-fecha"]
+
+    def __str__(self):
+        return f"{self.tienda} · {self.email}"
+
+
 class EstadoSolicitud(models.TextChoices):
     NUEVA = "nueva", "Nueva"
     CONTACTADA = "contactada", "Contactada"
