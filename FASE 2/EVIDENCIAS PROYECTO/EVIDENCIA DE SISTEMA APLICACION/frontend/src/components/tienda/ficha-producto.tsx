@@ -9,6 +9,7 @@ import type { Cotizacion, Producto } from "@/lib/tipos";
 
 import { useCarrito } from "./carrito";
 import { InsigniaDisponibilidad } from "./disponibilidad";
+import { ImagenDeProducto } from "./imagen-producto";
 import { TablaDeTramos } from "./tabla-tramos";
 
 /*
@@ -63,6 +64,12 @@ export function FichaProducto({ producto }: { producto: Producto }) {
   return (
     <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
       <div>
+        {!producto.foto && (
+          // Sin foto, el símbolo de cómo se vende: una balanza para lo que va por gramo.
+          <div className="mb-6 overflow-hidden rounded-[18px]">
+            <ImagenDeProducto producto={producto} alto="h-[260px]" grande />
+          </div>
+        )}
         {producto.foto && (
           // Alto acotado a la pantalla: la foto entera se ve sin tener que
           // bajar, y sin recortarla, porque en una joya el detalle importa.

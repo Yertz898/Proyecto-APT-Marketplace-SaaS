@@ -1,10 +1,10 @@
-import Image from "next/image";
 import Link from "next/link";
 
 import { formatearCantidad, formatearPesos } from "@/lib/formato";
 import type { Producto } from "@/lib/tipos";
 
 import { InsigniaDisponibilidad } from "./disponibilidad";
+import { ImagenDeProducto } from "./imagen-producto";
 
 /*
  * Un producto en la grilla del catálogo.
@@ -25,56 +25,33 @@ export function TarjetaProducto({
   return (
     <Link
       href={`/t/${slugTienda}/productos/${encodeURIComponent(producto.codigo)}`}
-      className="group flex flex-col overflow-hidden rounded-[18px] border border-lila/12 bg-superficie transition-colors hover:border-lila/45 hover:no-underline"
+      className="group flex h-full flex-col overflow-hidden rounded-[18px] border border-lila/12 bg-superficie transition-colors hover:border-lila/45 hover:no-underline"
     >
-      {producto.foto && (
-        <Image
-          src={producto.foto.url}
-          alt={producto.foto.alt}
-          width={420}
-          height={280}
-          className="h-[180px] w-full object-cover"
-        />
-      )}
+      <ImagenDeProducto producto={producto} alto="h-[190px]" />
 
       <div className="flex flex-1 flex-col p-5">
-        <span className="flex items-start justify-between gap-3">
-          <span className="font-serif text-[19px] leading-[1.25] text-texto">{producto.nombre}</span>
+        <span className="flex flex-wrap items-center gap-2">
+          {producto.categoria && (
+            <span className="rounded-full border border-oro/40 px-2.5 py-0.5 text-[11px] font-medium text-oro">
+              {producto.categoria}
+            </span>
+          )}
           <InsigniaDisponibilidad disponibilidad={producto.disponibilidad} />
         </span>
 
-        {producto.descripcion && (
-          <span className="mt-1.5 text-[13px] leading-[1.5] text-texto-suave">
-            {producto.descripcion}
-          </span>
-        )}
+        <span className="mt-3 line-clamp-2 font-serif text-[19px] leading-[1.25] text-texto">{producto.nombre}</span>
 
         {producto.piezasTotales !== null && (
-          <span className="mt-1.5 text-[13px] text-texto-suave">
-            {producto.piezasTotales} piezas
-          </span>
-        )}
-
-        {producto.composicion.length > 0 && (
-          <span className="mt-3 flex flex-wrap gap-1.5">
-            {producto.composicion.map((parte) => (
-              <span
-                key={parte.categoria}
-                className="rounded-md border border-lila/16 px-2 py-1 text-[11px] text-texto-suave"
-              >
-                {parte.cantidad} {parte.categoria}
-              </span>
-            ))}
-          </span>
+          <span className="mt-1 text-[13px] text-texto-suave">{producto.piezasTotales} piezas</span>
         )}
 
         <span className="mt-4 flex-1" />
 
-        <span className="font-serif text-[22px] font-semibold text-oro">
-          {desde.prefijo}
-          {formatearPesos(desde.monto)}
+        <span className="flex flex-wrap items-baseline gap-x-1.5">
+          {desde.prefijo && <span className="text-[13px] text-texto-suave">{desde.prefijo.trim()}</span>}
+          <span className="font-serif text-[22px] font-semibold text-oro">{formatearPesos(desde.monto)}</span>
+          <span className="text-[12px] text-texto-suave">{desde.detalle}</span>
         </span>
-        <span className="text-[12px] text-texto-suave">{desde.detalle}</span>
       </div>
     </Link>
   );
@@ -94,7 +71,7 @@ function precioDesde(producto: Producto): {
   const porUnidad =
     producto.unidadMedida === "unidad"
       ? "neto"
-      : `por ${producto.unidadMedida}, neto`;
+      : `por ${producto.unidadMedida} · neto`;
 
   if (producto.tramos.length === 0) {
     return { prefijo: "", monto: producto.precioNeto, detalle: porUnidad };
