@@ -100,6 +100,35 @@ def test_un_token_inventado_no_sirve(comprador, mailoutbox):
     assert not comprador.check_password(CLAVE_NUEVA)
 
 
+def test_con_resend_se_presenta_con_un_user_agent_propio(
+    comprador, settings, monkeypatch
+):
+    # Con el de urllib por defecto, Resend responde 403 «error code: 1010».
+    import urllib.request
+
+    enviadas = []
+
+    class Abierta:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+    def abrir(peticion, timeout):
+        enviadas.append(peticion)
+        return Abierta()
+
+    settings.RESEND_API_KEY = "re_prueba"
+    monkeypatch.setattr(urllib.request, "urlopen", abrir)
+
+    pedir(comprador.email)
+
+    (peticion,) = enviadas
+    assert peticion.full_url == "https://api.resend.com/emails"
+    assert not peticion.get_header("User-agent").startswith("Python-urllib")
+
+
 def test_la_contrasena_nueva_pasa_por_las_reglas(comprador, mailoutbox):
     pedir(comprador.email)
     uid, token = partes(enlace(mailoutbox[0]))

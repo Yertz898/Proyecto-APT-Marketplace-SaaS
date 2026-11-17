@@ -17,6 +17,7 @@ Dos reglas de seguridad:
 
 import json
 import logging
+import urllib.error
 import urllib.request
 
 from django.conf import settings
@@ -77,11 +78,21 @@ def _enviar(destino: str, asunto: str, texto: str) -> None:
             headers={
                 "Authorization": f"Bearer {settings.RESEND_API_KEY}",
                 "Content-Type": "application/json",
+                # Sin esto urllib se presenta como «Python-urllib/3.x», y el
+                # cortafuegos de Resend lo rechaza con un 403 «error code:
+                # 1010» antes de mirar la clave.
+                "User-Agent": "DealCommerce/1.0",
             },
             method="POST",
         )
-        with urllib.request.urlopen(peticion, timeout=10):  # noqa: S310 — URL fija
-            return
+        try:
+            with urllib.request.urlopen(peticion, timeout=10):  # noqa: S310 — URL fija
+                return
+        except urllib.error.HTTPError as error:
+            # El motivo viene en el cuerpo («API key is invalid», «domain is
+            # not verified»…): sin él, el log solo diría «403 Forbidden».
+            motivo = error.read()[:300].decode(errors="replace")
+            raise RuntimeError(f"Resend respondió {error.code}: {motivo}") from error
     send_mail(asunto, texto, settings.DEFAULT_FROM_EMAIL, [destino])
 
 
