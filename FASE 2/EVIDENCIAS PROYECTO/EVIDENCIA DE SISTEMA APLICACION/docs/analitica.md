@@ -383,7 +383,7 @@ cambia.
 Nada más. Cuando no entiende, lo dice y enumera esta lista. No conversa, no
 recuerda la pregunta anterior y no opina.
 
-### Por qué el modelo de lenguaje no ve los datos
+### Por qué el modelo de lenguaje no ve los datos (en las preguntas conocidas)
 
 Es la decisión que sostiene todo lo demás. El modelo hace **una sola cosa**: mirar la pregunta y devolver a cuál de esas ocho
 intenciones se parece. Una etiqueta de una lista cerrada, nada más. La
@@ -414,22 +414,49 @@ lo que no sea letra, número o espacio **antes** de mirarla.
 `gemini-3.5-flash-lite` (`GEMINI_MODELO`), el más liviano de los estables, que en el plan
 gratuito no tiene costo.
 
-- **Primero el modelo, después las palabras clave.** Si el modelo no responde en cinco
-  segundos, si no hay conexión, si se topa el límite del plan gratuito o si devuelve algo
+- **Primero el modelo, después las palabras clave.** Si el modelo no responde en doce
+  segundos (eran cinco, y el plan gratuito tarda entre 2 y 10: la mayoría de las preguntas
+  se cortaban y caían a las palabras clave), si no hay conexión, si se topa el límite del plan gratuito o si devuelve algo
   que no está en la lista, la pregunta se clasifica por palabras clave. El vendedor recibe
   su respuesta igual y no ve ningún error.
 - **La respuesta está restringida dos veces.** Se le pide a Gemini un JSON con un campo cuyo
   valor solo puede ser una de las nueve etiquetas, y lo que devuelve pasa igual por
   `_es_valida`. No se le cree a ciegas: un cambio del lado de Google no puede abrir un
   camino que acá está cerrado.
-- **Solo viaja la pregunta, y limpia.** En el plan gratuito, Google usa lo que recibe para
-  mejorar sus productos. Por eso no se le envía el nombre de la tienda, ni el de quien
-  pregunta, ni una cifra; y se pide `store=False` para que la conversación no quede
-  guardada. Si algún día hiciera falta mandar algo más, habría que pasar al plan pagado.
+- **Para clasificar, solo viaja la pregunta, y limpia.** En el plan gratuito, Google usa lo
+  que recibe para mejorar sus productos. Para clasificar no se le envía el nombre de quien
+  pregunta ni una cifra, y siempre se pide `store=False`.
 - **El log no guarda la pregunta.** Cuando el modelo falla se anota el tipo de error, nunca
   lo que escribió la persona.
 - **La API declara quién entendió.** La respuesta trae `clasificadoPor`: `"modelo"` o
   `"palabras clave"`. Lo que dice la respuesta sale siempre de la base.
+
+### Preguntas libres (desde el 16-11-2026)
+
+Las ocho intenciones dejaban sin respuesta todo lo demás —«¿cuánto vendí ayer?», «¿cuántos
+productos tengo?», «¿cuál es mi producto más caro?»—. Ahora, cuando Gemini clasifica una
+pregunta como «no entendí», se le pide una segunda cosa: redactar la respuesta con la
+**ficha de la tienda** (`apps/asistente/ficha.py`).
+
+- **La ficha la arma el backend**, con las mismas funciones del panel y el filtro de tienda
+  de siempre: ventas de hoy, ayer, 7 y 30 días, del mes y por mes; ticket promedio; pedidos
+  por coordinar; conteos del catálogo, los más caros, los más baratos y los de poco stock;
+  más vendidos y sin movimiento; pronóstico; cuántos clientes hay en cada segmento.
+- **Historial completo**: ventas por día, semana, mes, año, día de la semana y producto por
+  mes, con el ticket promedio de cada período y los récords ya calculados.
+- **Las fechas y rangos de la pregunta los resuelve el backend** («el 15 de diciembre», «el 3
+  de octubre» sin año, «del 1 al 10 de diciembre»): en las pruebas, el modelo elegía mal el
+  año y sumaba mal decenas de días. Ahora recibe el resultado ya buscado.
+- **Sin datos personales.** Ni nombres, ni correos, ni teléfonos, ni RUT de clientes: solo
+  conteos y montos. Los productos van por nombre porque son el catálogo público.
+- **No puede ver otra tienda**: recibe un diccionario ya calculado, no consulta nada. Lo peor
+  que logra una instrucción inyectada es que redacte mal cifras de la propia tienda.
+- **Instrucción cerrada**: usar solo cifras del JSON, decir cuando el dato no está y en qué
+  sección mirar, y negarse a lo que no sea del negocio.
+- **Sin modelo, o si falla, queda el «no entendí»** con la lista de lo que sí sabe.
+
+La respuesta vuelve con `"intencion": "consulta_libre"`. Las ocho preguntas conocidas no
+pasan por aquí: esas cifras las sigue redactando el backend.
 
 ### Cuánto entiende
 

@@ -8,6 +8,7 @@ from apps.usuarios.cuenta import (
     EquipoDeLaTienda,
     MiembroDelEquipo,
 )
+from apps.usuarios.recuperacion import PedirEnlace, Restablecer
 from apps.usuarios.views import IniciarSesion, RegistroComprador, RenovarSesion, Yo
 
 urlpatterns = [
@@ -16,6 +17,12 @@ urlpatterns = [
     path("auth/registro", RegistroComprador.as_view(), name="registro-comprador"),
     path("auth/yo", Yo.as_view(), name="usuario-de-la-sesion"),
     path("auth/contrasena", CambiarContrasena.as_view(), name="cambiar-contrasena"),
+    path("auth/contrasena/olvido", PedirEnlace.as_view(), name="olvido-contrasena"),
+    path(
+        "auth/contrasena/restablecer",
+        Restablecer.as_view(),
+        name="restablecer-contrasena",
+    ),
     path("panel/equipo", EquipoDeLaTienda.as_view(), name="panel-equipo"),
     path("panel/equipo/<int:pk>", MiembroDelEquipo.as_view(), name="panel-miembro"),
     path(

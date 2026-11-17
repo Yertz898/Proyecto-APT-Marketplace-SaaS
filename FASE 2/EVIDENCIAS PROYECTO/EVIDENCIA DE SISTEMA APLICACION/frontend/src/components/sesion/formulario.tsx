@@ -28,7 +28,7 @@ export type ModoDeSesion = "entrar" | "crear-cuenta";
  * DealCommerce lleva la marca de la plataforma y el de cada tienda, la de esa
  * tienda. Lo que cambia son los colores y la tipografía, no el formulario.
  */
-const PIEL = {
+export const PIEL = {
   claro: {
     titulo: "font-jakarta text-[32px] font-extrabold tracking-[-0.03em] text-marino",
     aviso: "rounded-[12px] border border-ambar bg-trigo px-4 py-3 text-[13px] text-marino",
@@ -55,6 +55,7 @@ export function FormularioDeSesion({
   destino,
   hrefAlternativa,
   textoAlternativa,
+  hrefOlvido,
   tema = "oscuro",
 }: {
   modo: ModoDeSesion;
@@ -68,6 +69,8 @@ export function FormularioDeSesion({
   /** Enlace al otro formulario; null cuando no corresponde ofrecerlo. */
   hrefAlternativa: string | null;
   textoAlternativa?: string;
+  /** Enlace a «¿Olvidaste tu contraseña?»; solo en el modo de entrar. */
+  hrefOlvido?: string;
   /** Claro para DealCommerce, oscuro para la vitrina de la tienda. */
   tema?: TemaDeFormulario;
 }) {
@@ -165,6 +168,12 @@ export function FormularioDeSesion({
         error={error?.de("password")}
         autoComplete={creando ? "new-password" : "current-password"}
       />
+
+      {!creando && hrefOlvido && (
+        <Link href={hrefOlvido} className={`-mt-2 self-end ${piel.enlace}`}>
+          ¿Olvidaste tu contraseña?
+        </Link>
+      )}
 
       <button
         type="submit"

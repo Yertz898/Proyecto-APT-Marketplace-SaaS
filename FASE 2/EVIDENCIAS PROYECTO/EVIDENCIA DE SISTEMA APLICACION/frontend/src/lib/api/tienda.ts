@@ -12,9 +12,10 @@ import { API_SERVIDOR as API } from "./base";
 export async function obtenerIdentidadTienda(slug: string): Promise<IdentidadTienda | null> {
   try {
     const respuesta = await fetch(`${API}/t/${encodeURIComponent(slug)}/tienda`, {
-      // La identidad cambia poco; un minuto de caché evita una consulta por
-      // cada página que visita el comprador.
-      next: { revalidate: 60 },
+      // Sin caché: es lo que decide si la tienda existe. Con un minuto de
+      // caché, una tienda que la plataforma acababa de cerrar se seguía
+      // viendo hasta que alguien la visitara de nuevo pasado ese minuto.
+      cache: "no-store",
     });
 
     if (!respuesta.ok) {

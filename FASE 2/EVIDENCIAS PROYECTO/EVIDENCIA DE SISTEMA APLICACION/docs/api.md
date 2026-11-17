@@ -228,8 +228,11 @@ conteo sí es del total; la lista es para saber a quién escribirle, no para rec
 ```
 
 `clasificadoPor` dice quién entendió la pregunta: Gemini, cuando hay `GEMINI_API_KEY` y
-respondió, o la tabla de palabras clave. El `texto` sale siempre de la base, nunca del
-modelo. Detalle en `analitica.md`.
+respondió, o la tabla de palabras clave. En las ocho preguntas conocidas el `texto` lo arma
+el backend. Una pregunta que no es ninguna de ellas vuelve con `"intencion":
+"consulta_libre"`: Gemini la redacta con la ficha de la tienda (`apps/asistente/ficha.py`),
+conteos y montos que arma el backend con el filtro de tienda, sin datos de clientes. Sin
+modelo, o si falla, queda `"no_entendi"`. Detalle en `analitica.md`.
 
 ### Carga masiva
 
@@ -401,6 +404,8 @@ arranca**: vale más un error al partir que una vitrina de imágenes rotas en pr
 |---|---|---|---|
 | `PATCH` | `/auth/yo` | cualquiera con sesión | cambia el nombre propio |
 | `POST` | `/auth/contrasena` | cualquiera con sesión | cambia la contraseña; pide la actual |
+| `POST` | `/auth/contrasena/olvido` | público | `{email, tienda?}`: manda el enlace por correo; responde lo mismo exista o no la cuenta |
+| `POST` | `/auth/contrasena/restablecer` | público | `{uid, token, password}`: contraseña nueva con el enlace (vence en 1 hora, sirve una vez) |
 | `GET`, `POST` | `/panel/equipo` | dueño, plan Premium | lista el equipo y crea vendedores |
 | `PATCH` | `/panel/equipo/<id>` | dueño, plan Premium | renombra o desactiva a un vendedor |
 | `POST` | `/panel/equipo/<id>/contrasena` | dueño, plan Premium | le pone otra contraseña a un vendedor |

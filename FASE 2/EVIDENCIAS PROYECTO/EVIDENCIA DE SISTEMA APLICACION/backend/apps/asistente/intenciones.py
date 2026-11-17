@@ -1,11 +1,12 @@
 """
 Qué puede preguntar el vendedor, y cómo se le responde.
 
-**El modelo de lenguaje nunca ve los datos de la tienda.** Esa es la decisión
-de diseño que sostiene todo lo demás. Lo único que hace —cuando hay modelo
-configurado— es mirar la pregunta y decir a cuál de estas intenciones se
-parece. La respuesta la arma este módulo, leyendo la base con el filtro de
-tienda de siempre.
+**En las preguntas conocidas, el modelo de lenguaje no ve los datos de la
+tienda.** Solo mira la pregunta y dice a cuál de estas intenciones se parece;
+la respuesta la arma este módulo, leyendo la base con el filtro de tienda de
+siempre. Lo que no calza con ninguna intención lo contesta el modelo con la
+ficha de la tienda (`ficha.py`): conteos y montos ya calculados por el backend,
+sin datos de clientes.
 
 Lo que eso compra:
 
@@ -18,9 +19,9 @@ Lo que eso compra:
 - **Funciona sin modelo.** Sin clave de API la clasificación es por palabras
   clave. Responde menos variantes de la misma pregunta, pero responde.
 
-Lo que el asistente **no** hace: conversar. No tiene memoria, no opina y no
-responde nada que no esté en esta lista. Cuando no entiende, lo dice y
-enumera lo que sí sabe contestar.
+Lo que el asistente **no** hace: conversar. No tiene memoria y no opina. Sin
+modelo configurado, o si el modelo falla, responde solo esta lista: cuando no
+entiende, lo dice y enumera lo que sí sabe contestar.
 """
 
 from dataclasses import dataclass

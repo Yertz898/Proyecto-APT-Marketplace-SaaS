@@ -22,6 +22,7 @@ export default async function PaginaEntrar({ params, searchParams }: PageProps<"
         destino={rutaSegura(volverDe(consulta), base)}
         hrefAlternativa={`${base}/crear-cuenta`}
         textoAlternativa="¿No tienes cuenta? Crear una"
+        hrefOlvido={`${base}/olvide-contrasena`}
       />
     </main>
   );

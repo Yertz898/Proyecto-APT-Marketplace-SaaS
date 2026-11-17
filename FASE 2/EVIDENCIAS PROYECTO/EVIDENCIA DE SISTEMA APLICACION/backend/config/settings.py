@@ -25,6 +25,10 @@ env = environ.Env(
     THROTTLE_AUTENTICACION=(str, "20/min"),
     THROTTLE_SOLICITUDES=(str, "10/hour"),
     R2_BUCKET_NAME=(str, ""),
+    FRONTEND_URL=(str, "http://localhost:3000"),
+    RESEND_API_KEY=(str, ""),
+    DEFAULT_FROM_EMAIL=(str, "DealCommerce <no-responder@dealcommerce.cl>"),
+    EMAIL_BACKEND=(str, "django.core.mail.backends.console.EmailBackend"),
 )
 
 # Fuera de Docker, .env vive en la raíz del repositorio.
@@ -176,6 +180,19 @@ SIMPLE_JWT = {
 }
 
 CORS_ALLOWED_ORIGINS = env("CORS_ALLOWED_ORIGINS")
+
+
+# ── Correo ──────────────────────────────────────────────────────────────────
+# Solo se usa para el enlace de «¿Olvidaste tu contraseña?». En producción sale
+# por la API de Resend (RESEND_API_KEY); sin ella, por el backend de Django,
+# que en desarrollo escribe el correo en la consola.
+
+FRONTEND_URL = env("FRONTEND_URL").rstrip("/")
+RESEND_API_KEY = env("RESEND_API_KEY")
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL")
+EMAIL_BACKEND = env("EMAIL_BACKEND")
+# El enlace para crear una contraseña nueva vence a la hora.
+PASSWORD_RESET_TIMEOUT = 60 * 60
 
 
 # ── Internacionalización ────────────────────────────────────────────────────

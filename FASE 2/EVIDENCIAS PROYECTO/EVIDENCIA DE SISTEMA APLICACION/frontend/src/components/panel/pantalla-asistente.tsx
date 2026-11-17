@@ -12,14 +12,14 @@ import { Cabecera, Error as Aviso, Tarjeta } from "./piezas";
 /*
  * El asistente del vendedor.
  *
- * Responde solo sobre la tienda de quien pregunta, y solo las preguntas que
- * sabe. Las ofrece de entrada: un recuadro de texto vacío invita a preguntar
+ * Responde solo sobre la tienda de quien pregunta. Las preguntas que mejor
+ * sabe las ofrece de entrada; un recuadro de texto vacío invita a preguntar
  * cualquier cosa y a recibir «no entendí», que es la peor forma de descubrir
  * para qué sirve algo.
  *
- * Las cifras no las redacta un modelo: las arma el backend con las mismas
- * funciones que pintan el panel, así que el asistente y las pantallas no se
- * pueden contradecir. Por eso cada respuesta puede ofrecer «ver el detalle»
+ * Las cifras salen del backend, con las mismas funciones que pintan el panel
+ * (en una pregunta libre, el modelo las redacta desde la ficha de la tienda),
+ * así que el asistente y las pantallas no se pueden contradecir. Por eso cada respuesta puede ofrecer «ver el detalle»
  * y llevar a la sección correspondiente en vez de repetir la tabla acá.
  */
 

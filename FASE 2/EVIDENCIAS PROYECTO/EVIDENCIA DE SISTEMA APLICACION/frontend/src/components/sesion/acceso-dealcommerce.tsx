@@ -20,6 +20,7 @@ export function AccesoDealCommerce({ volver }: { volver?: string }) {
       // tienda no le sirve de nada.
       destino={(sesion) => rutaSegura(volver, esAdminDePlataforma(sesion) ? "/plataforma" : "/panel")}
       hrefAlternativa={null}
+      hrefOlvido="/panel/olvide-contrasena"
     />
   );
 }

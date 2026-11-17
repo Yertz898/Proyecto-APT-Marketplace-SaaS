@@ -64,6 +64,29 @@ export async function registrarComprador(datos: DatosDeRegistro): Promise<Sesion
   return iniciarSesion(datos.email, datos.password);
 }
 
+/**
+ * Pide el enlace para crear una contraseña nueva.
+ *
+ * La respuesta es la misma exista o no la cuenta: el backend no revela quién
+ * está registrado. `tienda` hace que el enlace vuelva a esa tienda.
+ */
+export async function pedirEnlaceDeContrasena(email: string, tienda?: string): Promise<string> {
+  const respuesta = await pedir("/auth/contrasena/olvido", { email, tienda: tienda ?? "" });
+  if (!respuesta.ok) {
+    throw await leerError(respuesta);
+  }
+  return ((await respuesta.json()) as { detalle: string }).detalle;
+}
+
+/** Crea la contraseña nueva con el enlace del correo. Devuelve el correo de la cuenta. */
+export async function restablecerContrasena(uid: string, token: string, password: string): Promise<string> {
+  const respuesta = await pedir("/auth/contrasena/restablecer", { uid, token, password });
+  if (!respuesta.ok) {
+    throw await leerError(respuesta);
+  }
+  return ((await respuesta.json()) as { email: string }).email;
+}
+
 export function cerrarSesion() {
   borrarSesion();
 }
