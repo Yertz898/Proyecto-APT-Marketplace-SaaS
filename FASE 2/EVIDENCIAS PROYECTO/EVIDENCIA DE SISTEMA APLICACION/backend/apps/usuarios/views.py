@@ -38,7 +38,9 @@ class IniciarSesion(TokenObtainPairView):
         # Solo se anotan los inicios de sesión de quienes administran algo: los
         # compradores entran a muchas tiendas y su sesión no es un cambio en
         # ninguna.
-        if respuesta.status_code == 200:
+        # Con la verificación en dos pasos, este paso todavía no inicia la
+        # sesión: se anota cuando se valida el código.
+        if respuesta.status_code == 200 and "access" in respuesta.data:
             usuario = Usuario.objects.filter(
                 email__iexact=request.data.get("email", "")
             ).first()

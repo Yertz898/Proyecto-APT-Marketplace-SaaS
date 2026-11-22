@@ -8,7 +8,10 @@ camelCase, igual que en el resto de la API.
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.serializers import (
+    TokenObtainPairSerializer,
+    TokenObtainSerializer,
+)
 
 from apps.usuarios.models import Rol, Usuario
 from apps.usuarios.validadores import normalizar_rut, validar_rut
@@ -69,7 +72,10 @@ class TokenDeSesionSerializer(TokenObtainPairSerializer):
         return token
 
     def validate(self, attrs):
-        datos = super().validate(attrs)
+        # Primero solo se comprueban el correo y la contraseña (sin emitir
+        # tokens): si la cuenta tiene la verificación en dos pasos activa, los
+        # tokens recién salen después del código.
+        TokenObtainSerializer.validate(self, attrs)
         # Los vendedores de una tienda que cerró la administración no entran.
         # El dueño sí: su panel se reduce a la pantalla desde la que le escribe
         # a DealCommerce, y todo lo demás lo sigue rechazando cada endpoint.
@@ -82,8 +88,11 @@ class TokenDeSesionSerializer(TokenObtainPairSerializer):
             from apps.core.excepciones import TiendaCerrada
 
             raise TiendaCerrada()
-        datos["usuario"] = UsuarioSerializer(self.user).data
-        return datos
+        from apps.usuarios import dos_pasos
+
+        if dos_pasos.pide_codigo(self.user):
+            return {"otpRequerido": True, "desafio": dos_pasos.crear_desafio(self.user)}
+        return dos_pasos.tokens_para(self.user)
 
 
 class RegistroCompradorSerializer(serializers.ModelSerializer):

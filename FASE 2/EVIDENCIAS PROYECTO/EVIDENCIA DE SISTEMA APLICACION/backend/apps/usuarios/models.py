@@ -92,6 +92,15 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField("puede entrar al panel de Django", default=False)
     fecha_registro = models.DateTimeField("fecha de registro", auto_now_add=True)
 
+    # Verificación en dos pasos (Google Authenticator). Opcional, y solo para
+    # quienes administran algo: el dueño de una tienda y la administración.
+    # El secreto se guarda desde que se empieza a activar, pero no se pide hasta
+    # que `otp_activo` queda en True al confirmar un primer código.
+    otp_secreto = models.CharField("secreto de verificación", max_length=64, blank=True)
+    otp_activo = models.BooleanField("verificación en dos pasos activa", default=False)
+    # Huellas (HMAC) de los códigos de respaldo que quedan sin usar.
+    otp_respaldo = models.JSONField("códigos de respaldo", default=list, blank=True)
+
     objects = GestorDeUsuarios()
 
     USERNAME_FIELD = "email"

@@ -6,7 +6,7 @@ import { useState } from "react";
 
 import { Campo, type TemaDeFormulario } from "@/components/campo";
 import { ErrorDeApi } from "@/lib/api/errores";
-import { iniciarSesion, registrarComprador } from "@/lib/api/sesion";
+import { esDesafio, iniciarSesion, registrarComprador, verificarCodigo } from "@/lib/api/sesion";
 import type { Sesion } from "@/lib/sesion";
 
 /*
@@ -35,6 +35,7 @@ export const PIEL = {
     boton:
       "h-12 cursor-pointer rounded-[12px] bg-acero text-sm font-semibold text-white transition-colors hover:bg-acero-hondo disabled:cursor-not-allowed disabled:opacity-50",
     enlace: "text-center text-[13px] text-acero hover:underline",
+    texto: "text-[14px] leading-[1.55] text-pizarra",
   },
   oscuro: {
     titulo: "font-serif text-[32px] font-medium text-texto",
@@ -42,6 +43,7 @@ export const PIEL = {
     boton:
       "h-12 cursor-pointer rounded-full bg-violeta text-sm font-semibold text-white transition-colors hover:bg-violeta-hover disabled:cursor-not-allowed disabled:opacity-50",
     enlace: "text-center text-[13px] text-lila hover:underline",
+    texto: "text-[14px] leading-[1.55] text-texto-suave",
   },
 } as const;
 
@@ -86,6 +88,30 @@ export function FormularioDeSesion({
 
   const [error, setError] = useState<ErrorDeApi | null>(null);
   const [enviando, setEnviando] = useState(false);
+  // Con la verificación en dos pasos activa, la contraseña devuelve un
+  // desafío y el formulario pasa a pedir el código de la app.
+  const [desafio, setDesafio] = useState<string | null>(null);
+  const [codigo, setCodigo] = useState("");
+
+  function irADestino(sesion: Sesion) {
+    // `replace` y no `push`: volver atrás no debería llevar al formulario de
+    // una sesión que ya está iniciada.
+    router.replace(typeof destino === "function" ? destino(sesion) : destino);
+    router.refresh();
+  }
+
+  async function enviarCodigo(evento: React.FormEvent) {
+    evento.preventDefault();
+    if (!desafio) return;
+    setError(null);
+    setEnviando(true);
+    try {
+      irADestino(await verificarCodigo(desafio, codigo));
+    } catch (falla) {
+      setError(falla instanceof ErrorDeApi ? falla : new ErrorDeApi("error", "No pudimos verificar el código."));
+      setEnviando(false);
+    }
+  }
 
   async function enviar(evento: React.FormEvent) {
     evento.preventDefault();
@@ -93,14 +119,16 @@ export function FormularioDeSesion({
     setEnviando(true);
 
     try {
-      const sesion = creando
+      const resultado = creando
         ? await registrarComprador({ nombre, email, password, rut: rut || undefined })
         : await iniciarSesion(email, password);
 
-      // `replace` y no `push`: volver atrás no debería llevar al formulario de
-      // una sesión que ya está iniciada.
-      router.replace(typeof destino === "function" ? destino(sesion) : destino);
-      router.refresh();
+      if (esDesafio(resultado)) {
+        setDesafio(resultado.desafio);
+        setEnviando(false);
+        return;
+      }
+      irADestino(resultado);
     } catch (falla) {
       setError(falla instanceof ErrorDeApi ? falla : new ErrorDeApi("error", "No pudimos completar la operación."));
       setEnviando(false);
@@ -110,6 +138,50 @@ export function FormularioDeSesion({
   // Los errores que no son de un campo se muestran arriba: credenciales que no
   // coinciden, demasiados intentos, sin conexión.
   const general = error && Object.keys(error.detalles).length === 0 ? error.message : error?.de("general");
+
+  if (desafio) {
+    return (
+      <form onSubmit={enviarCodigo} className="flex flex-col gap-5">
+        <h1 className={piel.titulo}>Verificación en dos pasos</h1>
+        <p className={piel.texto}>
+          Abre Google Authenticator (u otra app de códigos) e ingresa el código de 6 dígitos de
+          DealCommerce. Si no tienes el teléfono, usa uno de tus códigos de respaldo.
+        </p>
+
+        {general && (
+          <p role="alert" className={piel.aviso}>
+            {general}
+          </p>
+        )}
+
+        <Campo
+          tema={tema}
+          id="codigo"
+          etiqueta="Código"
+          valor={codigo}
+          onCambio={setCodigo}
+          error={error?.de("codigo")}
+          autoComplete="one-time-code"
+        />
+
+        <button type="submit" disabled={enviando || codigo.trim().length < 6} className={piel.boton}>
+          {enviando ? "Verificando…" : "Verificar y entrar"}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setDesafio(null);
+            setCodigo("");
+            setError(null);
+          }}
+          className={`cursor-pointer bg-transparent `}
+        >
+          Volver a ingresar la contraseña
+        </button>
+      </form>
+    );
+  }
 
   return (
     <form onSubmit={enviar} noValidate={false} className="flex flex-col gap-5">

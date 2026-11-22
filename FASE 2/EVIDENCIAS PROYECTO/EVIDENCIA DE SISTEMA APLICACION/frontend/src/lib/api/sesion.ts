@@ -28,18 +28,47 @@ async function pedir(ruta: string, cuerpo: unknown, cabeceras: HeadersInit = {})
   }
 }
 
-/** Entra con correo y contraseña, y deja la sesión guardada. */
-export async function iniciarSesion(email: string, password: string): Promise<Sesion> {
+/**
+ * Falta el segundo paso: la cuenta tiene la verificación en dos pasos activa.
+ * Con el desafío y el código de la app, `verificarCodigo` termina de entrar.
+ */
+export type DesafioDeDosPasos = { otpRequerido: true; desafio: string };
+
+export function esDesafio(valor: Sesion | DesafioDeDosPasos): valor is DesafioDeDosPasos {
+  return "otpRequerido" in valor;
+}
+
+function guardarRespuesta(datos: RespuestaDeSesion): Sesion {
+  const sesion = { acceso: datos.access, refresco: datos.refresh, usuario: datos.usuario };
+  guardarSesion(sesion);
+  return sesion;
+}
+
+/**
+ * Entra con correo y contraseña, y deja la sesión guardada.
+ *
+ * Si la cuenta tiene la verificación en dos pasos activa, todavía no hay
+ * sesión: devuelve el desafío para pedir el código.
+ */
+export async function iniciarSesion(email: string, password: string): Promise<Sesion | DesafioDeDosPasos> {
   const respuesta = await pedir("/auth/sesion", { email, password });
 
   if (!respuesta.ok) {
     throw await leerError(respuesta);
   }
 
-  const datos = (await respuesta.json()) as RespuestaDeSesion;
-  const sesion = { acceso: datos.access, refresco: datos.refresh, usuario: datos.usuario };
-  guardarSesion(sesion);
-  return sesion;
+  const datos = (await respuesta.json()) as RespuestaDeSesion | DesafioDeDosPasos;
+  if ("otpRequerido" in datos) return datos;
+  return guardarRespuesta(datos);
+}
+
+/** El segundo paso: el código de la app (o uno de respaldo) a cambio de la sesión. */
+export async function verificarCodigo(desafio: string, codigo: string): Promise<Sesion> {
+  const respuesta = await pedir("/auth/sesion/otp", { desafio, codigo });
+  if (!respuesta.ok) {
+    throw await leerError(respuesta);
+  }
+  return guardarRespuesta((await respuesta.json()) as RespuestaDeSesion);
 }
 
 export type DatosDeRegistro = {
@@ -61,7 +90,8 @@ export async function registrarComprador(datos: DatosDeRegistro): Promise<Sesion
     throw await leerError(respuesta);
   }
 
-  return iniciarSesion(datos.email, datos.password);
+  // Un comprador nunca tiene verificación en dos pasos: la respuesta es la sesión.
+  return (await iniciarSesion(datos.email, datos.password)) as Sesion;
 }
 
 /**

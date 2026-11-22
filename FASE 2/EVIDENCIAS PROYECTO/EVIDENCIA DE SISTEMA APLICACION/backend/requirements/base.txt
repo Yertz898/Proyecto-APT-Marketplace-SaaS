@@ -24,6 +24,11 @@ Pillow~=11.3.0
 # porque el asistente corre en producción.
 google-genai~=3.3.0
 
+# Verificación en dos pasos (Google Authenticator) para dueños y administración.
+# qrcode dibuja el QR en SVG, sin Pillow de por medio.
+pyotp~=2.9.0
+qrcode~=8.2
+
 # Servidor de aplicación
 gunicorn~=23.0.0
 whitenoise~=6.11.0                # sirve los estáticos del admin sin un segundo servidor

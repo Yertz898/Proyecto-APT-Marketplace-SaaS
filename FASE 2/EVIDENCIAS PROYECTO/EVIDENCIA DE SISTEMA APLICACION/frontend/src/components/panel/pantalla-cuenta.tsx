@@ -8,6 +8,7 @@ import { cambiarContrasena, cambiarNombre } from "@/lib/api/gestion";
 import { cerrarSesion } from "@/lib/api/sesion";
 
 import { Aviso, Boton, Campo, mensajeDe } from "./controles";
+import { DosPasos } from "./dos-pasos";
 import { Cabecera, Cargando, Tarjeta } from "./piezas";
 
 /*
@@ -23,7 +24,7 @@ export function PantallaCuenta() {
 
   return (
     <>
-      <Cabecera titulo="Tu cuenta" descripcion="Tus datos, tu contraseña y tu sesión." />
+      <Cabecera titulo="Tu cuenta" descripcion="Tus datos, tu contraseña, la verificación en dos pasos y tu sesión." />
 
       <div className="grid gap-4 lg:grid-cols-2">
         <DatosPersonales
@@ -33,6 +34,8 @@ export function PantallaCuenta() {
         />
         <CambioDeContrasena />
       </div>
+
+      {(sesion.usuario.rol === "dueno_tienda" || sesion.usuario.rol === "admin_plataforma") && <DosPasos />}
 
       <Tarjeta className="mt-4">
         <p className="text-[13px] font-semibold text-marino">Sesión</p>

@@ -190,3 +190,19 @@ export const obtenerMensajes = () => pedir<MensajeDeTienda[]>("/plataforma/mensa
 
 export const marcarMensaje = (id: number, leido: boolean) =>
   pedir<MensajeDeTienda>(`/plataforma/mensajes/${id}`, "PATCH", { leido });
+
+// ── Verificación en dos pasos ───────────────────────────────────────────────
+
+export type EstadoDosPasos = { activa: boolean; codigosDeRespaldo: number };
+
+export const obtenerDosPasos = () => pedir<EstadoDosPasos>("/auth/otp");
+
+/** Secreto nuevo y su QR. Todavía no queda activa: falta confirmar un código. */
+export const iniciarDosPasos = () => pedir<{ secreto: string; qr: string }>("/auth/otp/iniciar", "POST");
+
+/** La activa con el primer código de la app. Devuelve los códigos de respaldo (se ven una vez). */
+export const confirmarDosPasos = (codigo: string) =>
+  pedir<{ codigosDeRespaldo: string[] }>("/auth/otp/confirmar", "POST", { codigo });
+
+export const desactivarDosPasos = (password: string, codigo: string) =>
+  pedir<void>("/auth/otp/desactivar", "POST", { password, codigo });

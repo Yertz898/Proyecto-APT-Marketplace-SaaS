@@ -47,7 +47,12 @@ diría si el correo existe.
 
 | Método | Ruta | Quién | Devuelve |
 |---|---|---|---|
-| `POST` | `/auth/sesion` | cualquiera | `access`, `refresh`, `usuario` |
+| `POST` | `/auth/sesion` | cualquiera | `access`, `refresh`, `usuario`; o `{otpRequerido, desafio}` si la cuenta tiene verificación en dos pasos |
+| `POST` | `/auth/sesion/otp` | cualquiera | `{desafio, codigo}` → `access`, `refresh`, `usuario`. Acepta un código de la app o de respaldo; 5 fallos → espera |
+| `GET` | `/auth/otp` | dueño o admin | `{activa, codigosDeRespaldo}` |
+| `POST` | `/auth/otp/iniciar` | dueño o admin | `{secreto, qr}` (QR en SVG); todavía no la activa |
+| `POST` | `/auth/otp/confirmar` | dueño o admin | `{codigo}` → la activa y devuelve 8 `codigosDeRespaldo` (se ven una vez) |
+| `POST` | `/auth/otp/desactivar` | dueño o admin | `{password, codigo}` |
 | `POST` | `/auth/sesion/renovar` | cualquiera | `access` |
 | `POST` | `/auth/registro` | cualquiera | crea un **comprador** y lo deja con sesión |
 | `GET` | `/auth/yo` | con sesión | el `usuario` de la sesión |
