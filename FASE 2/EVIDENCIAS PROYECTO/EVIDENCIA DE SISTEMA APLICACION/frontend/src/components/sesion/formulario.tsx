@@ -7,6 +7,7 @@ import { useState } from "react";
 import { Campo, type TemaDeFormulario } from "@/components/campo";
 import { ErrorDeApi } from "@/lib/api/errores";
 import { esDesafio, iniciarSesion, registrarComprador, verificarCodigo } from "@/lib/api/sesion";
+import { formatearRut } from "@/lib/rut";
 import type { Sesion } from "@/lib/sesion";
 
 /*
@@ -223,9 +224,9 @@ export function FormularioDeSesion({
           id="rut"
           etiqueta="RUT"
           valor={rut}
-          onCambio={setRut}
+          onCambio={(valor) => setRut(formatearRut(valor))}
           error={error?.de("rut")}
-          ayuda="Sirve para la boleta y el despacho. Con guion y sin puntos: 12345678-5."
+          ayuda="Sirve para la boleta y el despacho. Se completa solo con puntos y guion: 12.345.678-5."
           requerido={false}
         />
       )}

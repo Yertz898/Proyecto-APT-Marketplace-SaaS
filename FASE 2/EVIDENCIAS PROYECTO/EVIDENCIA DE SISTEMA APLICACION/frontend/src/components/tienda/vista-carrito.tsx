@@ -7,6 +7,7 @@ import { useSesion } from "@/components/sesion/usar-sesion";
 import { confirmarPedido, cotizarCarrito } from "@/lib/api/carrito";
 import { ErrorDeApi } from "@/lib/api/errores";
 import { formatearPesos } from "@/lib/formato";
+import { formatearRut, rutValido } from "@/lib/rut";
 import type {
   CarritoCotizado,
   DatosDeContacto,
@@ -17,21 +18,7 @@ import type {
 import { useCarrito } from "./carrito";
 import { EnlaceExterno } from "./enlace-externo";
 
-/** Formato y dígito verificador de un RUT chileno. El backend lo vuelve a revisar. */
-function rutValido(rut: string): boolean {
-  const limpio = rut.replace(/[.\s]/g, "").toUpperCase();
-  const partes = /^(\d{7,8})-?([\dK])$/.exec(limpio);
-  if (!partes) return false;
-  let suma = 0;
-  let factor = 2;
-  for (const digito of partes[1].split("").reverse()) {
-    suma += Number(digito) * factor;
-    factor = factor === 7 ? 2 : factor + 1;
-  }
-  const resto = 11 - (suma % 11);
-  const esperado = resto === 11 ? "0" : resto === 10 ? "K" : String(resto);
-  return esperado === partes[2];
-}
+
 
 const CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -259,7 +246,8 @@ export function VistaCarrito({ slugTienda, aceptaWebpay = false }: { slugTienda:
                 id="rut-contacto"
                 etiqueta="RUT"
                 valor={rut}
-                onCambio={(valor) => /^[\dkK.\-]{0,12}$/.test(valor) && escribir("rut_contacto", valor)}
+                // Se le van poniendo los puntos y el guion mientras se escribe.
+                onCambio={(valor) => escribir("rut_contacto", formatearRut(valor))}
                 error={rutMalo ? "Revisa el RUT: el dígito verificador no calza." : null}
               />
             )}
