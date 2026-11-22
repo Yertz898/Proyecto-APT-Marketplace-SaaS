@@ -9,9 +9,19 @@ from apps.agenda.panel import (
     DiaBloqueadoDetalle,
     DiasBloqueados,
     EstadoDeVisita,
+    ProponerCambioDesdePanel,
+    ResponderCambioDesdePanel,
     VisitasDeLaTienda,
 )
-from apps.agenda.views import HorasDisponibles, PedirVisita
+from apps.agenda.views import (
+    CambioPorEnlace,
+    CancelarMiVisita,
+    HorasDisponibles,
+    MisVisitas,
+    PedirVisita,
+    PropuestaDeHora,
+    RespuestaAlCambio,
+)
 
 urlpatterns = [
     path(
@@ -23,6 +33,31 @@ urlpatterns = [
         "t/<slug:slug>/agenda/visitas",
         PedirVisita.as_view(),
         name="agenda-pedir-visita",
+    ),
+    path(
+        "t/<slug:slug>/agenda/mis-visitas",
+        MisVisitas.as_view(),
+        name="agenda-mis-visitas",
+    ),
+    path(
+        "t/<slug:slug>/agenda/mis-visitas/<int:pk>/cambio",
+        PropuestaDeHora.as_view(),
+        name="agenda-proponer-cambio",
+    ),
+    path(
+        "t/<slug:slug>/agenda/mis-visitas/<int:pk>/cambio/respuesta",
+        RespuestaAlCambio.as_view(),
+        name="agenda-responder-cambio",
+    ),
+    path(
+        "t/<slug:slug>/agenda/mis-visitas/<int:pk>/cancelar",
+        CancelarMiVisita.as_view(),
+        name="agenda-cancelar-visita",
+    ),
+    path(
+        "agenda/cambios/enlace",
+        CambioPorEnlace.as_view(),
+        name="agenda-cambio-por-enlace",
     ),
     path(
         "panel/agenda/configuracion",
@@ -54,5 +89,15 @@ urlpatterns = [
         "panel/agenda/visitas/<int:pk>/estado",
         EstadoDeVisita.as_view(),
         name="panel-agenda-visita-estado",
+    ),
+    path(
+        "panel/agenda/visitas/<int:pk>/cambio",
+        ProponerCambioDesdePanel.as_view(),
+        name="panel-agenda-proponer-cambio",
+    ),
+    path(
+        "panel/agenda/visitas/<int:pk>/cambio/respuesta",
+        ResponderCambioDesdePanel.as_view(),
+        name="panel-agenda-responder-cambio",
     ),
 ]

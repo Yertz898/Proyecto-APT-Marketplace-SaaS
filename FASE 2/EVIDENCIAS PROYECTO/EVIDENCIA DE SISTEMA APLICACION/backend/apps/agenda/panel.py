@@ -14,13 +14,15 @@ from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.agenda.disponibilidad import asiento_libre, capacidad_de_la_hora
+from apps.agenda import avisos, cambios
+from apps.agenda.disponibilidad import capacidad_de_la_hora
 from apps.agenda.models import (
     ESTADOS_QUE_OCUPAN,
     BloqueHorario,
     ConfiguracionAgenda,
     DiaBloqueado,
     EstadoVisita,
+    LadoDelCambio,
     Visita,
 )
 from apps.core.mixins import MixinTiendaDelUsuario
@@ -206,6 +208,7 @@ class VisitaDelPanelSerializer(serializers.ModelSerializer):
     motivoRechazo = serializers.CharField(source="motivo_rechazo")
     siguientes = serializers.SerializerMethodField()
     horaTomada = serializers.SerializerMethodField()
+    cambioPendiente = serializers.SerializerMethodField()
 
     class Meta:
         model = Visita
@@ -222,7 +225,11 @@ class VisitaDelPanelSerializer(serializers.ModelSerializer):
             "motivoRechazo",
             "siguientes",
             "horaTomada",
+            "cambioPendiente",
         ]
+
+    def get_cambioPendiente(self, visita):  # noqa: N802 — nombre del campo
+        return cambios.representar(cambios.pendiente_de(visita))
 
     def get_siguientes(self, visita):
         from apps.agenda.models import TRANSICIONES
@@ -294,14 +301,17 @@ class EstadoDeVisita(APIView):
         datos.is_valid(raise_exception=True)
         nuevo = datos.validated_data["estado"]
 
+        motivo = datos.validated_data.get("motivoRechazo", "")
         try:
             with transaction.atomic():
-                visita.cambiar_estado(
-                    nuevo, motivo_rechazo=datos.validated_data.get("motivoRechazo", "")
-                )
+                visita.cambiar_estado(nuevo, motivo_rechazo=motivo)
                 if nuevo == EstadoVisita.CONFIRMADA:
-                    visita.posicion = self._asiento(visita)
+                    visita.posicion = cambios.asiento_en(
+                        visita.tienda_id, visita.inicio
+                    )
                 visita.save()
+                if nuevo in (EstadoVisita.CANCELADA, EstadoVisita.RECHAZADA):
+                    cambios.anular_pendiente(visita)
         except ErrorDeDjango as error:
             raise _como_error_de_api(error) from None
         except IntegrityError:
@@ -310,31 +320,63 @@ class EstadoDeVisita(APIView):
             raise serializers.ValidationError(
                 {"estado": "Esa hora se acaba de tomar. Rechaza esta o propón otra."}
             ) from None
+        if nuevo in (EstadoVisita.CANCELADA, EstadoVisita.RECHAZADA):
+            avisos.visita_cancelada(visita, por=LadoDelCambio.TIENDA, motivo=motivo)
         return Response(VisitaDelPanelSerializer(visita).data)
 
-    def _asiento(self, visita) -> int:
-        """
-        El cupo que toma la visita al confirmarse, o un error si ya no queda.
 
-        Es acá, y no al pedirla, donde la hora pasa a estar tomada.
-        """
-        configuracion, _ = ConfiguracionAgenda.objects.get_or_create(
-            tienda_id=visita.tienda_id
-        )
-        # Bloquear las visitas de esa hora serializa a dos vendedores que
-        # confirman a la vez.
-        list(
-            Visita.objects.select_for_update()
-            .filter(tienda_id=visita.tienda_id, inicio=visita.inicio)
-            .values_list("pk", flat=True)
-        )
-        capacidad = capacidad_de_la_hora(configuracion, visita.inicio)
-        asiento = asiento_libre(visita.tienda_id, visita.inicio, capacidad)
-        if asiento is None:
-            raise serializers.ValidationError(
-                {
-                    "estado": "Esa hora ya está tomada por otra visita confirmada. "
-                    "Rechaza esta o propón otra hora."
-                }
+# ── Reagendar ───────────────────────────────────────────────────────────────
+
+
+class PropuestaDeHoraSerializer(serializers.Serializer):
+    inicio = serializers.DateTimeField()
+
+
+class RespuestaAlCambioSerializer(serializers.Serializer):
+    acepta = serializers.BooleanField()
+
+
+def _visita_del_panel(request, pk) -> Visita:
+    visita = Visita.objects.de_usuario(request.user).filter(pk=pk).first()
+    if visita is None:
+        raise NotFound()
+    return visita
+
+
+class ProponerCambioDesdePanel(APIView):
+    """POST /panel/agenda/visitas/<id>/cambio {"inicio": ...}: otra hora."""
+
+    permission_classes = PERMISOS
+
+    def post(self, request, pk):
+        visita = _visita_del_panel(request, pk)
+        datos = PropuestaDeHoraSerializer(data=request.data)
+        datos.is_valid(raise_exception=True)
+        try:
+            cambios.proponer(
+                visita, datos.validated_data["inicio"], por=LadoDelCambio.TIENDA
             )
-        return asiento
+        except ErrorDeDjango as error:
+            raise _como_error_de_api(error) from None
+        return Response(VisitaDelPanelSerializer(visita).data, status=201)
+
+
+class ResponderCambioDesdePanel(APIView):
+    """POST /panel/agenda/visitas/<id>/cambio/respuesta  {"acepta": true}."""
+
+    permission_classes = PERMISOS
+
+    def post(self, request, pk):
+        visita = _visita_del_panel(request, pk)
+        datos = RespuestaAlCambioSerializer(data=request.data)
+        datos.is_valid(raise_exception=True)
+        cambio = cambios.pendiente_de(visita)
+        if cambio is None:
+            raise NotFound("Esta visita no tiene un cambio de hora pendiente.")
+        try:
+            visita = cambios.responder(
+                cambio, acepta=datos.validated_data["acepta"], por=LadoDelCambio.TIENDA
+            )
+        except ErrorDeDjango as error:
+            raise _como_error_de_api(error) from None
+        return Response(VisitaDelPanelSerializer(visita).data)

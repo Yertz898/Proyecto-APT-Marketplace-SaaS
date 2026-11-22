@@ -447,6 +447,8 @@ class TipoCorreo(models.TextChoices):
     REPROGRAMADA = "reprogramada", "Visita reprogramada"
     CANCELADA = "cancelada", "Visita cancelada"
     RECORDATORIO = "recordatorio", "Recordatorio"
+    CAMBIO_PROPUESTO = "cambio_propuesto", "Cambio de hora propuesto"
+    CAMBIO_RECHAZADO = "cambio_rechazado", "Cambio de hora rechazado"
 
 
 class EstadoEnvio(models.TextChoices):
@@ -473,6 +475,12 @@ class EnvioCorreo(ModeloDeTienda):
     tipo = models.CharField("tipo", max_length=30, choices=TipoCorreo.choices)
     destinatario = models.EmailField("destinatario")
 
+    # El texto se guarda al crear el aviso y no se arma al enviarlo: así, si el
+    # envío queda pendiente (por ejemplo, mientras los correos están apagados),
+    # lo que sale después es lo que correspondía en el momento.
+    asunto = models.CharField("asunto", max_length=200, blank=True)
+    cuerpo = models.TextField("cuerpo", blank=True)
+
     estado = models.CharField(
         "estado",
         max_length=20,
@@ -493,3 +501,76 @@ class EnvioCorreo(ModeloDeTienda):
     def __str__(self):
         estado = self.get_estado_display()
         return f"{self.get_tipo_display()} a {self.destinatario}: {estado}"
+
+
+class LadoDelCambio(models.TextChoices):
+    COMPRADOR = "comprador", "Cliente"
+    TIENDA = "tienda", "Tienda"
+
+
+class EstadoDelCambio(models.TextChoices):
+    PENDIENTE = "pendiente", "Pendiente"
+    ACEPTADO = "aceptado", "Aceptado"
+    RECHAZADO = "rechazado", "Rechazado"
+    ANULADO = "anulado", "Anulado"
+
+
+class CambioDeHora(ModeloDeTienda):
+    """
+    Una propuesta para mover una visita a otra hora.
+
+    La propone una de las dos partes —el cliente o la tienda— y la responde la
+    otra. Si la acepta, la visita se mueve a la hora nueva; si la rechaza, la
+    visita se cancela. Es la regla que pidió el cliente piloto: una hora que una
+    de las partes ya no puede cumplir no se deja en el aire.
+
+    Una visita tiene a lo más un cambio pendiente: dos propuestas cruzadas
+    obligarían a decidir cuál vale, y eso es justo la confusión que se quiere
+    evitar.
+    """
+
+    visita = models.ForeignKey(
+        Visita,
+        verbose_name="visita",
+        on_delete=models.CASCADE,
+        related_name="cambios",
+    )
+    inicio = models.DateTimeField("inicio propuesto")
+    fin = models.DateTimeField("término propuesto")
+    propuesto_por = models.CharField(
+        "propuesto por", max_length=20, choices=LadoDelCambio.choices
+    )
+    estado = models.CharField(
+        "estado",
+        max_length=20,
+        choices=EstadoDelCambio.choices,
+        default=EstadoDelCambio.PENDIENTE,
+    )
+    respondido_en = models.DateTimeField("respondido en", blank=True, null=True)
+
+    class Meta(ModeloDeTienda.Meta):
+        verbose_name = "cambio de hora"
+        verbose_name_plural = "cambios de hora"
+        ordering = ["-fecha_creacion"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["visita"],
+                condition=models.Q(estado="pendiente"),
+                name="agenda_un_cambio_pendiente_por_visita",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(fin__gt=models.F("inicio")),
+                name="agenda_cambio_termina_despues_de_empezar",
+            ),
+        ]
+
+    def __str__(self):
+        cuando = f"{self.inicio:%d-%m-%Y %H:%M}"
+        return f"{self.visita} → {cuando} ({self.get_estado_display()})"
+
+    @property
+    def responde(self) -> str:
+        """El lado que tiene que contestar: el contrario al que propuso."""
+        if self.propuesto_por == LadoDelCambio.COMPRADOR:
+            return LadoDelCambio.TIENDA
+        return LadoDelCambio.COMPRADOR

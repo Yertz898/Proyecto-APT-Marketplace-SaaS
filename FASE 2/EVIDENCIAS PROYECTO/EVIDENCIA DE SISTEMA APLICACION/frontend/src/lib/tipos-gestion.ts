@@ -60,6 +60,14 @@ export type BloqueDeAtencion = {
   visitasSimultaneas: number | null;
 };
 
+/** Una propuesta para mover una visita. La responde el lado contrario a `propuestoPor`. */
+export type CambioPendiente = {
+  id: number;
+  inicio: string;
+  fin: string;
+  propuestoPor: "comprador" | "tienda";
+};
+
 export type DiaCerrado = { id: number; fecha: string; motivo: string };
 
 export type EstadoDeVisita =
@@ -85,6 +93,8 @@ export type VisitaDelPanel = {
   siguientes: EstadoDeVisita[];
   /** Solicitud cuya hora ya tomó otra visita confirmada: no se puede confirmar. */
   horaTomada: boolean;
+  /** Propuesta de otra hora que espera respuesta, o null. */
+  cambioPendiente: CambioPendiente | null;
 };
 
 // ── Plataforma ──────────────────────────────────────────────────────────────

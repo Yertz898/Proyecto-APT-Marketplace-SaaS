@@ -2,6 +2,7 @@
 
 from datetime import datetime, timedelta
 
+from django.core.exceptions import ValidationError as ErrorDeDjango
 from django.db import transaction
 from rest_framework import status
 from rest_framework.exceptions import NotFound, ValidationError
@@ -9,6 +10,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.agenda import avisos, cambios
 from apps.agenda.disponibilidad import asiento_libre, horas_disponibles, ventana_de
 from apps.agenda.models import (
     ESTADOS_VIGENTES,
@@ -19,6 +21,7 @@ from apps.agenda.models import (
 )
 from apps.agenda.serializers import (
     HoraDisponibleSerializer,
+    MiVisitaSerializer,
     SolicitudDeVisitaSerializer,
     VisitaSerializer,
 )
@@ -208,3 +211,189 @@ class PedirVisita(APIView):
             )
 
         return Response(VisitaSerializer(visita).data, status=status.HTTP_201_CREATED)
+
+
+# ── Mis citas: reagendar y cancelar desde la cuenta del comprador ───────────
+
+
+def _como_error_de_api(error: ErrorDeDjango) -> ValidationError:
+    if hasattr(error, "error_dict"):
+        return ValidationError(error.message_dict)
+    return ValidationError({"detalle": error.messages})
+
+
+def _mi_visita(request, slug, pk) -> Visita:
+    """La visita del comprador en esa tienda, o 404: nunca la de otra persona."""
+    visita = (
+        Visita.objects.filter(
+            pk=pk, comprador=request.user, tienda__slug=slug, tienda__activa=True
+        )
+        .select_related("tienda")
+        .first()
+    )
+    if visita is None:
+        raise NotFound()
+    return visita
+
+
+class MisVisitas(APIView):
+    """
+    GET /t/<slug>/agenda/mis-visitas: las visitas del comprador en la tienda.
+
+    Primero las que siguen en pie, de la más próxima a la más lejana; después
+    las pasadas o cerradas de los últimos 60 días, para que vea qué pasó con
+    una que se canceló.
+    """
+
+    permission_classes = [EsComprador]
+
+    def get(self, request, slug):
+        from django.utils import timezone
+
+        desde = timezone.now() - timedelta(days=60)
+        visitas = list(
+            Visita.objects.filter(
+                comprador=request.user,
+                tienda__slug=slug,
+                tienda__activa=True,
+                inicio__gte=desde,
+            ).order_by("inicio")
+        )
+        ahora = timezone.now()
+        visitas.sort(
+            key=lambda v: (
+                not (v.estado in ESTADOS_VIGENTES and v.fin >= ahora),
+                v.inicio,
+            )
+        )
+        return Response(MiVisitaSerializer(visitas, many=True).data)
+
+
+class PropuestaDeHora(APIView):
+    """POST /t/<slug>/agenda/mis-visitas/<id>/cambio  {"inicio": ...}."""
+
+    permission_classes = [EsComprador]
+
+    def post(self, request, slug, pk):
+        from apps.agenda.panel import PropuestaDeHoraSerializer
+
+        visita = _mi_visita(request, slug, pk)
+        datos = PropuestaDeHoraSerializer(data=request.data)
+        datos.is_valid(raise_exception=True)
+        try:
+            cambios.proponer(
+                visita,
+                datos.validated_data["inicio"],
+                por=cambios.LadoDelCambio.COMPRADOR,
+            )
+        except ErrorDeDjango as error:
+            raise _como_error_de_api(error) from None
+        return Response(MiVisitaSerializer(visita).data, status=status.HTTP_201_CREATED)
+
+
+class RespuestaAlCambio(APIView):
+    """POST /t/<slug>/agenda/mis-visitas/<id>/cambio/respuesta  {"acepta": true}."""
+
+    permission_classes = [EsComprador]
+
+    def post(self, request, slug, pk):
+        from apps.agenda.panel import RespuestaAlCambioSerializer
+
+        visita = _mi_visita(request, slug, pk)
+        datos = RespuestaAlCambioSerializer(data=request.data)
+        datos.is_valid(raise_exception=True)
+        cambio = cambios.pendiente_de(visita)
+        if cambio is None:
+            raise NotFound("Esta visita no tiene un cambio de hora pendiente.")
+        try:
+            visita = cambios.responder(
+                cambio,
+                acepta=datos.validated_data["acepta"],
+                por=cambios.LadoDelCambio.COMPRADOR,
+            )
+        except ErrorDeDjango as error:
+            raise _como_error_de_api(error) from None
+        return Response(MiVisitaSerializer(visita).data)
+
+
+class CancelarMiVisita(APIView):
+    """POST /t/<slug>/agenda/mis-visitas/<id>/cancelar."""
+
+    permission_classes = [EsComprador]
+
+    def post(self, request, slug, pk):
+        visita = _mi_visita(request, slug, pk)
+        if visita.estado not in ESTADOS_VIGENTES:
+            raise ValidationError({"visita": "Esta visita ya no se puede cancelar."})
+        cambios.cancelar(visita, por=cambios.LadoDelCambio.COMPRADOR)
+        return Response(MiVisitaSerializer(visita).data)
+
+
+# ── El enlace del correo ────────────────────────────────────────────────────
+
+
+class CambioPorEnlace(APIView):
+    """
+    GET/POST /agenda/cambios/enlace?firma=...
+
+    Lo que abre el enlace de Aceptar / Rechazar del correo. La firma dice qué
+    cambio es y qué lado responde, y vence en una semana: con ella no hace falta
+    iniciar sesión, igual que el enlace para crear una contraseña nueva.
+
+    GET muestra el cambio (para que la persona vea qué está aceptando) y POST
+    lo responde con {"firma": ..., "acepta": true|false}.
+
+    Mientras los correos de la agenda estén apagados nadie recibe estos
+    enlaces, pero el camino ya funciona.
+    """
+
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def _cambio(self, firma):
+        from django.core import signing
+
+        from apps.agenda.models import CambioDeHora
+
+        try:
+            datos = avisos.leer_firma(firma or "")
+        except signing.BadSignature:
+            raise ValidationError(
+                {"firma": "El enlace venció o no es válido. Responde desde tu cuenta."}
+            ) from None
+        cambio = (
+            CambioDeHora.objects.filter(pk=datos.get("cambio"))
+            .select_related("visita", "visita__tienda")
+            .first()
+        )
+        if cambio is None:
+            raise NotFound()
+        return cambio, datos.get("lado")
+
+    def get(self, request):
+        cambio, lado = self._cambio(request.query_params.get("firma"))
+        visita = cambio.visita
+        return Response(
+            {
+                "tienda": visita.tienda.nombre,
+                "cliente": visita.nombre_contacto,
+                "horaActual": visita.inicio,
+                "horaPropuesta": cambio.inicio,
+                "estado": cambio.estado,
+                "responde": lado,
+            }
+        )
+
+    def post(self, request):
+        from apps.agenda.panel import RespuestaAlCambioSerializer
+
+        cambio, lado = self._cambio(request.data.get("firma"))
+        datos = RespuestaAlCambioSerializer(data=request.data)
+        datos.is_valid(raise_exception=True)
+        try:
+            visita = cambios.responder(
+                cambio, acepta=datos.validated_data["acepta"], por=lado
+            )
+        except ErrorDeDjango as error:
+            raise _como_error_de_api(error) from None
+        return Response({"estado": visita.estado, "inicio": visita.inicio})

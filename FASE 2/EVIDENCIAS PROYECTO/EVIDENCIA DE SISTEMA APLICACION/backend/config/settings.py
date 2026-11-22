@@ -29,6 +29,7 @@ env = environ.Env(
     RESEND_API_KEY=(str, ""),
     DEFAULT_FROM_EMAIL=(str, "DealCommerce <no-responder@dealcommerce.cl>"),
     EMAIL_BACKEND=(str, "django.core.mail.backends.console.EmailBackend"),
+    CORREOS_AGENDA_ACTIVOS=(bool, False),
 )
 
 # Fuera de Docker, .env vive en la raíz del repositorio.
@@ -193,6 +194,11 @@ DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL")
 EMAIL_BACKEND = env("EMAIL_BACKEND")
 # El enlace para crear una contraseña nueva vence a la hora.
 PASSWORD_RESET_TIMEOUT = 60 * 60
+# Los avisos de la agenda (cambios de hora, cancelaciones) se registran siempre
+# en EnvioCorreo, pero solo salen con esto en True. Está apagado hasta tener un
+# dominio verificado en Resend: sin él, Resend solo entrega a la dueña de la
+# cuenta. Al encenderlo, `manage.py enviar_correos_agenda` manda lo pendiente.
+CORREOS_AGENDA_ACTIVOS = env("CORREOS_AGENDA_ACTIVOS")
 
 
 # ── Internacionalización ────────────────────────────────────────────────────

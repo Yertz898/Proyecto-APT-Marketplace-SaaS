@@ -76,6 +76,11 @@ Sin sesión. La tienda sale del slug de la ruta.
 | `POST` | `/t/<slug>/carrito/cotizar` | qué cuesta el carrito completo; no escribe nada |
 | `POST` | `/t/<slug>/pedidos` | cierra el pedido y devuelve folio y enlace de WhatsApp |
 | `POST` | `/t/<slug>/agenda/visitas` | pide una hora (**comprador con sesión**) |
+| `GET` | `/t/<slug>/agenda/mis-visitas` | «Mis citas»: las visitas del comprador en la tienda, con el cambio pendiente (**comprador**) |
+| `POST` | `/t/<slug>/agenda/mis-visitas/<id>/cambio` | el cliente propone otra hora `{inicio}` (**comprador**) |
+| `POST` | `/t/<slug>/agenda/mis-visitas/<id>/cambio/respuesta` | responde la hora que propuso la tienda `{acepta}`; rechazar cancela la visita (**comprador**) |
+| `POST` | `/t/<slug>/agenda/mis-visitas/<id>/cancelar` | cancela la visita (**comprador**) |
+| `GET`, `POST` | `/agenda/cambios/enlace` | ver y responder un cambio con la firma del enlace del correo (sin sesión; vence en 7 días) |
 
 `colores` es `null` cuando la tienda no definió los cuatro: con la paleta a medias, la
 vitrina usa la de la plataforma en vez de mezclar.
@@ -419,6 +424,10 @@ arranca**: vale más un error al partir que una vitrina de imágenes rotas en pr
 | `DELETE` | `/panel/agenda/dias-cerrados/<id>` | ídem | reabre un día |
 | `GET` | `/panel/agenda/visitas` | ídem | visitas desde hoy (`?todas=1` para todas) |
 | `POST` | `/panel/agenda/visitas/<id>/estado` | ídem | confirmar, rechazar, asistió, no asistió |
+| `POST` | `/panel/agenda/visitas/<id>/cambio` | ídem | la tienda propone otra hora `{inicio}` |
+| `POST` | `/panel/agenda/visitas/<id>/cambio/respuesta` | ídem | responde la hora que propuso el cliente `{acepta}`; rechazar cancela la visita |
+
+Reagendar: propone una parte y responde la otra. Aceptar mueve la visita (si estaba confirmada, busca cupo en la hora nueva); rechazar la cancela. Cada paso registra un aviso en `EnvioCorreo`, que solo sale por correo con `CORREOS_AGENDA_ACTIVOS=True` (apagado mientras no haya dominio verificado en Resend; lo pendiente se manda con `manage.py enviar_correos_agenda`).
 
 El plan se revisa en el backend (`PlanMinimo` en `apps/core/permissions.py`); el candado del
 panel solo lo refleja. No hay cobro en línea: cada cambio de plan queda en el registro de

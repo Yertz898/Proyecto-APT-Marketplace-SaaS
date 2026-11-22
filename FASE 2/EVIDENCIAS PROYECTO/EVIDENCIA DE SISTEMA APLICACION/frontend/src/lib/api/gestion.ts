@@ -112,6 +112,14 @@ export const obtenerVisitas = () => pedir<VisitaDelPanel[]>("/panel/agenda/visit
 export const cambiarEstadoDeVisita = (id: number, estado: EstadoDeVisita, motivoRechazo = "") =>
   pedir<VisitaDelPanel>(`/panel/agenda/visitas/${id}/estado`, "POST", { estado, motivoRechazo });
 
+/** La tienda propone mover la visita a otra hora; la responde el cliente. */
+export const proponerCambioDeVisita = (id: number, inicio: string) =>
+  pedir<VisitaDelPanel>(`/panel/agenda/visitas/${id}/cambio`, "POST", { inicio });
+
+/** La tienda acepta o rechaza el cambio que propuso el cliente. Rechazar cancela la visita. */
+export const responderCambioDeVisita = (id: number, acepta: boolean) =>
+  pedir<VisitaDelPanel>(`/panel/agenda/visitas/${id}/cambio/respuesta`, "POST", { acepta });
+
 // ── Plataforma ──────────────────────────────────────────────────────────────
 
 export const obtenerTiendas = () => pedir<TiendaDePlataforma[]>("/plataforma/tiendas");

@@ -43,6 +43,15 @@ export function Cuenta({
         <span className={cn("text-[13px] text-texto-suave", movil ? "block" : "hidden xl:inline")}>
           {sesion.usuario.nombre}
         </span>
+        {sesion.usuario.rol === "comprador" && (
+          <Link
+            href={`/t/${slug}/cuenta/citas`}
+            onClick={onNavegar}
+            className={cn("text-[13px] text-texto hover:text-lila", movil ? "mt-3 block" : "")}
+          >
+            Mis citas
+          </Link>
+        )}
         <button
           type="button"
           onClick={() => {

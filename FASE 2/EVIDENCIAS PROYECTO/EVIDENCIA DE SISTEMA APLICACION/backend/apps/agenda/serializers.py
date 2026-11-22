@@ -91,3 +91,42 @@ class VisitaSerializer(serializers.ModelSerializer):
             "motivo",
         ]
         read_only_fields = fields
+
+
+class MiVisitaSerializer(serializers.ModelSerializer):
+    """
+    Una visita en «Mis citas» del comprador.
+
+    Trae el cambio de hora pendiente, si hay, y qué puede hacer con la visita:
+    reagendar, cancelar y responder la propuesta de la tienda.
+    """
+
+    estadoNombre = serializers.CharField(source="get_estado_display", read_only=True)
+    motivoRechazo = serializers.CharField(source="motivo_rechazo", read_only=True)
+    cambioPendiente = serializers.SerializerMethodField()
+    vigente = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Visita
+        fields = [
+            "id",
+            "inicio",
+            "fin",
+            "estado",
+            "estadoNombre",
+            "motivo",
+            "motivoRechazo",
+            "cambioPendiente",
+            "vigente",
+        ]
+        read_only_fields = fields
+
+    def get_cambioPendiente(self, visita):  # noqa: N802 — nombre del campo
+        from apps.agenda import cambios
+
+        return cambios.representar(cambios.pendiente_de(visita))
+
+    def get_vigente(self, visita):
+        from apps.agenda.models import ESTADOS_VIGENTES
+
+        return visita.estado in ESTADOS_VIGENTES

@@ -306,6 +306,26 @@ export type Visita = {
   motivo: string;
 };
 
+/** Una visita en «Mis citas» del comprador. */
+export type MiVisita = {
+  id: number;
+  inicio: string;
+  fin: string;
+  estado: EstadoVisita;
+  estadoNombre: string;
+  motivo: string;
+  motivoRechazo: string;
+  /** Propuesta de otra hora que espera respuesta, o null. */
+  cambioPendiente: {
+    id: number;
+    inicio: string;
+    fin: string;
+    propuestoPor: "comprador" | "tienda";
+  } | null;
+  /** Si sigue en pie: solicitada o confirmada. */
+  vigente: boolean;
+};
+
 export type SolicitudDeVisita = {
   inicio: string;
   nombreContacto: string;

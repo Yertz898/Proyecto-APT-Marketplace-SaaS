@@ -15,16 +15,12 @@ Dos reglas de seguridad:
   a la hora (`PASSWORD_RESET_TIMEOUT`).
 """
 
-import json
 import logging
-import urllib.error
-import urllib.request
 
 from django.conf import settings
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ValidationError as DjangoValidationError
-from django.core.mail import send_mail
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from rest_framework import serializers, status
@@ -35,6 +31,7 @@ from rest_framework.views import APIView
 
 from apps.auditoria.models import Accion
 from apps.auditoria.registrar import registrar
+from apps.core.correo import enviar_correo
 from apps.tiendas.models import Tienda
 from apps.usuarios.models import Usuario
 
@@ -55,45 +52,6 @@ def _enlace(usuario: Usuario, tienda: Tienda | None) -> str:
     return f"{settings.FRONTEND_URL}{ruta}?uid={uid}&token={token}"
 
 
-def _enviar(destino: str, asunto: str, texto: str) -> None:
-    """
-    Manda el correo.
-
-    Con `RESEND_API_KEY` sale por la API HTTP de Resend: varios hostings
-    bloquean el puerto SMTP. Sin ella usa el backend de correo de Django, que en
-    desarrollo lo escribe en la consola.
-    """
-    if settings.RESEND_API_KEY:
-        cuerpo = json.dumps(
-            {
-                "from": settings.DEFAULT_FROM_EMAIL,
-                "to": [destino],
-                "subject": asunto,
-                "text": texto,
-            }
-        ).encode()
-        peticion = urllib.request.Request(
-            "https://api.resend.com/emails",
-            data=cuerpo,
-            headers={
-                "Authorization": f"Bearer {settings.RESEND_API_KEY}",
-                "Content-Type": "application/json",
-                # Sin esto urllib se presenta como «Python-urllib/3.x», y el
-                # cortafuegos de Resend lo rechaza con un 403 «error code:
-                # 1010» antes de mirar la clave.
-                "User-Agent": "DealCommerce/1.0",
-            },
-            method="POST",
-        )
-        try:
-            with urllib.request.urlopen(peticion, timeout=10):  # noqa: S310 — URL fija
-                return
-        except urllib.error.HTTPError as error:
-            # El motivo viene en el cuerpo («API key is invalid», «domain is
-            # not verified»…): sin él, el log solo diría «403 Forbidden».
-            motivo = error.read()[:300].decode(errors="replace")
-            raise RuntimeError(f"Resend respondió {error.code}: {motivo}") from error
-    send_mail(asunto, texto, settings.DEFAULT_FROM_EMAIL, [destino])
 
 
 class PedirEnlaceSerializer(serializers.Serializer):
@@ -133,7 +91,7 @@ class PedirEnlace(APIView):
             "ignora este correo: tu contraseña sigue siendo la misma.\n"
         )
         try:
-            _enviar(usuario.email, f"Tu contraseña de {nombre}", texto)
+            enviar_correo(usuario.email, f"Tu contraseña de {nombre}", texto)
         except Exception:
             # Al comprador no se le dice nada distinto: sería revelar que el
             # correo tiene cuenta. Queda en el log para revisarlo.

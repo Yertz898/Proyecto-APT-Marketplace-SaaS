@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 
+import { SelectorDeHora } from "@/components/agenda/selector-de-hora";
+import { useSesion } from "@/components/sesion/usar-sesion";
 import { ErrorDeApi } from "@/lib/api/errores";
 import {
   abrirDia,
@@ -14,6 +16,8 @@ import {
   obtenerConfiguracionAgenda,
   obtenerDiasCerrados,
   obtenerVisitas,
+  proponerCambioDeVisita,
+  responderCambioDeVisita,
 } from "@/lib/api/gestion";
 import { formatearDiaLargo, formatearFechaLarga, formatearHora } from "@/lib/formato";
 import type {
@@ -126,23 +130,33 @@ function Visitas() {
 }
 
 function TarjetaDeVisita({ visita, onCambio }: { visita: VisitaDelPanel; onCambio: (v: VisitaDelPanel) => void }) {
+  const { sesion } = useSesion();
+  const slug = sesion?.usuario.tienda?.slug;
   const [trabajando, setTrabajando] = useState(false);
   const [fallo, setFallo] = useState<string | null>(null);
+  const [eligiendo, setEligiendo] = useState(false);
+  const cambio = visita.cambioPendiente;
+  const vigente = visita.estado === "solicitada" || visita.estado === "confirmada";
+
+  async function hacer(accion: () => Promise<VisitaDelPanel>) {
+    setTrabajando(true);
+    setFallo(null);
+    try {
+      onCambio(await accion());
+      setEligiendo(false);
+    } catch (error) {
+      setFallo(mensajeDe(error));
+    } finally {
+      setTrabajando(false);
+    }
+  }
 
   async function pasarA(estado: EstadoDeVisita) {
     let motivo = "";
     if (estado === "rechazada") {
       motivo = window.prompt("¿Por qué la rechazas? El cliente lo verá.") ?? "";
     }
-    setTrabajando(true);
-    setFallo(null);
-    try {
-      onCambio(await cambiarEstadoDeVisita(visita.id, estado, motivo));
-    } catch (error) {
-      setFallo(mensajeDe(error));
-    } finally {
-      setTrabajando(false);
-    }
+    await hacer(() => cambiarEstadoDeVisita(visita.id, estado, motivo));
   }
 
   return (
@@ -162,11 +176,54 @@ function TarjetaDeVisita({ visita, onCambio }: { visita: VisitaDelPanel; onCambi
       </div>
       {visita.horaTomada && (
         <p className="mt-3 rounded-[10px] border border-ambar bg-trigo px-3 py-2 text-[13px] text-marino">
-          Esa hora ya la tomó otra visita que confirmaste. Rechaza esta solicitud o escríbele para
-          proponerle otra hora.
+          Esa hora ya la tomó otra visita que confirmaste. Rechaza esta solicitud o proponle otra hora.
         </p>
       )}
-      {visita.siguientes.length > 0 && (
+
+      {cambio && cambio.propuestoPor === "comprador" && (
+        <div className="mt-3 rounded-[10px] border border-ambar bg-trigo px-3.5 py-3">
+          <p className="text-[13px] text-marino">
+            <b>{visita.nombreContacto}</b> pide cambiarla al{" "}
+            <b>
+              {formatearDiaLargo(cambio.inicio)} · {formatearHora(cambio.inicio)}
+            </b>
+            . Si rechazas el cambio, la visita se cancela.
+          </p>
+          <div className="mt-2.5 flex flex-wrap gap-2">
+            <Boton
+              className="h-9 px-3 text-[13px]"
+              disabled={trabajando}
+              onClick={() => hacer(() => responderCambioDeVisita(visita.id, true))}
+            >
+              Aceptar cambio
+            </Boton>
+            <Boton
+              variante="secundario"
+              className="h-9 px-3 text-[13px]"
+              disabled={trabajando}
+              onClick={() => {
+                if (window.confirm("Si rechazas el cambio, la visita se cancela. ¿Seguir?")) {
+                  hacer(() => responderCambioDeVisita(visita.id, false));
+                }
+              }}
+            >
+              Rechazar
+            </Boton>
+          </div>
+        </div>
+      )}
+
+      {cambio && cambio.propuestoPor === "tienda" && (
+        <p className="mt-3 rounded-[10px] border border-niebla bg-cielo px-3 py-2 text-[13px] text-marino">
+          Le propusiste cambiarla al{" "}
+          <b>
+            {formatearDiaLargo(cambio.inicio)} · {formatearHora(cambio.inicio)}
+          </b>
+          . Esperando la respuesta del cliente.
+        </p>
+      )}
+
+      {!eligiendo && (visita.siguientes.length > 0 || (vigente && !cambio && slug)) && (
         <div className="mt-4 flex flex-wrap gap-2">
           {visita.siguientes.map((estado) => (
             <Boton
@@ -179,6 +236,32 @@ function TarjetaDeVisita({ visita, onCambio }: { visita: VisitaDelPanel; onCambi
               {ACCION_DE_ESTADO[estado]}
             </Boton>
           ))}
+          {vigente && !cambio && slug && (
+            <Boton
+              variante="secundario"
+              className="h-9 px-3 text-[13px]"
+              disabled={trabajando}
+              onClick={() => setEligiendo(true)}
+            >
+              Proponer otra hora
+            </Boton>
+          )}
+        </div>
+      )}
+
+      {eligiendo && slug && (
+        <div className="mt-4">
+          <SelectorDeHora
+            slug={slug}
+            horaActual={visita.inicio}
+            tema="panel"
+            ocupado={trabajando}
+            onElegir={(inicio) => hacer(() => proponerCambioDeVisita(visita.id, inicio))}
+            onCancelar={() => setEligiendo(false)}
+          />
+          <p className="mt-2 text-xs text-pizarra">
+            El cliente acepta o rechaza la hora nueva desde «Mis citas». Si la rechaza, la visita se cancela.
+          </p>
         </div>
       )}
       {fallo && <Aviso tipo="error">{fallo}</Aviso>}
