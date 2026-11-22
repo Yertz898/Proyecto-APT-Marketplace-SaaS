@@ -68,10 +68,13 @@ export function PantallaPlataforma() {
 
   return (
     <>
-      <h1 className="font-jakarta text-[32px] leading-[1.1] font-extrabold tracking-[-0.03em]">
-        Administración de DealCommerce
-      </h1>
-      <p className="mt-2 text-[15px] text-pizarra">Las tiendas suscritas, quién pidió entrar y qué pasó en cada una.</p>
+      <div className="border-b border-arena pb-6">
+        <p className="mb-1.5 text-[12px] font-semibold tracking-[0.06em] text-acero uppercase">Plataforma</p>
+        <h1 className="font-jakarta text-[clamp(26px,2.6cqi,32px)] leading-[1.1] font-extrabold tracking-[-0.03em]">
+          Administración de DealCommerce
+        </h1>
+        <p className="mt-2 text-[15px] text-pizarra">Las tiendas suscritas, quién pidió entrar y qué pasó en cada una.</p>
+      </div>
 
       <div role="tablist" className="mt-6 mb-6 flex flex-wrap gap-2">
         {(
@@ -89,8 +92,8 @@ export function PantallaPlataforma() {
             aria-selected={pestana === valor}
             onClick={() => setPestana(valor)}
             className={cn(
-              "h-10 cursor-pointer rounded-full border px-4 text-[13px] font-semibold transition-colors",
-              pestana === valor ? "border-acero bg-acero text-white" : "border-niebla bg-white text-acero hover:bg-cielo",
+              "h-9 cursor-pointer rounded-lg border px-3.5 text-[13px] font-semibold transition-colors motion-reduce:transition-none",
+              pestana === valor ? "border-marino bg-marino text-white" : "border-arena bg-white text-marino hover:border-niebla",
             )}
           >
             {etiqueta}

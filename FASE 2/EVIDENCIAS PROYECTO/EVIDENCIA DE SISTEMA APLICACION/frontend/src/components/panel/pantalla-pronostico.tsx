@@ -103,7 +103,7 @@ export function PantallaPronostico() {
       {cabecera}
 
       {porAgotarse.length > 0 && (
-        <div className="mt-4 rounded-[14px] border border-ambar bg-trigo p-4">
+        <div className="mt-4 rounded-xl border border-ambar bg-trigo p-4">
           <h2 className="text-[13px] font-semibold text-marino">
             Se te va a acabar pronto
           </h2>

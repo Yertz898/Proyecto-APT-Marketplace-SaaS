@@ -32,7 +32,7 @@ export function ResumenDeCarga({
   const [desactivarAusentes, setDesactivarAusentes] = useState(false);
 
   return (
-    <section className="mt-4 rounded-[14px] border border-arena bg-white p-5">
+    <section className="mt-4 rounded-xl border border-arena bg-white p-5">
       <h2 className="text-[13px] font-semibold text-marino">Revisión</h2>
       <p className="mt-2 text-[13px] text-pizarra">
         Esto es lo que va a pasar si confirmas. Todavía no se ha escrito nada.
@@ -98,7 +98,7 @@ export function ResumenDeFotos({
   onCancelar: () => void;
 }) {
   return (
-    <section className="mt-4 rounded-[14px] border border-arena bg-white p-5">
+    <section className="mt-4 rounded-xl border border-arena bg-white p-5">
       <h2 className="text-[13px] font-semibold text-marino">Revisión</h2>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-3">

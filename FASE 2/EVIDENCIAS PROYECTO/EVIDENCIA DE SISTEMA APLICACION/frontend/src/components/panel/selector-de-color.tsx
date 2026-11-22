@@ -113,7 +113,7 @@ export function SelectorDeColor({
 
       <Popover.Portal>
         <Popover.Positioner side="bottom" align="start" sideOffset={10}>
-          <Popover.Popup className="w-[360px] rounded-[14px] border border-arena bg-white p-[18px] shadow-[0_14px_34px_rgba(20,33,61,0.14)] outline-none">
+          <Popover.Popup className="w-[360px] rounded-xl border border-arena bg-white p-[18px] shadow-[0_14px_34px_rgba(20,33,61,0.14)] outline-none">
             <Popover.Title className="text-xs font-semibold text-pizarra">
               Plantillas
             </Popover.Title>

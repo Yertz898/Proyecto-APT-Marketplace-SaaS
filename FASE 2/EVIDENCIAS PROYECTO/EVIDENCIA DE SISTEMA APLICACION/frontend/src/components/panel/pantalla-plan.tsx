@@ -59,7 +59,7 @@ export function PantallaPlan() {
       />
 
       {cancelada && (
-        <div role="status" className="mb-5 rounded-[14px] border border-ambar bg-trigo p-5 text-marino">
+        <div role="status" className="mb-5 rounded-xl border border-ambar bg-trigo p-5 text-marino">
           <p className="font-semibold">Tu suscripción está cancelada.</p>
           <p className="mt-1 text-[14px] text-pizarra">
             La cancelaste el {formatearFecha(estado.canceladaEn as string)}. Tu tienda no se muestra al

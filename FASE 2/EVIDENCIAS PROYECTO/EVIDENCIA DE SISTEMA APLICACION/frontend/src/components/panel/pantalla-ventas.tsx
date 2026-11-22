@@ -224,16 +224,16 @@ function Indicador({
   comparacion?: number | null;
 }) {
   return (
-    <Tarjeta>
-      <p className="text-xs text-pizarra">{titulo}</p>
-      <p className="mt-1.5 text-[22px] font-semibold text-marino">{valor}</p>
+    <Tarjeta className="px-5 py-4">
+      <p className="text-[13px] text-pizarra">{titulo}</p>
+      <p className="mt-1 font-jakarta text-[26px] leading-tight font-extrabold tracking-[-0.02em] text-marino tabular-nums">{valor}</p>
       <p className="mt-1 text-xs text-pizarra">{detalle}</p>
 
       {comparacion !== undefined && comparacion !== null && (
         <p
           className={cn(
             "mt-2 text-xs font-semibold",
-            comparacion >= 0 ? "text-acero" : "text-ambar-hondo",
+            comparacion >= 0 ? "text-jade" : "text-ambar-hondo",
           )}
         >
           {comparacion >= 0 ? "▲" : "▼"} {Math.abs(Math.round(comparacion * 100))}%

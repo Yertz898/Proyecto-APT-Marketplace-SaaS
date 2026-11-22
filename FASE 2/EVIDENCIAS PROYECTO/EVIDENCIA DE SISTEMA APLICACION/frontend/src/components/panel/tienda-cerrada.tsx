@@ -37,7 +37,7 @@ export function TiendaCerrada({ usuario }: { usuario: UsuarioSesion }) {
 
   return (
     <div className="mx-auto max-w-[620px] py-10">
-      <div role="status" className="rounded-[14px] border border-ambar bg-trigo p-5 text-marino">
+      <div role="status" className="rounded-xl border border-ambar bg-trigo p-5 text-marino">
         <p className="font-jakarta text-[20px] font-extrabold">Tu tienda está cerrada</p>
         <p className="mt-1 text-[14px] text-pizarra">
           La administración de DealCommerce cerró {usuario.tienda?.nombre}. Tu vitrina no se muestra al

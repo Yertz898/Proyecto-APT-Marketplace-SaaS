@@ -38,7 +38,7 @@ export function PantallaCargas() {
           <Link
             key={tipo}
             href={`/panel/cargas/${tipo}`}
-            className="flex flex-col rounded-[14px] border border-arena bg-white p-5 text-marino no-underline transition-colors hover:border-niebla hover:bg-cielo hover:no-underline"
+            className="flex flex-col rounded-xl border border-arena bg-white p-5 text-marino no-underline transition-colors hover:border-niebla hover:bg-cielo hover:no-underline"
           >
             <span className="font-jakarta text-[17px] font-bold">{configuracion.titulo}</span>
             <span className="mt-2 flex-1 text-[13px] leading-[1.55] text-pizarra">

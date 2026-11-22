@@ -175,6 +175,33 @@ html:has([data-tema="claro"]) body {
   background: var(--color-hueso);
 }
 
+/*
+ * Los componentes de shadcn (components/ui) leen estas variables, que en
+ * :root son las de la vitrina: oscuras y violetas. Dentro de la portada y de
+ * los paneles se redefinen con la paleta de la plataforma, para que un botón o
+ * un interruptor de components/ui no aparezca en violeta en medio del panel.
+ * Solo vale adentro de [data-tema="claro"]: la vitrina no cambia.
+ */
+[data-tema="claro"] {
+  --background: var(--color-hueso);
+  --foreground: var(--color-marino);
+  --card: #ffffff;
+  --card-foreground: var(--color-marino);
+  --popover: #ffffff;
+  --popover-foreground: var(--color-marino);
+  --primary: var(--color-acero);
+  --primary-foreground: #ffffff;
+  --secondary: var(--color-cielo);
+  --secondary-foreground: var(--color-acero);
+  --muted: var(--color-lino);
+  --muted-foreground: var(--color-pizarra);
+  --accent: var(--color-cielo);
+  --accent-foreground: var(--color-marino);
+  --border: var(--color-arena);
+  --input: var(--color-arena-honda);
+  --ring: var(--color-acero);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

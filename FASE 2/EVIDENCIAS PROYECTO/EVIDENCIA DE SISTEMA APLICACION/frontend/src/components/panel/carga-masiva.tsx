@@ -121,7 +121,7 @@ export function CargaMasiva({ tipo }: { tipo: TipoCarga }) {
       </div>
 
       {configuracion.columnas.length > 0 && (
-        <section className="rounded-[14px] border border-arena bg-white p-5">
+        <section className="rounded-xl border border-arena bg-white p-5">
           <h2 className="text-[13px] font-semibold text-marino">1. Descargar la plantilla</h2>
           <p className="mt-2 text-[13px] text-pizarra">
             Trae los encabezados exactos y una fila de ejemplo. Usa siempre esta plantilla: así ninguna tienda
@@ -148,7 +148,7 @@ export function CargaMasiva({ tipo }: { tipo: TipoCarga }) {
         </section>
       )}
 
-      <section className="mt-4 rounded-[14px] border border-arena bg-white p-5">
+      <section className="mt-4 rounded-xl border border-arena bg-white p-5">
         <h2 className="text-[13px] font-semibold text-marino">
           {configuracion.columnas.length > 0 ? "2. Subir el archivo" : "1. Subir el archivo"}
         </h2>
@@ -191,13 +191,13 @@ export function CargaMasiva({ tipo }: { tipo: TipoCarga }) {
       </section>
 
       {estado.paso === "error" && (
-        <p role="alert" className="mt-4 rounded-[14px] border border-ambar bg-trigo p-5 text-[13px] leading-[1.6] text-marino">
+        <p role="alert" className="mt-4 rounded-xl border border-ambar bg-trigo p-5 text-[13px] leading-[1.6] text-marino">
           {estado.mensaje}
         </p>
       )}
 
       {estado.paso === "aplicada" && (
-        <p className="mt-4 rounded-[14px] border border-niebla bg-cielo p-5 text-[13px] font-semibold text-acero">
+        <p className="mt-4 rounded-xl border border-niebla bg-cielo p-5 text-[13px] font-semibold text-acero">
           La carga se aplicó.
         </p>
       )}

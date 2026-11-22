@@ -193,7 +193,7 @@ function Tabla({
   onEditar: (producto: ProductoDelPanel) => void;
 }) {
   return (
-    <div className="mt-4 overflow-x-auto rounded-[14px] border border-arena bg-white">
+    <div className="mt-4 overflow-x-auto rounded-xl border border-arena bg-white">
       <table className="w-full min-w-[720px] text-left text-[13px]">
         <thead className="bg-hueso text-[11px] tracking-[.08em] text-pizarra uppercase">
           <tr>
