@@ -33,7 +33,10 @@ export async function guardarPerfil(cambios: CambiosDelPerfil): Promise<PerfilDe
     if (valor === undefined) continue;
     // Un formulario no lleva listas: las redes viajan como texto JSON y el
     // backend las vuelve a leer como lista.
-    cuerpo.append(campo, Array.isArray(valor) ? JSON.stringify(valor) : valor);
+    cuerpo.append(
+      campo,
+      Array.isArray(valor) ? JSON.stringify(valor) : typeof valor === "boolean" ? String(valor) : valor,
+    );
   }
 
   const respuesta = await pedirConSesion(RUTA, { method: "PATCH", body: cuerpo });

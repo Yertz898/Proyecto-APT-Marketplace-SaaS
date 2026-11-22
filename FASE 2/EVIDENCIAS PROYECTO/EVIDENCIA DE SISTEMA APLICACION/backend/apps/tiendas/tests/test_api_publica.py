@@ -35,6 +35,7 @@ def test_devuelve_la_identidad_de_la_tienda(client, tienda_a):
             "horario": "",
             "redes": [],
         },
+        "aceptaWebpay": False,
         "plantilla": "clasica",
     }
 

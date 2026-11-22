@@ -79,7 +79,8 @@ Sin sesión. La tienda sale del slug de la ruta.
 | `POST` | `/t/<slug>/productos/<codigo>/cotizar` | qué cuesta una cantidad |
 | `GET` | `/t/<slug>/agenda/horas` | horas disponibles; filtra con `desde` y `hasta` |
 | `POST` | `/t/<slug>/carrito/cotizar` | qué cuesta el carrito completo; no escribe nada |
-| `POST` | `/t/<slug>/pedidos` | cierra el pedido y devuelve folio y enlace de WhatsApp |
+| `POST` | `/t/<slug>/pedidos` | cierra el pedido y devuelve folio y enlace de WhatsApp. Con `metodo: "webpay"` (si la tienda tiene `aceptaWebpay`) además abre la transacción y devuelve `webpay: {url, token}` |
+| `GET`, `POST` | `/pagos/webpay/retorno` | adonde vuelve el cliente desde Webpay: confirma (pedido confirmado) o anula (stock devuelto) y redirige a `/t/<slug>/pago` |
 | `POST` | `/t/<slug>/agenda/visitas` | pide una hora (**comprador con sesión**) |
 | `GET` | `/t/<slug>/agenda/mis-visitas` | «Mis citas»: las visitas del comprador en la tienda, con el cambio pendiente (**comprador**) |
 | `POST` | `/t/<slug>/agenda/mis-visitas/<id>/cambio` | el cliente propone otra hora `{inicio}` (**comprador**) |

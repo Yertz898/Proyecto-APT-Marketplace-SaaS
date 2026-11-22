@@ -22,7 +22,7 @@ from decimal import Decimal, InvalidOperation
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from rest_framework import permissions, status
-from rest_framework.exceptions import NotFound, ValidationError
+from rest_framework.exceptions import APIException, NotFound, ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -173,6 +173,12 @@ class CotizarCarritoView(APIView):
         )
 
 
+class WebpayNoResponde(APIException):
+    status_code = status.HTTP_502_BAD_GATEWAY
+    default_detail = "No pudimos conectar con Webpay. Intenta de nuevo en un momento."
+    default_code = "webpay_no_responde"
+
+
 class ConfirmarPedidoView(APIView):
     """
     POST /api/t/<slug>/pedidos
@@ -194,6 +200,17 @@ class ConfirmarPedidoView(APIView):
         datos = CheckoutSerializer(data=request.data, context={"request": request})
         datos.is_valid(raise_exception=True)
         contacto = datos.validated_data
+        con_webpay = contacto.get("metodo") == "webpay"
+        if con_webpay:
+            if not tienda.acepta_webpay:
+                raise ValidationError(
+                    {"metodo": "Esta tienda no recibe pagos con Webpay."}
+                )
+            # Un pago que nunca volvió no puede seguir reteniendo stock que
+            # este pedido necesita.
+            from apps.pagos.servicios import anular_vencidos
+
+            anular_vencidos(tienda.pk)
 
         lineas, neto_total, _ = _revisar_carrito(tienda, contacto["lineas"])
 
@@ -237,18 +254,38 @@ class ConfirmarPedidoView(APIView):
                 subtotal_total=linea["total"],
             )
 
-        return Response(
-            {
-                "numero": pedido.folio,
-                "mensaje": (
-                    "Tu pedido quedó registrado con el folio "
-                    f"{pedido.folio}. Escríbele a la tienda para coordinar el "
-                    "pago y la entrega."
-                ),
-                "enlaceWhatsapp": _enlace_de_whatsapp(tienda, pedido, lineas),
-            },
-            status=status.HTTP_201_CREATED,
-        )
+        respuesta = {
+            "numero": pedido.folio,
+            "mensaje": (
+                "Tu pedido quedó registrado con el folio "
+                f"{pedido.folio}. Escríbele a la tienda para coordinar el "
+                "pago y la entrega."
+            ),
+            "enlaceWhatsapp": _enlace_de_whatsapp(tienda, pedido, lineas),
+        }
+
+        if con_webpay:
+            # Dentro de la misma transacción: si Transbank no responde, el
+            # pedido no se crea y el stock no queda reservado.
+            from apps.pagos import servicios as pagos
+            from apps.pagos.webpay import ErrorDeWebpay
+
+            try:
+                _, url = pagos.iniciar(
+                    pedido, request.build_absolute_uri("/api/pagos/webpay/retorno")
+                )
+            except ErrorDeWebpay as error:
+                # La excepción deshace la transacción entera: ni pedido ni
+                # stock reservado.
+                raise WebpayNoResponde() from error
+            pago = pedido.pagos.get()
+            respuesta["mensaje"] = (
+                f"Tu pedido {pedido.folio} quedó reservado. "
+                "Te llevamos a Webpay para pagarlo."
+            )
+            respuesta["webpay"] = {"url": url, "token": pago.token}
+
+        return Response(respuesta, status=status.HTTP_201_CREATED)
 
     def _descontar(self, linea) -> None:
         """
@@ -330,7 +367,7 @@ class PedidoPanelListView(APIView):
 
         pedidos = (
             Pedido.objects.filter(tienda=tienda)
-            .prefetch_related("lineas__producto")
+            .prefetch_related("lineas__producto", "pagos")
             .order_by("-fecha_creacion")
         )
         return Response(PedidoDetalleSerializer(pedidos, many=True).data)

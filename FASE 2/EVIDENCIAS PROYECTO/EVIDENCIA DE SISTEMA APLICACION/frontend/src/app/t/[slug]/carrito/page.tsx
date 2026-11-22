@@ -6,7 +6,7 @@ import { obtenerIdentidadTienda } from "@/lib/api/tienda";
 
 export const metadata: Metadata = { title: "Carrito" };
 
-/** Carrito y checkout simulado de la tienda. */
+/** Carrito y cierre del pedido: por WhatsApp o, si la tienda lo acepta, con Webpay. */
 export default async function PaginaCarrito({ params }: PageProps<"/t/[slug]/carrito">) {
   const { slug } = await params;
   const tienda = await obtenerIdentidadTienda(slug);
@@ -19,7 +19,7 @@ export default async function PaginaCarrito({ params }: PageProps<"/t/[slug]/car
     <main className="mx-auto w-full max-w-[1100px] flex-1 px-5 py-10 lg:px-6">
       <h1 className="font-serif text-[38px] font-medium text-texto">Carrito</h1>
       <div className="mt-8">
-        <VistaCarrito slugTienda={slug} />
+        <VistaCarrito slugTienda={slug} aceptaWebpay={tienda.aceptaWebpay ?? false} />
       </div>
     </main>
   );

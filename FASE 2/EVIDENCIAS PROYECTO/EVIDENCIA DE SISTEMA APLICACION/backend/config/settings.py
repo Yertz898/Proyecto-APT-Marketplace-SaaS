@@ -30,6 +30,13 @@ env = environ.Env(
     DEFAULT_FROM_EMAIL=(str, "DealCommerce <no-responder@dealcommerce.cl>"),
     EMAIL_BACKEND=(str, "django.core.mail.backends.console.EmailBackend"),
     CORREOS_AGENDA_ACTIVOS=(bool, False),
+    WEBPAY_AMBIENTE=(str, "integracion"),
+    # Credenciales públicas de integración de Transbank (Webpay Plus). No cobran.
+    WEBPAY_CODIGO_COMERCIO=(str, "597055555532"),
+    WEBPAY_API_KEY=(
+        str,
+        "579B532A7440BB0C9079DED94D31EA1615BACEB56610332264630D42D0A36B1C",
+    ),
 )
 
 # Fuera de Docker, .env vive en la raíz del repositorio.
@@ -74,6 +81,7 @@ LOCAL_APPS = [
     "apps.analitica",
     "apps.asistente",
     "apps.auditoria",
+    "apps.pagos",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -199,6 +207,16 @@ PASSWORD_RESET_TIMEOUT = 60 * 60
 # dominio verificado en Resend: sin él, Resend solo entrega a la dueña de la
 # cuenta. Al encenderlo, `manage.py enviar_correos_agenda` manda lo pendiente.
 CORREOS_AGENDA_ACTIVOS = env("CORREOS_AGENDA_ACTIVOS")
+
+
+# ── Webpay Plus ─────────────────────────────────────────────────────────────
+# Por omisión, el ambiente de integración de Transbank con sus credenciales de
+# prueba públicas: se paga con tarjetas de prueba y no se cobra nada. Para
+# cobrar de verdad: contrato con Transbank, su código de comercio y su llave, y
+# WEBPAY_AMBIENTE=produccion.
+WEBPAY_AMBIENTE = env("WEBPAY_AMBIENTE")
+WEBPAY_CODIGO_COMERCIO = env("WEBPAY_CODIGO_COMERCIO")
+WEBPAY_API_KEY = env("WEBPAY_API_KEY")
 
 
 # ── Internacionalización ────────────────────────────────────────────────────

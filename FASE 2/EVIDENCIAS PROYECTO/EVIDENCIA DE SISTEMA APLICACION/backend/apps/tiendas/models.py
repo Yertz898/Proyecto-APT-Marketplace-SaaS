@@ -129,6 +129,10 @@ class Tienda(models.Model):
     )
 
     whatsapp = models.URLField("enlace de WhatsApp", blank=True)
+
+    # Si el carrito ofrece pagar con Webpay además de coordinar por WhatsApp.
+    # Apagado por omisión: la tienda lo enciende desde «Tienda y marca».
+    acepta_webpay = models.BooleanField("acepta pagos con Webpay", default=False)
     instagram = models.URLField("enlace de Instagram", blank=True)
 
     # El pie de página de la vitrina. Lo edita el dueño desde «Tienda y marca»;

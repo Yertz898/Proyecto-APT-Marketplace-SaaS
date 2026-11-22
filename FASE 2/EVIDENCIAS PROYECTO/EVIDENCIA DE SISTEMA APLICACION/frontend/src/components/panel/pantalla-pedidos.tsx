@@ -13,7 +13,7 @@ import { Cabecera, Cargando, Error as Aviso, Vacio } from "./piezas";
 /*
  * La bandeja de pedidos del dueño.
  *
- * El pago no pasa por la plataforma: la tienda lo coordina por WhatsApp. Así
+ * El pago se coordina por WhatsApp o, si la tienda lo activó, se hace con Webpay. Así
  * que esta pantalla no cobra nada, sirve para seguir en qué va cada pedido y
  * tener a mano con quién hablar.
  *
@@ -290,7 +290,14 @@ function FilaDePedido({
           <span className="text-[12px] text-pizarra tabular-nums @3xl:hidden">
             {pedido.folio} · {formatearFecha(pedido.creadoEn)}
           </span>
-          <InsigniaDeEstado estado={pedido.estado}>{pedido.estadoVisible}</InsigniaDeEstado>
+          <span className="flex items-center gap-1.5">
+            {pedido.pago?.estado === "autorizado" && (
+              <span className="rounded-full border border-jade/30 bg-jade-claro px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap text-jade">
+                Webpay
+              </span>
+            )}
+            <InsigniaDeEstado estado={pedido.estado}>{pedido.estadoVisible}</InsigniaDeEstado>
+          </span>
         </span>
       </button>
 
@@ -322,6 +329,13 @@ function FilaDePedido({
               {pedido.emailContacto && ` · ${pedido.emailContacto}`}
             </p>
             {pedido.direccionEntrega && <p className="text-pizarra">{pedido.direccionEntrega}</p>}
+            {pedido.pago && (
+              <p className="text-pizarra">
+                Webpay: <span className="font-semibold text-marino">{pedido.pago.estadoVisible}</span>
+                {pedido.pago.ultimosDigitos && ` · tarjeta terminada en `}
+                {pedido.pago.codigoAutorizacion && ` · autorización `}
+              </p>
+            )}
             {pedido.notas && (
               <p className="rounded-lg border border-arena bg-hueso px-3 py-2 text-xs leading-[1.5] text-pizarra">
                 {pedido.notas}

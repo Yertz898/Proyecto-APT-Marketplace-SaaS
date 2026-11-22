@@ -41,6 +41,8 @@ export type IdentidadTienda = {
     whatsapp: string | null;
     instagram: string | null;
   };
+  /** Si el carrito ofrece pagar con Webpay. */
+  aceptaWebpay?: boolean;
   /** El pie de página que edita el dueño. Lo que viene vacío no se muestra. */
   pie?: {
     descripcion: string;
@@ -251,6 +253,8 @@ export type CarritoCotizado = {
  */
 export type DatosDeContacto = {
   nombre_contacto: string;
+  /** Cómo se paga: coordinando por WhatsApp (por omisión) o con Webpay. */
+  metodo?: "whatsapp" | "webpay";
   telefono_contacto: string;
   email_contacto?: string;
   /** Solo para quien compra sin cuenta. */
@@ -262,8 +266,10 @@ export type DatosDeContacto = {
 export type PedidoConfirmado = {
   numero: string;
   mensaje: string;
-  /** Enlace para coordinar el pago; el checkout es simulado. */
+  /** Enlace para coordinar el pago por WhatsApp. */
   enlaceWhatsapp: string | null;
+  /** Con Webpay: adónde mandar al cliente a pagar (POST con token_ws). */
+  webpay?: { url: string; token: string };
 };
 
 // ── Agenda de visitas ───────────────────────────────────────────────────────

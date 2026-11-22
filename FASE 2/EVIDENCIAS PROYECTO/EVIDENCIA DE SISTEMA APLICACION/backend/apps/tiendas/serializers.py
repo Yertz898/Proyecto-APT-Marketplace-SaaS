@@ -27,6 +27,7 @@ class TiendaPublicaSerializer(serializers.ModelSerializer):
     colores = serializers.SerializerMethodField()
     redes = serializers.SerializerMethodField()
     pie = serializers.SerializerMethodField()
+    aceptaWebpay = serializers.BooleanField(source="acepta_webpay", read_only=True)
 
     class Meta:
         model = Tienda
@@ -38,6 +39,7 @@ class TiendaPublicaSerializer(serializers.ModelSerializer):
             "colores",
             "redes",
             "pie",
+            "aceptaWebpay",
             "plantilla",
         ]
 
@@ -119,7 +121,12 @@ CAMPOS_DEL_PIE = {
     "pie_horario",
     "redes_sociales",
 }
-CAMPOS_DEL_PLAN_BASICO = {"nombre", "logo", "plantilla"} | CAMPOS_DEL_PIE
+CAMPOS_DEL_PLAN_BASICO = {
+    "nombre",
+    "logo",
+    "plantilla",
+    "acepta_webpay",
+} | CAMPOS_DEL_PIE
 
 #: Cuántos enlaces a redes acepta el pie.
 MAXIMO_DE_REDES = 8
@@ -237,6 +244,7 @@ class PerfilDeTiendaSerializer(serializers.ModelSerializer):
         source="pie_horario", required=False, allow_blank=True, max_length=120
     )
     redesSociales = ListaDeRedes(source="redes_sociales", required=False)
+    aceptaWebpay = serializers.BooleanField(source="acepta_webpay", required=False)
 
     class Meta:
         model = Tienda
@@ -261,6 +269,7 @@ class PerfilDeTiendaSerializer(serializers.ModelSerializer):
             "pieDireccion",
             "pieHorario",
             "redesSociales",
+            "aceptaWebpay",
             "tipografiasDisponibles",
             "plantilla",
             "plantillasDisponibles",

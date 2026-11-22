@@ -97,6 +97,8 @@ export type PerfilDeTienda = {
   pieDireccion: string;
   pieHorario: string;
   redesSociales: string[];
+  /** Si el carrito ofrece pagar con Webpay (ambiente de pruebas de Transbank). */
+  aceptaWebpay: boolean;
   tipografiasDisponibles: TipografiaDisponible[];
   /** Cómo se arma la portada de la vitrina: clasica, moderna o minimal. */
   plantilla: string;
@@ -122,6 +124,7 @@ export type CambiosDelPerfil = Partial<{
   pieDireccion: string;
   pieHorario: string;
   redesSociales: string[];
+  aceptaWebpay: boolean;
   logo: File;
   banner: File;
 }>;
@@ -228,6 +231,13 @@ export type PedidoDelPanel = {
   /** Fecha en ISO. */
   creadoEn: string;
   lineas: LineaDelPedido[];
+  /** El pago con Webpay, o null si se coordinó por WhatsApp. */
+  pago: {
+    estado: "iniciado" | "autorizado" | "rechazado" | "abortado" | "vencido";
+    estadoVisible: string;
+    ultimosDigitos: string;
+    codigoAutorizacion: string;
+  } | null;
 };
 
 // ── Ventas ──────────────────────────────────────────────────────────────────

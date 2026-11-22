@@ -131,6 +131,7 @@ function Formulario({
       pieDireccion: borrador.pieDireccion ?? "",
       pieHorario: borrador.pieHorario ?? "",
       redesSociales: borrador.redesSociales ?? [],
+      aceptaWebpay: borrador.aceptaWebpay ?? false,
     };
     if (logo) cambios.logo = logo;
 
@@ -349,6 +350,28 @@ function Formulario({
           </Tarjeta>
 
           <EditorDelPie borrador={borrador} cambiar={cambiar} deshabilitado={!puedeEditar} error={error} />
+
+          <Tarjeta>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-[13px] font-semibold text-marino">Pagos con Webpay</p>
+                <p className="mt-1 max-w-[460px] text-[13px] leading-[1.55] text-pizarra">
+                  Tus clientes pueden pagar el pedido en línea con tarjeta, además de coordinar por WhatsApp. Por
+                  ahora funciona en el ambiente de pruebas de Transbank: no se cobra dinero real.
+                </p>
+              </div>
+              <label className="flex flex-none cursor-pointer items-center gap-2 text-[13px] font-semibold text-marino">
+                <input
+                  type="checkbox"
+                  checked={borrador.aceptaWebpay ?? false}
+                  onChange={(e) => cambiar("aceptaWebpay", e.target.checked)}
+                  disabled={!puedeEditar}
+                  className="size-4 accent-acero"
+                />
+                Activar
+              </label>
+            </div>
+          </Tarjeta>
         </div>
 
         <VistaPrevia perfil={borrador} logo={logo} />

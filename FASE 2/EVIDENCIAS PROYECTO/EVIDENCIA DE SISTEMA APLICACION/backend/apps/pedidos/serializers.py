@@ -44,6 +44,13 @@ class CheckoutSerializer(serializers.Serializer):
         max_length=12, required=False, allow_blank=True, default=""
     )
     lineas = LineaDelCarritoSerializer(many=True, allow_empty=False)
+    # Cómo se paga: coordinando por WhatsApp (como siempre) o con Webpay, si la
+    # tienda lo tiene encendido.
+    metodo = serializers.ChoiceField(
+        choices=[("whatsapp", "WhatsApp"), ("webpay", "Webpay")],
+        required=False,
+        default="whatsapp",
+    )
 
     def validate(self, datos):
         """
@@ -111,6 +118,7 @@ class PedidoDetalleSerializer(serializers.ModelSerializer):
     totalNeto = serializers.IntegerField(source="total_neto", read_only=True)
     totalIva = serializers.IntegerField(source="total_iva", read_only=True)
     creadoEn = serializers.DateTimeField(source="fecha_creacion", read_only=True)
+    pago = serializers.SerializerMethodField()
 
     class Meta:
         model = Pedido
@@ -129,4 +137,19 @@ class PedidoDetalleSerializer(serializers.ModelSerializer):
             "total",
             "creadoEn",
             "lineas",
+            "pago",
         ]
+
+    def get_pago(self, pedido):
+        """El último pago con Webpay, o null si se coordinó por WhatsApp."""
+        # Se ordena en Python y no con order_by: así aprovecha el
+        # prefetch_related de la bandeja y no hace una consulta por pedido.
+        pago = max(pedido.pagos.all(), key=lambda p: p.fecha_creacion, default=None)
+        if pago is None:
+            return None
+        return {
+            "estado": pago.estado,
+            "estadoVisible": pago.get_estado_display(),
+            "ultimosDigitos": pago.ultimos_digitos,
+            "codigoAutorizacion": pago.codigo_autorizacion,
+        }

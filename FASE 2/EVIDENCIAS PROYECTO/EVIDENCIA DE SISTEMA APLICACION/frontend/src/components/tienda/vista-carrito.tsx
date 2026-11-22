@@ -35,8 +35,29 @@ function rutValido(rut: string): boolean {
 
 const CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export function VistaCarrito({ slugTienda }: { slugTienda: string }) {
+/**
+ * Manda al navegador a Webpay.
+ *
+ * Transbank pide llegar con un POST de formulario que lleve el token: un
+ * enlace (GET) no sirve. Se arma el formulario, se envía y la página se va.
+ */
+function irAWebpay(url: string, token: string) {
+  const formulario = document.createElement("form");
+  formulario.method = "POST";
+  formulario.action = url;
+  const campo = document.createElement("input");
+  campo.type = "hidden";
+  campo.name = "token_ws";
+  campo.value = token;
+  formulario.appendChild(campo);
+  document.body.appendChild(formulario);
+  formulario.submit();
+}
+
+export function VistaCarrito({ slugTienda, aceptaWebpay = false }: { slugTienda: string; aceptaWebpay?: boolean }) {
   const { lineas, quitar, vaciar } = useCarrito();
+  // Con Webpay se paga en línea; con WhatsApp se coordina como siempre.
+  const [metodo, setMetodo] = useState<"whatsapp" | "webpay">(aceptaWebpay ? "webpay" : "whatsapp");
   const { sesion, hidratado } = useSesion();
   // Se compra con cuenta o como visitante: la tienda tiene que saber quién
   // pidió. Con sesión se usa la cuenta; sin ella, la persona elige.
@@ -106,14 +127,20 @@ export function VistaCarrito({ slugTienda }: { slugTienda: string }) {
   async function confirmar() {
     setConfirmando(true);
     try {
-      setPedido(
-        await confirmarPedido(slugTienda, lineas, {
-          ...contacto,
-          nombre_contacto: nombre.trim(),
-          email_contacto: correo.trim(),
-          rut_contacto: conCuenta ? "" : rut,
-        }),
-      );
+      const confirmado = await confirmarPedido(slugTienda, lineas, {
+        ...contacto,
+        nombre_contacto: nombre.trim(),
+        email_contacto: correo.trim(),
+        rut_contacto: conCuenta ? "" : rut,
+        metodo,
+      });
+      if (confirmado.webpay) {
+        // El carrito se vacía recién cuando el pago vuelve aprobado: si el
+        // cliente anula en Webpay, vuelve con sus productos.
+        irAWebpay(confirmado.webpay.url, confirmado.webpay.token);
+        return;
+      }
+      setPedido(confirmado);
       setError(null);
       vaciar();
     } catch (problema) {
@@ -223,7 +250,7 @@ export function VistaCarrito({ slugTienda }: { slugTienda: string }) {
             {conCuenta ? `Comprando como ${sesion?.usuario.nombre}` : "Tus datos (visitante)"}
           </h2>
           <p className="mt-1.5 text-xs leading-[1.5] text-texto-suave">
-            Para coordinar el pago y la entrega. No se cobra en línea.
+            Para coordinar la entrega{aceptaWebpay ? "" : " y el pago. No se cobra en línea"}.
           </p>
 
           <div className="mt-4 flex flex-col gap-3">
@@ -314,6 +341,38 @@ export function VistaCarrito({ slugTienda }: { slugTienda: string }) {
           </p>
         )}
 
+        {aceptaWebpay && (
+          <fieldset className="mt-5 flex flex-col gap-2">
+            <legend className="mb-1 text-[13px] font-semibold text-texto">¿Cómo quieres pagar?</legend>
+            {(
+              [
+                ["webpay", "Pagar ahora con Webpay", "Tarjeta de débito, crédito o prepago."],
+                ["whatsapp", "Coordinar por WhatsApp", "Transferencia o el medio que acuerdes con la tienda."],
+              ] as const
+            ).map(([valor, titulo, detalle]) => (
+              <label
+                key={valor}
+                className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition-colors ${
+                  metodo === valor ? "border-violeta bg-violeta/12" : "border-lila/16 hover:border-lila/40"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="metodo-de-pago"
+                  value={valor}
+                  checked={metodo === valor}
+                  onChange={() => setMetodo(valor)}
+                  className="mt-0.5 accent-violeta"
+                />
+                <span>
+                  <span className="block text-[13px] font-semibold text-texto">{titulo}</span>
+                  <span className="block text-xs text-texto-suave">{detalle}</span>
+                </span>
+              </label>
+            ))}
+          </fieldset>
+        )}
+
         <button
           type="button"
           disabled={
@@ -322,7 +381,13 @@ export function VistaCarrito({ slugTienda }: { slugTienda: string }) {
           onClick={confirmar}
           className="mt-5 h-12 w-full cursor-pointer rounded-full bg-violeta text-sm font-semibold text-white transition-colors hover:bg-violeta-hover disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {confirmando ? "Confirmando…" : "Confirmar pedido"}
+          {confirmando
+            ? metodo === "webpay"
+              ? "Abriendo Webpay…"
+              : "Confirmando…"
+            : metodo === "webpay"
+              ? "Ir a pagar con Webpay"
+              : "Confirmar pedido"}
         </button>
 
         <p className="mt-3 text-center text-xs text-texto-suave">
@@ -332,7 +397,9 @@ export function VistaCarrito({ slugTienda }: { slugTienda: string }) {
             ? conCuenta
               ? "Completa tu nombre y tu WhatsApp para confirmar."
               : "Completa tu RUT, nombre, correo y WhatsApp para confirmar."
-            : "No se cobra en línea: el pago se coordina al confirmar."}
+            : metodo === "webpay"
+              ? "Pagas en el sitio seguro de Transbank. Ambiente de pruebas: no se cobra dinero real."
+              : "No se cobra en línea: el pago se coordina al confirmar."}
         </p>
         </section>
       </aside>
