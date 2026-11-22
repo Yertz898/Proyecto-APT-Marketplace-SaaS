@@ -6,9 +6,9 @@ import { FranjaClara, TituloDeSeccion } from "./secciones";
 /*
  * Los tres planes.
  *
- * Ninguno tiene precio todavía y la sección lo dice de frente en vez de
- * inventar cifras: cómo se cobra la suscripción es una de las cosas que el
- * equipo aún no decide (CONVENCIONES.md > Lo que no está decidido).
+ * Precios mensuales netos por tienda. El Premium va destacado: es el que trae
+ * la marca propia, el panel de ventas y la agenda, que es lo que la mayoría
+ * de las tiendas pide.
  */
 
 type Plan = {
@@ -86,7 +86,7 @@ export function Planes() {
 
 function Normal({ plan }: { plan: Plan }) {
   return (
-    <div className="flex flex-col gap-5 rounded-[18px] border border-arena bg-hueso p-8">
+    <div className="flex flex-col gap-5 rounded-xl border border-arena bg-hueso p-8">
       <Cabecera plan={plan} />
       <Precio valor={plan.precio} />
       <ul className="flex flex-1 list-none flex-col gap-3 border-t border-arena p-0 pt-5 text-[15px] leading-[1.4]">
@@ -111,7 +111,7 @@ function Normal({ plan }: { plan: Plan }) {
 
 function Destacado({ plan }: { plan: Plan }) {
   return (
-    <div className="flex flex-col gap-5 rounded-[18px] bg-acero p-8 text-white shadow-[0_20px_44px_rgba(31,78,121,.25)]">
+    <div className="flex flex-col gap-5 relative rounded-xl bg-acero p-8 text-white shadow-[0_20px_44px_rgba(31,78,121,.25)] ring-2 ring-ambar ring-offset-2 ring-offset-white @4xl:-my-3 @4xl:py-11">
       <div className="flex flex-col gap-1.5">
         <div className="flex items-center justify-between gap-2">
           <h3 className="font-jakarta text-2xl font-extrabold">{plan.nombre}</h3>
@@ -155,7 +155,7 @@ function Cabecera({ plan }: { plan: Plan }) {
 function Precio({ valor, claro = false }: { valor: string; claro?: boolean }) {
   return (
     <p className="flex items-baseline gap-1.5">
-      <span className="font-jakarta text-[32px] font-extrabold tracking-[-0.02em]">{valor}</span>
+      <span className="font-jakarta text-[32px] font-extrabold tracking-[-0.02em] tabular-nums">{valor}</span>
       <span className={claro ? "text-sm text-[#DCE6F0]" : "text-sm text-pizarra"}>al mes</span>
     </p>
   );

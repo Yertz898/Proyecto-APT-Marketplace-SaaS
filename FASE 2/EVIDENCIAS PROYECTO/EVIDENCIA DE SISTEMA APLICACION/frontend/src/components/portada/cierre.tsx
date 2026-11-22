@@ -1,3 +1,6 @@
+import Link from "next/link";
+
+import { ENTRAR, SOLICITAR_ACCESO, TIENDA_DE_EJEMPLO } from "./enlaces";
 import { Isotipo } from "./marca";
 
 /*
@@ -104,16 +107,69 @@ export function Preguntas() {
   );
 }
 
+const COLUMNAS_DEL_PIE = [
+  {
+    titulo: "Producto",
+    enlaces: [
+      { href: "#como-funciona", texto: "Cómo funciona" },
+      { href: "#funciones", texto: "Funciones" },
+      { href: "#planes", texto: "Planes" },
+    ],
+  },
+  {
+    titulo: "Empezar",
+    enlaces: [
+      { href: SOLICITAR_ACCESO, texto: "Solicitar acceso" },
+      { href: TIENDA_DE_EJEMPLO, texto: "Ver una tienda de ejemplo" },
+      { href: ENTRAR, texto: "Entrar al panel" },
+    ],
+  },
+];
+
 export function Pie() {
   return (
-    <footer className="border-t border-arena px-[clamp(20px,5.5cqi,80px)] py-8">
-      <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-4 text-sm text-pizarra">
-        <span className="flex items-center gap-2 text-marino">
-          <Isotipo tamano={22} />
-          <span className="font-jakarta text-base font-extrabold">DealCommerce</span>
-        </span>
+    <footer className="bg-marino px-[clamp(20px,5.5cqi,80px)] pt-14 pb-8 text-[#C9D3DF]">
+      <div className="mx-auto flex max-w-[1280px] flex-col gap-10">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,200px),1fr))] gap-8">
+          <div className="flex flex-col gap-3 [grid-column:1/-1] @3xl:[grid-column:auto]">
+            <span className="flex items-center gap-2 text-white">
+              <span className="rounded-md bg-hueso p-0.5">
+                <Isotipo tamano={22} />
+              </span>
+              <span className="font-jakarta text-lg font-extrabold">DealCommerce</span>
+            </span>
+            <p className="max-w-[28em] text-sm leading-[1.6]">
+              Catálogos mayoristas en línea para tiendas chilenas, con precios por cantidad que se calculan solos.
+            </p>
+          </div>
 
-        <span>© 2026 DealCommerce · Hecho en Chile</span>
+          {COLUMNAS_DEL_PIE.map((columna) => (
+            <nav key={columna.titulo} aria-label={columna.titulo} className="flex flex-col gap-2.5 text-sm">
+              <span className="text-xs font-semibold tracking-[0.06em] text-white uppercase">{columna.titulo}</span>
+              {columna.enlaces.map((enlace) => (
+                <Link
+                  key={enlace.texto}
+                  href={enlace.href}
+                  className="text-[#C9D3DF] no-underline hover:text-white hover:underline"
+                >
+                  {enlace.texto}
+                </Link>
+              ))}
+            </nav>
+          ))}
+
+          <div className="flex flex-col gap-2.5 text-sm">
+            <span className="text-xs font-semibold tracking-[0.06em] text-white uppercase">Seguridad</span>
+            <p className="leading-[1.6]">
+              Cada tienda vive aislada: sus clientes, precios y ventas no se cruzan con los de ninguna otra.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/12 pt-6 text-[13px]">
+          <span>© 2026 DealCommerce · Hecho en Chile</span>
+          <span>Precios en pesos chilenos, netos de IVA.</span>
+        </div>
       </div>
     </footer>
   );

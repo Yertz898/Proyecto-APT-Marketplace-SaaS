@@ -31,6 +31,19 @@ export const TIENDA_DE_EJEMPLO = SLUG_DE_EJEMPLO
   ? `/t/${SLUG_DE_EJEMPLO}`
   : "#solicitar";
 
+/**
+ * Nombre a mostrar de esa tienda, sacado del mismo slug: «joyas-ye» → «Joyas Ye».
+ *
+ * Sale del slug y no de otra variable para que el nombre de la maqueta y el
+ * destino del botón no puedan apuntar a tiendas distintas.
+ */
+export const NOMBRE_DE_EJEMPLO = SLUG_DE_EJEMPLO
+  ? SLUG_DE_EJEMPLO.split("-")
+      .filter(Boolean)
+      .map((parte) => parte[0].toUpperCase() + parte.slice(1))
+      .join(" ")
+  : null;
+
 /** Las tres secciones que enlaza el menú. */
 export const SECCIONES = [
   { href: "#como-funciona", etiqueta: "Cómo funciona" },

@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { SOLICITAR_ACCESO } from "./enlaces";
-import { MaquetaTienda } from "./maqueta-tienda";
+import { CotizadorDemo } from "./cotizador-demo";
 
 /*
  * Titular de la portada.
@@ -47,7 +47,7 @@ export function Hero() {
           </p>
         </div>
 
-        <MaquetaTienda />
+        <CotizadorDemo />
       </div>
     </section>
   );
